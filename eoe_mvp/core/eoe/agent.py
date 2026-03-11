@@ -164,6 +164,19 @@ class Agent:
         self.food_quality: float = 1.0       # 当前携带食物的质量
         self.ate_poisoned: bool = False      # 是否吃了腐败食物
         
+        # ============================================================
+        # v0.98: 热力学庇护所 - 温度感知
+        # ============================================================
+        self.body_temperature: float = 25.0  # 体温
+        self.temperature_sensors: List[float] = [0.5, 0.5, 0.5]  # [左温度, 右温度, 舒适度]
+        
+        # ============================================================
+        # v0.98: 发育相变 - 幼体保护期
+        # ============================================================
+        self.developmental_stage: str = "juvenile"  # "juvenile" 或 "adult"
+        self.age_steps: int = 0                # 出生后的步数
+        self.phase_transition_done: bool = False  # 是否已完成相变
+        
         # 创建大脑
         self.genome = OperatorGenome()
         
