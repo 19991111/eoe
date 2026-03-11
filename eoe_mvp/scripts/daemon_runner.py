@@ -127,6 +127,46 @@ def detect_available_gpus() -> int:
     return 1
 
 
+def is_gpu_available(gpu_id: int) -> bool:
+    """检测指定GPU是否可用（未被占用）"""
+    try:
+        # 查询GPU内存使用情况
+        result = subprocess.run(
+            ['nvidia-smi', '--query-gpu=memory.used', '--format=csv,noheader,nounits', 
+             '-i', str(gpu_id)],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            memory_used = int(result.stdout.strip().split('\n')[0])
+            # 如果使用内存超过70GB，认为被占用
+            if memory_used > 70000:
+                return False
+            return True
+    except:
+        pass
+    # 默认认为可用
+    return True
+
+
+def get_last_available_gpu() -> int:
+    """获取最后一张可用的GPU"""
+    try:
+        result = subprocess.run(
+            ['nvidia-smi', '--query-gpu=count', '--format=csv,noheader'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            total = int(result.stdout.strip().split('\n')[0])
+            # 从最后一张开始检查
+            for i in range(total - 1, -1, -1):
+                if is_gpu_available(i):
+                    return i
+    except:
+        pass
+    # 默认返回0
+    return 0
+
+
 class GPUScheduler:
     """GPU并发调度器 - 自适应多GPU/单GPU模式"""
     
@@ -146,12 +186,29 @@ class GPUScheduler:
             logger.info(f"🖥️ 多GPU模式: {num_gpus} x A100 80GB")
     
     def get_available_gpu(self) -> int:
-        """获取最空闲的GPU"""
-        min_usage = min(self.gpu_usage.values())
-        for gpu_id, usage in self.gpu_usage.items():
-            if usage == min_usage:
-                return gpu_id
-        return 0
+        """获取最空闲且可用的GPU"""
+        # 首先检查哪些GPU实际可用（内存占用 < 70GB）
+        available_gpus = []
+        for gpu_id in range(self.num_gpus):
+            if is_gpu_available(gpu_id):
+                available_gpus.append(gpu_id)
+        
+        if not available_gpus:
+            # 所有GPU都被占用，回退到最后一张
+            fallback = get_last_available_gpu()
+            logger.warning(f"⚠️ 所有GPU被占用，回退到GPU {fallback}")
+            return fallback
+        
+        # 从可用的GPU中选择最空闲的
+        min_usage = float('inf')
+        best_gpu = available_gpus[0]
+        
+        for gpu_id in available_gpus:
+            if self.gpu_usage[gpu_id] < min_usage:
+                min_usage = self.gpu_usage[gpu_id]
+                best_gpu = gpu_id
+        
+        return best_gpu
     
     def allocate(self, gpu_id: int, memory_mb: int):
         """分配GPU内存"""
