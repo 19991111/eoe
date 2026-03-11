@@ -101,14 +101,49 @@ class Checkpoint:
 # GPU 调度器
 # ============================================================
 
-class GPUScheduler:
-    """GPU并发调度器 - 4x A100 80GB"""
+def detect_available_gpus() -> int:
+    """检测可用的GPU数量"""
+    try:
+        # 尝试使用 nvidia-smi 检测
+        result = subprocess.run(
+            ['nvidia-smi', '--query-gpu=count', '--format=csv,noheader'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            count = int(result.stdout.strip().split('\n')[0])
+            return count
+    except:
+        pass
     
-    def __init__(self, num_gpus: int = GPU_COUNT):
+    # 检查 CUDA_VISIBLE_DEVICES 环境变量
+    cuda_devices = os.environ.get('CUDA_VISIBLE_DEVICES', '')
+    if cuda_devices:
+        # 格式: "0,1,2,3" 或 "0"
+        devices = [d for d in cuda_devices.split(',') if d]
+        if devices:
+            return len(devices)
+    
+    # 默认返回1（单GPU模式）
+    return 1
+
+
+class GPUScheduler:
+    """GPU并发调度器 - 自适应多GPU/单GPU模式"""
+    
+    def __init__(self, num_gpus: int = None):
+        # 自动检测可用GPU数量
+        if num_gpus is None:
+            detected = detect_available_gpus()
+            num_gpus = max(1, detected)
+        
         self.num_gpus = num_gpus
         self.gpu_usage = {i: 0 for i in range(num_gpus)}
         self.gpu_locks = {i: mp.Lock() for i in range(num_gpus)}
-        logger.info(f"🖥️ 初始化GPU调度器: {num_gpus} x A100 80GB")
+        
+        if num_gpus == 1:
+            logger.info(f"🖥️ 单GPU模式: 1 x A100 80GB (最后一张卡)")
+        else:
+            logger.info(f"🖥️ 多GPU模式: {num_gpus} x A100 80GB")
     
     def get_available_gpu(self) -> int:
         """获取最空闲的GPU"""
