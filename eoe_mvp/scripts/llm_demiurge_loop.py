@@ -118,7 +118,8 @@ class PopulationStats:
 
 @dataclass
 class PhysicsConfig:
-    """物理配置参数"""
+    """物理配置参数 - 支持嵌套配置"""
+    # 基础参数
     metabolic_alpha: float = 0.05
     metabolic_beta: float = 0.05
     sensor_range: float = 200.0
@@ -129,6 +130,29 @@ class PhysicsConfig:
     enable_fatigue_system: bool = False
     enable_thermal_sanctuary: bool = False
     enable_morphological_computation: bool = False
+    
+    # 嵌套配置 (通过__init__处理)
+    def __init__(self, **kwargs):
+        # 解包嵌套配置
+        thermal = kwargs.pop('thermal_sanctuary', {})
+        morph = kwargs.pop('morphological_computation', {})
+        onto = kwargs.pop('ontogenetic_phase', {})
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
+        # 保存嵌套配置
+        self.thermal_sanctuary = thermal
+        self.morphological_computation = morph
+        self.ontogenetic_phase = onto
+    
+    def to_dict(self) -> dict:
+        """转换为字典"""
+        result = {}
+        for key, value in self.__dict__.items():
+            if not key.startswith('_'):
+                result[key] = value
+        return result
     
 
 # ============================================================
@@ -336,9 +360,36 @@ class LLMDemiurge:
         return PhysicsConfig()
     
     def _save_config(self, config: PhysicsConfig):
-        """保存物理配置"""
+        """保存物理配置 - 保留嵌套配置"""
+        # 读取原始配置，保留嵌套结构
+        try:
+            with open(self.config_path, 'r') as f:
+                original = json.load(f)
+        except:
+            original = {}
+        
+        # 更新基础参数
+        for key in ['metabolic_alpha', 'metabolic_beta', 'sensor_range', 
+                    'season_length', 'winter_metabolic_multiplier', 
+                    'fatigue_build_rate', 'food_energy',
+                    'enable_fatigue_system', 'enable_thermal_sanctuary', 
+                    'enable_morphological_computation']:
+            if hasattr(config, key):
+                original[key] = getattr(config, key)
+        
+        # 保留嵌套配置
+        if hasattr(config, 'thermal_sanctuary') and config.thermal_sanctuary:
+            original['thermal_sanctuary'] = config.thermal_sanctuary
+        if hasattr(config, 'morphological_computation') and config.morphological_computation:
+            original['morphological_computation'] = config.morphological_computation
+        if hasattr(config, 'ontogenetic_phase') and config.ontogenetic_phase:
+            original['ontogenetic_phase'] = config.ontogenetic_phase
+        
+        # 添加注释
+        original['notes'] = 'Updated by LLM Demiurge'
+        
         with open(self.config_path, 'w') as f:
-            json.dump(config.__dict__, f, indent=2)
+            json.dump(original, f, indent=2)
     
     def _send_to_deepseek(self, constitution: str, user_prompt: str) -> Dict:
         """发送请求到 DeepSeek API"""
@@ -426,6 +477,43 @@ class LLMDemiurge:
             if pc['metabolic_alpha'] < 0 or pc['metabolic_alpha'] > 1:
                 print("⚠️ metabolic_alpha 超出合理范围 [0, 1]")
                 return None
+            
+            # ============================================================
+            # v1.4: 参数边界校验 - 拒绝超过20%的调整!
+            # ============================================================
+            # 读取原始配置作为基准
+            try:
+                with open(self.config_path, 'r') as f:
+                    original = json.load(f)
+            except:
+                original = {}
+            
+            max_change = 0.20  # 20% 最大调整幅度
+            rejected = []
+            
+            for key in ['metabolic_alpha', 'metabolic_beta', 'sensor_range', 
+                        'season_length', 'winter_metabolic_multiplier', 
+                        'fatigue_build_rate', 'food_energy']:
+                if key in pc and key in original:
+                    orig = original[key]
+                    new = pc[key]
+                    if orig != 0:
+                        change = abs(new - orig) / orig
+                    else:
+                        change = 1.0 if new != 0 else 0
+                    
+                    if change > max_change:
+                        rejected.append(f"{key}: {orig}->{new} ({change*100:.1f}%)")
+            
+            if rejected:
+                print(f"⚠️ 以下参数调整超过20%，被拒绝:")
+                for r in rejected:
+                    print(f"   - {r}")
+                # 将被拒绝的参数恢复为原始值
+                for key in rejected:
+                    k = key.split(':')[0].strip()
+                    if k in original:
+                        pc[k] = original[k]
             
             return data
             
