@@ -139,18 +139,60 @@ class SubgraphFreezer:
         return unique_macros
     
     def _extract_topology_pattern(self, genome: 'OperatorGenome') -> List[Tuple]:
-        """提取拓扑模式 (节点类型序列)"""
+        """
+        提取拓扑模式 (增强版)
+        
+        原来只使用 (src_type, tgt_type, weight_sign)
+        增强后包含:
+        - 源/目标节点类型
+        - 权重符号和量化区间 (pos_small/pos_large/neg_small/neg_large)
+        - 节点度数信息 (in_degree, out_degree)
+        - 局部结构 (是否有残差连接)
+        """
         patterns = []
+        
+        # 预计算节点度数
+        in_degree = defaultdict(int)
+        out_degree = defaultdict(int)
+        for edge in genome.edges:
+            if edge['enabled']:
+                out_degree[edge['source_id']] += 1
+                in_degree[edge['target_id']] += 1
         
         for edge in genome.edges:
             if not edge['enabled']:
                 continue
             
-            src_type = genome.nodes[edge['source_id']].node_type
-            tgt_type = genome.nodes[edge['target_id']].node_type
-            weight_sign = 'pos' if edge['weight'] > 0 else 'neg'
+            src_node = genome.nodes[edge['source_id']]
+            tgt_node = genome.nodes[edge['target_id']]
             
-            patterns.append((src_type, tgt_type, weight_sign))
+            src_type = src_node.node_type
+            tgt_type = tgt_node.node_type
+            
+            # 权重量化
+            w = edge['weight']
+            if w > 0:
+                weight_quant = 'pos_small' if abs(w) < 1.0 else 'pos_large'
+            else:
+                weight_quant = 'neg_small' if abs(w) < 1.0 else 'neg_large'
+            
+            # 局部结构: 检查是否有残差连接 (目标->源)
+            has_residual = any(
+                e['enabled'] and e['source_id'] == edge['target_id'] and e['target_id'] == edge['source_id']
+                for e in genome.edges
+            )
+            
+            # 创建增强模式
+            pattern = (
+                src_type,
+                tgt_type,
+                weight_quant,
+                (in_degree[edge['source_id']], out_degree[edge['source_id']]),  # 源度数
+                (in_degree[edge['target_id']], out_degree[edge['target_id']]),  # 目标度数
+                'residual' if has_residual else 'none'
+            )
+            
+            patterns.append(pattern)
         
         return patterns
     
@@ -1188,15 +1230,22 @@ class Population:
                 self._apply_micro_mutations(child_genome)
             else:
                 # Tier 3: 正常突变 - 轮盘赌选择
-                min_fitness = min(e.fitness for e in elite_pool)
-                weights = np.array([e.fitness - min_fitness + 1e-6 for e in elite_pool])
+                # v修复6: 适应度归一化 - 避免负权重导致选择崩溃
+                fitnesses = np.array([e.fitness for e in elite_pool])
                 
-                # v7.2: 修复 - 如果所有权重相同或为0，使用均匀分布
-                if weights.sum() == 0 or np.all(weights == weights[0]):
-                    parent = np.random.choice(elite_pool)
+                # 将负适应度映射到正区间 (min-max归一化)
+                min_fit = fitnesses.min()
+                max_fit = fitnesses.max()
+                
+                if max_fit > min_fit:
+                    # 归一化到 [0.1, 1.0] 避免零权重
+                    weights = 0.1 + 0.9 * (fitnesses - min_fit) / (max_fit - min_fit)
                 else:
-                    weights = weights / weights.sum()
-                    parent = elite_pool[np.random.choice(len(elite_pool), p=weights)]
+                    # 所有适应度相同，使用均匀分布
+                    weights = np.ones(len(fitnesses))
+                
+                # 轮盘赌选择
+                parent = elite_pool[np.random.choice(len(elite_pool), p=weights/weights.sum())]
                 child_genome = parent.genome.copy()
                 parent_food = parent.food_eaten
                 

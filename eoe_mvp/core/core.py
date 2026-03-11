@@ -12,7 +12,7 @@
 import os
 import sys
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Callable
 from collections import deque
 
 # 确保eoe模块在路径中
@@ -37,15 +37,38 @@ except ImportError:
     NUMBA_AVAILABLE = False
     print("WARNING: Numba not available, using NumPy fallback")
 
+# ============================================================
+# 环形世界 (Torus) 距离计算
+# ============================================================
+def _toroidal_distance(dx: float, dy: float, width: float, height: float) -> Tuple[float, float]:
+    """
+    计算环形世界的最短距离（考虑边界环绕）
+    
+    返回:
+        (dx, dy): 最短距离向量
+    """
+    dx = dx % width
+    dy = dy % height
+    # 如果距离超过一半，环绕更近
+    if dx > width / 2:
+        dx -= width
+    if dy > height / 2:
+        dy -= height
+    return dx, dy
+
+
 if NUMBA_AVAILABLE:
     @jit(nopython=True, parallel=True, cache=True)
-    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr):
-        """向量化计算距离矩阵"""
+    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr, width=100.0, height=100.0):
+        """向量化计算环形世界距离矩阵"""
         n = len(x2_arr)
         distances = np.empty(n, dtype=np.float64)
         for i in prange(n):
             dx = x2_arr[i] - x1
             dy = y2_arr[i] - y1
+            # 环形世界距离计算
+            dx = dx - width * np.floor(dx / width + 0.5)
+            dy = dy - height * np.floor(dy / height + 0.5)
             distances[i] = np.sqrt(dx*dx + dy*dy)
         return distances
     
@@ -68,10 +91,13 @@ if NUMBA_AVAILABLE:
         return new_x, new_y, new_theta
     
     @jit(nopython=True, cache=True)
-    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range):
-        """向量化传感器计算"""
+    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range, width=100.0, height=100.0):
+        """向量化环形世界传感器计算"""
+        # 环形世界最短距离
         dx = target_x - agent_x
         dy = target_y - agent_y
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
         distance = np.sqrt(dx*dx + dy*dy)
         
         if distance < 0.1:
@@ -91,8 +117,14 @@ if NUMBA_AVAILABLE:
         
         return np.array([left_sensor * distance_decay, right_sensor * distance_decay])
 else:
-    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr):
-        return np.sqrt((x2_arr - x1)**2 + (y2_arr - y1)**2)
+    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr, width=100.0, height=100.0):
+        """向量化计算环形世界距离矩阵"""
+        dx = x2_arr - x1
+        dy = y2_arr - y1
+        # 环形世界距离计算
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
+        return np.sqrt(dx**2 + dy**2)
     
     def update_positions_vectorized(x, y, theta, left_force, right_force, max_speed, turn_rate, width, height):
         diff = right_force - left_force
@@ -100,8 +132,13 @@ else:
         speed = np.clip((left_force + right_force) / 2.0, -max_speed, max_speed)
         return (x + np.cos(new_theta) * speed) % width, (y + np.sin(new_theta) * speed) % height, new_theta
     
-    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range):
-        dx, dy = target_x - agent_x, target_y - agent_y
+    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range, width=100.0, height=100.0):
+        """向量化环形世界传感器计算"""
+        # 环形世界最短距离
+        dx = target_x - agent_x
+        dy = target_y - agent_y
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
         dist = np.hypot(dx, dy)
         if dist < 0.1:
             return np.array([1.0, 1.0])

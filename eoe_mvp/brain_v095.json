@@ -1,0 +1,997 @@
+{
+  "nodes": [
+    {
+      "id": 0,
+      "label": "SENSOR\n#0",
+      "title": "\u7c7b\u578b: SENSOR\n\u6fc0\u6d3b: -1.000",
+      "color": "#4ade80",
+      "shape": "square",
+      "size": 18,
+      "ntype": "SENSOR",
+      "activation": -0.9999999083060747
+    },
+    {
+      "id": 1,
+      "label": "SENSOR\n#1",
+      "title": "\u7c7b\u578b: SENSOR\n\u6fc0\u6d3b: -0.638",
+      "color": "#4ade80",
+      "shape": "square",
+      "size": 18,
+      "ntype": "SENSOR",
+      "activation": -0.6380513628340646
+    },
+    {
+      "id": 2,
+      "label": "ACTUATOR\n#2",
+      "title": "\u7c7b\u578b: ACTUATOR\n\u6fc0\u6d3b: 0.000",
+      "color": "#f87171",
+      "shape": "square",
+      "size": 18,
+      "ntype": "ACTUATOR",
+      "activation": 0.0
+    },
+    {
+      "id": 3,
+      "label": "ACTUATOR\n#3",
+      "title": "\u7c7b\u578b: ACTUATOR\n\u6fc0\u6d3b: 0.000",
+      "color": "#f87171",
+      "shape": "square",
+      "size": 18,
+      "ntype": "ACTUATOR",
+      "activation": 0.0
+    },
+    {
+      "id": 4,
+      "label": "PREDICTOR\n#4",
+      "title": "\u7c7b\u578b: PREDICTOR\n\u6fc0\u6d3b: 0.000",
+      "color": "#38bdf8",
+      "shape": "triangle",
+      "size": 12,
+      "ntype": "PREDICTOR",
+      "activation": 0.0
+    },
+    {
+      "id": 5,
+      "label": "PREDICTOR\n#5",
+      "title": "\u7c7b\u578b: PREDICTOR\n\u6fc0\u6d3b: -0.095",
+      "color": "#38bdf8",
+      "shape": "triangle",
+      "size": 12,
+      "ntype": "PREDICTOR",
+      "activation": -0.09517796326167566
+    },
+    {
+      "id": 100,
+      "label": "PORT_MOTION\n#100",
+      "title": "\u7c7b\u578b: PORT_MOTION\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "PORT_MOTION",
+      "activation": 0.0
+    },
+    {
+      "id": 101,
+      "label": "PORT_MOTION\n#101",
+      "title": "\u7c7b\u578b: PORT_MOTION\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "PORT_MOTION",
+      "activation": 0.0
+    },
+    {
+      "id": 102,
+      "label": "PORT_REPAIR\n#102",
+      "title": "\u7c7b\u578b: PORT_REPAIR\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "PORT_REPAIR",
+      "activation": 0.0
+    },
+    {
+      "id": 103,
+      "label": "PORT_OFFENSE\n#103",
+      "title": "\u7c7b\u578b: PORT_OFFENSE\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "PORT_OFFENSE",
+      "activation": 0.0
+    },
+    {
+      "id": 104,
+      "label": "PORT_DEFENSE\n#104",
+      "title": "\u7c7b\u578b: PORT_DEFENSE\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "PORT_DEFENSE",
+      "activation": 0.0
+    },
+    {
+      "id": 10,
+      "label": "DELAY\n#10",
+      "title": "\u7c7b\u578b: DELAY\n\u6fc0\u6d3b: 0.000",
+      "color": "#a78bfa",
+      "shape": "hexagon",
+      "size": 12,
+      "ntype": "DELAY",
+      "activation": 0.0
+    },
+    {
+      "id": 9,
+      "label": "PREDICTOR\n#9",
+      "title": "\u7c7b\u578b: PREDICTOR\n\u6fc0\u6d3b: 0.464",
+      "color": "#38bdf8",
+      "shape": "triangle",
+      "size": 12,
+      "ntype": "PREDICTOR",
+      "activation": 0.4643164776399453
+    },
+    {
+      "id": 7,
+      "label": "THRESHOLD\n#7",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 8,
+      "label": "THRESHOLD\n#8",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 105,
+      "label": "META_NODE\n#105",
+      "title": "\u7c7b\u578b: META_NODE\n\u6fc0\u6d3b: 0.000",
+      "color": "#fbbf24",
+      "shape": "diamond",
+      "size": 14,
+      "ntype": "META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 106,
+      "label": "META_NODE\n#106",
+      "title": "\u7c7b\u578b: META_NODE\n\u6fc0\u6d3b: 0.000",
+      "color": "#fbbf24",
+      "shape": "diamond",
+      "size": 14,
+      "ntype": "META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 107,
+      "label": "META_NODE\n#107",
+      "title": "\u7c7b\u578b: META_NODE\n\u6fc0\u6d3b: 0.000",
+      "color": "#fbbf24",
+      "shape": "diamond",
+      "size": 14,
+      "ntype": "META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 108,
+      "label": "META_NODE\n#108",
+      "title": "\u7c7b\u578b: META_NODE\n\u6fc0\u6d3b: 0.000",
+      "color": "#fbbf24",
+      "shape": "diamond",
+      "size": 14,
+      "ntype": "META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 109,
+      "label": "META_NODE\n#109",
+      "title": "\u7c7b\u578b: META_NODE\n\u6fc0\u6d3b: 0.000",
+      "color": "#fbbf24",
+      "shape": "diamond",
+      "size": 14,
+      "ntype": "META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 110,
+      "label": "THRESHOLD\n#110",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 111,
+      "label": "DELAY\n#111",
+      "title": "\u7c7b\u578b: DELAY\n\u6fc0\u6d3b: 0.000",
+      "color": "#a78bfa",
+      "shape": "hexagon",
+      "size": 12,
+      "ntype": "DELAY",
+      "activation": 0.0
+    },
+    {
+      "id": 112,
+      "label": "PREDICTOR\n#112",
+      "title": "\u7c7b\u578b: PREDICTOR\n\u6fc0\u6d3b: -1.005",
+      "color": "#38bdf8",
+      "shape": "triangle",
+      "size": 12,
+      "ntype": "PREDICTOR",
+      "activation": -1.0053802998444639
+    },
+    {
+      "id": 113,
+      "label": "PREDICTOR\n#113",
+      "title": "\u7c7b\u578b: PREDICTOR\n\u6fc0\u6d3b: 0.000",
+      "color": "#38bdf8",
+      "shape": "triangle",
+      "size": 12,
+      "ntype": "PREDICTOR",
+      "activation": 0.0
+    },
+    {
+      "id": 114,
+      "label": "MULTIPLY\n#114",
+      "title": "\u7c7b\u578b: MULTIPLY\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "MULTIPLY",
+      "activation": 0.0
+    },
+    {
+      "id": 115,
+      "label": "THRESHOLD\n#115",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 116,
+      "label": "THRESHOLD\n#116",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 117,
+      "label": "DELAY\n#117",
+      "title": "\u7c7b\u578b: DELAY\n\u6fc0\u6d3b: 0.000",
+      "color": "#a78bfa",
+      "shape": "hexagon",
+      "size": 12,
+      "ntype": "DELAY",
+      "activation": 0.0
+    },
+    {
+      "id": 118,
+      "label": "DELAY\n#118",
+      "title": "\u7c7b\u578b: DELAY\n\u6fc0\u6d3b: 0.000",
+      "color": "#a78bfa",
+      "shape": "hexagon",
+      "size": 12,
+      "ntype": "DELAY",
+      "activation": 0.0
+    },
+    {
+      "id": 119,
+      "label": "THRESHOLD\n#119",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 120,
+      "label": "ADD\n#120",
+      "title": "\u7c7b\u578b: ADD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "ADD",
+      "activation": 0.0
+    },
+    {
+      "id": 121,
+      "label": "THRESHOLD\n#121",
+      "title": "\u7c7b\u578b: THRESHOLD\n\u6fc0\u6d3b: 0.000",
+      "color": "#94a3b8",
+      "shape": "circle",
+      "size": 12,
+      "ntype": "THRESHOLD",
+      "activation": 0.0
+    }
+  ],
+  "edges": [
+    {
+      "from": 0,
+      "to": 2,
+      "width": 1.8174748894804686,
+      "color": "#3b82f6",
+      "title": "Weight: 0.909",
+      "arrows": "to",
+      "weight": 0.9087374447402343
+    },
+    {
+      "from": 1,
+      "to": 3,
+      "width": 1.9069107662109377,
+      "color": "#3b82f6",
+      "title": "Weight: 0.953",
+      "arrows": "to",
+      "weight": 0.9534553831054688
+    },
+    {
+      "from": 0,
+      "to": 3,
+      "width": 1.201486488997532,
+      "color": "#ef4444",
+      "title": "Weight: -0.601",
+      "arrows": "to",
+      "weight": -0.600743244498766
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "width": 1.3211856243928073,
+      "color": "#ef4444",
+      "title": "Weight: -0.661",
+      "arrows": "to",
+      "weight": -0.6605928121964036
+    },
+    {
+      "from": 2,
+      "to": 10,
+      "width": 1.9344999577254354,
+      "color": "#3b82f6",
+      "title": "Weight: 0.967",
+      "arrows": "to",
+      "weight": 0.9672499788627177
+    },
+    {
+      "from": 10,
+      "to": 2,
+      "width": 1.630048516691117,
+      "color": "#3b82f6",
+      "title": "Weight: 0.815",
+      "arrows": "to",
+      "weight": 0.8150242583455585
+    },
+    {
+      "from": 10,
+      "to": 3,
+      "width": 1.5517444448845936,
+      "color": "#3b82f6",
+      "title": "Weight: 0.776",
+      "arrows": "to",
+      "weight": 0.7758722224422968
+    },
+    {
+      "from": 10,
+      "to": 4,
+      "width": 1.880745202230256,
+      "color": "#3b82f6",
+      "title": "Weight: 0.940",
+      "arrows": "to",
+      "weight": 0.940372601115128
+    },
+    {
+      "from": 4,
+      "to": 5,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.192",
+      "arrows": "to",
+      "weight": 0.19234220938254903
+    },
+    {
+      "from": 5,
+      "to": 7,
+      "width": 1.087328630837072,
+      "color": "#ef4444",
+      "title": "Weight: -0.544",
+      "arrows": "to",
+      "weight": -0.543664315418536
+    },
+    {
+      "from": 7,
+      "to": 4,
+      "width": 1.4984378378129448,
+      "color": "#3b82f6",
+      "title": "Weight: 0.749",
+      "arrows": "to",
+      "weight": 0.7492189189064724
+    },
+    {
+      "from": 5,
+      "to": 3,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.424",
+      "arrows": "to",
+      "weight": 0.4242186559939045
+    },
+    {
+      "from": 0,
+      "to": 9,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.464",
+      "arrows": "to",
+      "weight": -0.4643165202149497
+    },
+    {
+      "from": 5,
+      "to": 8,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.381",
+      "arrows": "to",
+      "weight": 0.3808224136463809
+    },
+    {
+      "from": 0,
+      "to": 105,
+      "width": 1.8212975344815587,
+      "color": "#3b82f6",
+      "title": "Weight: 0.911",
+      "arrows": "to",
+      "weight": 0.9106487672407794
+    },
+    {
+      "from": 2,
+      "to": 105,
+      "width": 1.5491342730212532,
+      "color": "#3b82f6",
+      "title": "Weight: 0.775",
+      "arrows": "to",
+      "weight": 0.7745671365106266
+    },
+    {
+      "from": 0,
+      "to": 106,
+      "width": 1.7322590034452334,
+      "color": "#3b82f6",
+      "title": "Weight: 0.866",
+      "arrows": "to",
+      "weight": 0.8661295017226167
+    },
+    {
+      "from": 1,
+      "to": 106,
+      "width": 1.6565067025700686,
+      "color": "#3b82f6",
+      "title": "Weight: 0.828",
+      "arrows": "to",
+      "weight": 0.8282533512850343
+    },
+    {
+      "from": 0,
+      "to": 107,
+      "width": 1.807929784655049,
+      "color": "#3b82f6",
+      "title": "Weight: 0.904",
+      "arrows": "to",
+      "weight": 0.9039648923275245
+    },
+    {
+      "from": 2,
+      "to": 107,
+      "width": 1.7282617945177678,
+      "color": "#3b82f6",
+      "title": "Weight: 0.864",
+      "arrows": "to",
+      "weight": 0.8641308972588839
+    },
+    {
+      "from": 0,
+      "to": 108,
+      "width": 2.0,
+      "color": "#3b82f6",
+      "title": "Weight: 1.000",
+      "arrows": "to",
+      "weight": 1.0
+    },
+    {
+      "from": 2,
+      "to": 108,
+      "width": 1.915387044031063,
+      "color": "#3b82f6",
+      "title": "Weight: 0.958",
+      "arrows": "to",
+      "weight": 0.9576935220155315
+    },
+    {
+      "from": 1,
+      "to": 109,
+      "width": 1.9972875768292926,
+      "color": "#3b82f6",
+      "title": "Weight: 0.999",
+      "arrows": "to",
+      "weight": 0.9986437884146463
+    },
+    {
+      "from": 2,
+      "to": 109,
+      "width": 1.8179000994686854,
+      "color": "#3b82f6",
+      "title": "Weight: 0.909",
+      "arrows": "to",
+      "weight": 0.9089500497343427
+    },
+    {
+      "from": 10,
+      "to": 5,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.363",
+      "arrows": "to",
+      "weight": -0.3629286966351036
+    },
+    {
+      "from": 10,
+      "to": 110,
+      "width": 1.986164986285726,
+      "color": "#3b82f6",
+      "title": "Weight: 0.993",
+      "arrows": "to",
+      "weight": 0.993082493142863
+    },
+    {
+      "from": 110,
+      "to": 2,
+      "width": 1.7208029396895699,
+      "color": "#3b82f6",
+      "title": "Weight: 0.860",
+      "arrows": "to",
+      "weight": 0.8604014698447849
+    },
+    {
+      "from": 5,
+      "to": 10,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.222",
+      "arrows": "to",
+      "weight": 0.22157963956048454
+    },
+    {
+      "from": 10,
+      "to": 9,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.249",
+      "arrows": "to",
+      "weight": 0.24853437743118265
+    },
+    {
+      "from": 5,
+      "to": 111,
+      "width": 1.9524120163870784,
+      "color": "#3b82f6",
+      "title": "Weight: 0.976",
+      "arrows": "to",
+      "weight": 0.9762060081935392
+    },
+    {
+      "from": 111,
+      "to": 8,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.157",
+      "arrows": "to",
+      "weight": 0.15729832152245768
+    },
+    {
+      "from": 4,
+      "to": 110,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.109",
+      "arrows": "to",
+      "weight": 0.1087674893749028
+    },
+    {
+      "from": 1,
+      "to": 111,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.132",
+      "arrows": "to",
+      "weight": 0.13243457060351013
+    },
+    {
+      "from": 5,
+      "to": 112,
+      "width": 1.935324836426749,
+      "color": "#3b82f6",
+      "title": "Weight: 0.968",
+      "arrows": "to",
+      "weight": 0.9676624182133745
+    },
+    {
+      "from": 112,
+      "to": 10,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.298",
+      "arrows": "to",
+      "weight": 0.2978342259447706
+    },
+    {
+      "from": 9,
+      "to": 111,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.015",
+      "arrows": "to",
+      "weight": -0.014917124423826398
+    },
+    {
+      "from": 10,
+      "to": 113,
+      "width": 1.8847284240634685,
+      "color": "#3b82f6",
+      "title": "Weight: 0.942",
+      "arrows": "to",
+      "weight": 0.9423642120317343
+    },
+    {
+      "from": 113,
+      "to": 3,
+      "width": 1.7677205949686494,
+      "color": "#3b82f6",
+      "title": "Weight: 0.884",
+      "arrows": "to",
+      "weight": 0.8838602974843247
+    },
+    {
+      "from": 10,
+      "to": 114,
+      "width": 1.38850374500897,
+      "color": "#3b82f6",
+      "title": "Weight: 0.694",
+      "arrows": "to",
+      "weight": 0.694251872504485
+    },
+    {
+      "from": 114,
+      "to": 4,
+      "width": 1.8060413697460236,
+      "color": "#3b82f6",
+      "title": "Weight: 0.903",
+      "arrows": "to",
+      "weight": 0.9030206848730118
+    },
+    {
+      "from": 113,
+      "to": 4,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.141",
+      "arrows": "to",
+      "weight": -0.1412465537732233
+    },
+    {
+      "from": 1,
+      "to": 115,
+      "width": 1.846869273772713,
+      "color": "#3b82f6",
+      "title": "Weight: 0.923",
+      "arrows": "to",
+      "weight": 0.9234346368863565
+    },
+    {
+      "from": 115,
+      "to": 109,
+      "width": 1.8225844230891304,
+      "color": "#3b82f6",
+      "title": "Weight: 0.911",
+      "arrows": "to",
+      "weight": 0.9112922115445652
+    },
+    {
+      "from": 111,
+      "to": 114,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.228",
+      "arrows": "to",
+      "weight": -0.22758044332302685
+    },
+    {
+      "from": 1,
+      "to": 9,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.083",
+      "arrows": "to",
+      "weight": 0.08348618897395245
+    },
+    {
+      "from": 5,
+      "to": 115,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.250",
+      "arrows": "to",
+      "weight": 0.25004791379176516
+    },
+    {
+      "from": 113,
+      "to": 115,
+      "width": 1.2955364101134585,
+      "color": "#3b82f6",
+      "title": "Weight: 0.648",
+      "arrows": "to",
+      "weight": 0.6477682050567293
+    },
+    {
+      "from": 0,
+      "to": 10,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.067",
+      "arrows": "to",
+      "weight": 0.06723842323754013
+    },
+    {
+      "from": 9,
+      "to": 114,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.308",
+      "arrows": "to",
+      "weight": -0.30780066283093976
+    },
+    {
+      "from": 0,
+      "to": 116,
+      "width": 2.0,
+      "color": "#3b82f6",
+      "title": "Weight: 1.000",
+      "arrows": "to",
+      "weight": 1.0
+    },
+    {
+      "from": 116,
+      "to": 105,
+      "width": 1.865137989419882,
+      "color": "#3b82f6",
+      "title": "Weight: 0.933",
+      "arrows": "to",
+      "weight": 0.932568994709941
+    },
+    {
+      "from": 1,
+      "to": 10,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.214",
+      "arrows": "to",
+      "weight": 0.21442056282785998
+    },
+    {
+      "from": 0,
+      "to": 5,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.095",
+      "arrows": "to",
+      "weight": 0.09517797198891752
+    },
+    {
+      "from": 0,
+      "to": 112,
+      "width": 1.7713614118076189,
+      "color": "#3b82f6",
+      "title": "Weight: 0.886",
+      "arrows": "to",
+      "weight": 0.8856807059038094
+    },
+    {
+      "from": 2,
+      "to": 117,
+      "width": 1.7509087527510407,
+      "color": "#3b82f6",
+      "title": "Weight: 0.875",
+      "arrows": "to",
+      "weight": 0.8754543763755204
+    },
+    {
+      "from": 117,
+      "to": 105,
+      "width": 2.0,
+      "color": "#3b82f6",
+      "title": "Weight: 1.000",
+      "arrows": "to",
+      "weight": 1.0
+    },
+    {
+      "from": 10,
+      "to": 118,
+      "width": 1.893252960440925,
+      "color": "#3b82f6",
+      "title": "Weight: 0.947",
+      "arrows": "to",
+      "weight": 0.9466264802204625
+    },
+    {
+      "from": 118,
+      "to": 9,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.213",
+      "arrows": "to",
+      "weight": 0.21325326736433467
+    },
+    {
+      "from": 112,
+      "to": 118,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.216",
+      "arrows": "to",
+      "weight": -0.21580024469363232
+    },
+    {
+      "from": 111,
+      "to": 118,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.459",
+      "arrows": "to",
+      "weight": -0.4590030576074758
+    },
+    {
+      "from": 116,
+      "to": 119,
+      "width": 1.9726269769960252,
+      "color": "#3b82f6",
+      "title": "Weight: 0.986",
+      "arrows": "to",
+      "weight": 0.9863134884980126
+    },
+    {
+      "from": 119,
+      "to": 105,
+      "width": 1.8003836014463361,
+      "color": "#3b82f6",
+      "title": "Weight: 0.900",
+      "arrows": "to",
+      "weight": 0.9001918007231681
+    },
+    {
+      "from": 114,
+      "to": 118,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.329",
+      "arrows": "to",
+      "weight": -0.32923599182641666
+    },
+    {
+      "from": 111,
+      "to": 7,
+      "width": 1.57824896169811,
+      "color": "#ef4444",
+      "title": "Weight: -0.789",
+      "arrows": "to",
+      "weight": -0.789124480849055
+    },
+    {
+      "from": 111,
+      "to": 3,
+      "width": 1.0300844386976151,
+      "color": "#3b82f6",
+      "title": "Weight: 0.515",
+      "arrows": "to",
+      "weight": 0.5150422193488076
+    },
+    {
+      "from": 1,
+      "to": 112,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.043",
+      "arrows": "to",
+      "weight": 0.04325598011292986
+    },
+    {
+      "from": 117,
+      "to": 110,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.239",
+      "arrows": "to",
+      "weight": 0.2388738055790365
+    },
+    {
+      "from": 117,
+      "to": 111,
+      "width": 1.037392391047333,
+      "color": "#ef4444",
+      "title": "Weight: -0.519",
+      "arrows": "to",
+      "weight": -0.5186961955236665
+    },
+    {
+      "from": 115,
+      "to": 120,
+      "width": 2.0,
+      "color": "#3b82f6",
+      "title": "Weight: 1.000",
+      "arrows": "to",
+      "weight": 1.0
+    },
+    {
+      "from": 120,
+      "to": 109,
+      "width": 1.7840739309292861,
+      "color": "#3b82f6",
+      "title": "Weight: 0.892",
+      "arrows": "to",
+      "weight": 0.8920369654646431
+    },
+    {
+      "from": 118,
+      "to": 8,
+      "width": 1,
+      "color": "#ef4444",
+      "title": "Weight: -0.453",
+      "arrows": "to",
+      "weight": -0.4525530895592973
+    },
+    {
+      "from": 112,
+      "to": 2,
+      "width": 2.913418867031208,
+      "color": "#3b82f6",
+      "title": "Weight: 1.457",
+      "arrows": "to",
+      "weight": 1.456709433515604
+    },
+    {
+      "from": 1,
+      "to": 121,
+      "width": 1.9866143364784359,
+      "color": "#3b82f6",
+      "title": "Weight: 0.993",
+      "arrows": "to",
+      "weight": 0.9933071682392179
+    },
+    {
+      "from": 121,
+      "to": 9,
+      "width": 1,
+      "color": "#3b82f6",
+      "title": "Weight: 0.083",
+      "arrows": "to",
+      "weight": 0.08348618897395245
+    }
+  ],
+  "stats": {
+    "total_nodes": 32,
+    "total_edges": 74,
+    "fitness": 9029
+  }
+}

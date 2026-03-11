@@ -6,6 +6,63 @@ import numpy as np
 
 from .node import Node, NodeType
 
+
+class InnovationManager:
+    """
+    创新ID管理器 - 支持多进程并行和多次实验
+    
+    问题解决:
+    - 类级别静态变量在多进程间不同步
+    - 多次实验间ID污染
+    
+    方案:
+    - 每个演化实验独立实例
+    - 支持序列化/反序列化恢复ID
+    """
+    
+    def __init__(self, start_id: int = 0):
+        self._next_edge_id = start_id
+        self._next_node_id = start_id
+        self._edge_id_history: Dict[Tuple[int, int], int] = {}  # (src, tgt) -> id
+    
+    def get_edge_id(self, source_id: int, target_id: int, weight: float = None) -> int:
+        """获取边的创新ID (如果边已存在则返回已有ID)"""
+        edge_key = (source_id, target_id)
+        if edge_key in self._edge_id_history:
+            return self._edge_id_history[edge_key]
+        
+        # 新边，分配新ID
+        new_id = self._next_edge_id
+        self._next_edge_id += 1
+        self._edge_id_history[edge_key] = new_id
+        return new_id
+    
+    def get_node_id(self) -> int:
+        """分配新的节点ID"""
+        new_id = self._next_node_id
+        self._next_node_id += 1
+        return new_id
+    
+    def reset(self):
+        """重置ID计数器"""
+        self._next_edge_id = 0
+        self._next_node_id = 0
+        self._edge_id_history.clear()
+    
+    def get_state(self) -> Dict:
+        """获取当前状态 (用于序列化)"""
+        return {
+            'next_edge_id': self._next_edge_id,
+            'next_node_id': self._next_node_id,
+            'edge_id_history': {str(k): v for k, v in self._edge_id_history.items()}
+        }
+    
+    def set_state(self, state: Dict):
+        """恢复状态 (从序列化恢复)"""
+        self._next_edge_id = state.get('next_edge_id', 0)
+        self._next_node_id = state.get('next_node_id', 0)
+        self._edge_id_history = {eval(k): v for k, v in state.get('edge_id_history', {}).items()}
+
 class OperatorGenome:
     """
     智能体的"大脑" - 带有权重的有向无环图 (DAG)
@@ -22,20 +79,20 @@ class OperatorGenome:
         forward(sensor_inputs): 前向传播，返回执行器输出
     """
     
-    def __init__(self):
+    def __init__(self, innovation_manager: Optional[InnovationManager] = None):
         self.nodes: Dict[int, Node] = {}
         self.edges: List[Dict] = []
         self._adjacency_list: Dict[int, List[int]] = defaultdict(list)  # target -> sources
         self._reverse_adj: Dict[int, List[int]] = defaultdict(list)    # source -> targets
         self._topo_order: Optional[List[int]] = None
+        
+        # 创新ID管理器 (可共享)
+        self._innovation_mgr = innovation_manager or InnovationManager()
     
     def add_node(self, node: Node) -> None:
         """添加一个节点到基因组"""
         self.nodes[node.node_id] = node
         self._topo_order = None  # 拓扑序失效，需要重新计算
-    
-    # v5.5 全局边创新计数器
-    _global_innovation_edge = 0
     
     def add_edge(
         self, 
@@ -53,19 +110,18 @@ class OperatorGenome:
             target_id: 目标节点 ID
             weight: 连接权重 (默认为 1.0)
             enabled: 是否启用 (用于基因突变)
-            innovation_id: v5.5 创新序列号
+            innovation_id: v5.5 创新序列号 (可选)
         """
         if source_id not in self.nodes:
             raise ValueError(f"源节点 {source_id} 不存在")
         if target_id not in self.nodes:
             raise ValueError(f"目标节点 {target_id} 不存在")
         
-        # v5.5: 分配创新ID
+        # v5.5: 分配创新ID (使用InnovationManager)
         if innovation_id is not None:
             edge_innovation = innovation_id
         else:
-            OperatorGenome._global_innovation_edge += 1
-            edge_innovation = OperatorGenome._global_innovation_edge
+            edge_innovation = self._innovation_mgr.get_edge_id(source_id, target_id, weight)
         
         edge = {
             'source_id': source_id,
@@ -676,8 +732,10 @@ class OperatorGenome:
     def copy(self) -> 'OperatorGenome':
         """
         深拷贝当前基因组 (用于复制智能体)
+        
+        注意: 复制时共享InnovationManager以保持ID一致性
         """
-        new_genome = OperatorGenome()
+        new_genome = OperatorGenome(innovation_manager=self._innovation_mgr)
         
         # 复制节点
         for node in self.nodes.values():
@@ -697,13 +755,14 @@ class OperatorGenome:
                 new_node.target_type_weights = node.target_type_weights.copy()
             new_genome.add_node(new_node)
         
-        # 复制边
+        # 复制边 (保留创新ID)
         for edge in self.edges:
             new_genome.add_edge(
                 source_id=edge['source_id'],
                 target_id=edge['target_id'],
                 weight=edge['weight'],
-                enabled=edge['enabled']
+                enabled=edge['enabled'],
+                innovation_id=edge.get('innovation_id')
             )
             # 复制学习率
             if edge.get('learning_rate', 0) > 0:

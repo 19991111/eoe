@@ -7,10 +7,22 @@ from .node import NodeType
 try:
     from ..core import compute_sensor_vectorized, update_positions_vectorized, compute_distances_vectorized, NUMBA_AVAILABLE
 except ImportError:
-    # 如果core未加载，使用纯numpy版本
+    # 如果core未加载，使用纯numpy版本 (环形世界感知)
     NUMBA_AVAILABLE = False
-    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr):
-        return np.sqrt((x2_arr - x1)**2 + (y2_arr - y1)**2)
+    
+    def _toroidal_distance_vec(dx, dy, width, height):
+        """计算环形世界距离向量"""
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
+        return dx, dy
+    
+    def compute_distances_vectorized(x1, y1, x2_arr, y2_arr, width=100.0, height=100.0):
+        """向量化计算环形世界距离矩阵"""
+        dx = x2_arr - x1
+        dy = y2_arr - y1
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
+        return np.sqrt(dx**2 + dy**2)
     
     def update_positions_vectorized(x, y, theta, left_force, right_force, max_speed, turn_rate, width, height):
         diff = right_force - left_force
@@ -18,8 +30,13 @@ except ImportError:
         speed = np.clip((left_force + right_force) / 2.0, -max_speed, max_speed)
         return (x + np.cos(new_theta) * speed) % width, (y + np.sin(new_theta) * speed) % height, new_theta
     
-    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range):
-        dx, dy = target_x - agent_x, target_y - agent_y
+    def compute_sensor_vectorized(agent_x, agent_y, agent_theta, target_x, target_y, sensor_range, width=100.0, height=100.0):
+        """环形世界传感器计算"""
+        # 环形世界最短距离
+        dx = target_x - agent_x
+        dy = target_y - agent_y
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
         dist = np.hypot(dx, dy)
         if dist < 0.1:
             return np.array([1.0, 1.0])
@@ -64,36 +81,123 @@ class ChunkManager:
         # 已访问区块集合
         self.visited_chunks: Set[Tuple[int, int]] = set()
         
+        # 当前帧数 (用于清理判定)
+        self._current_frame = 0
+        
+        # 清理间隔 (每100帧尝试清理)
+        self._cleanup_interval = 100
+        self._last_cleanup_frame = 0
+        
         # Perlin噪声生成器
         self._init_noise()
     
     def _init_noise(self):
         """初始化Perlin噪声参数"""
-        # 简单的2D噪声实现
         self.noise_scale = 0.1  # 噪声缩放
         self.noise_offset = self.rng.uniform(0, 1000)
+        
+        # 初始化Perlin噪声梯度表
+        self._init_perlin_gradients()
+    
+    def _init_perlin_gradients(self):
+        """初始化Perlin噪声梯度表"""
+        # 梯度向量 (8个方向)
+        self.gradients = {}
+        self.permutation = self.rng.permutation(256).tolist()
+        # 扩展到512以避免模运算边界问题
+        self.permutation = self.permutation + self.permutation
+    
+    def _fade(self, t: float) -> float:
+        """Perlin fade函数: 6t^5 - 15t^4 + 10t^3"""
+        return t * t * t * (t * (t * 6 - 15) + 10)
+    
+    def _lerp(self, a: float, b: float, t: float) -> float:
+        """线性插值"""
+        return a + t * (b - a)
+    
+    def _grad(self, hash_val: int, x: float, y: float) -> float:
+        """计算梯度"""
+        # 将hash转为0-7
+        h = hash_val & 7
+        # 8个方向的梯度向量
+        if h == 0:
+            return x + y
+        elif h == 1:
+            return -x + y
+        elif h == 2:
+            return x - y
+        elif h == 3:
+            return -x - y
+        elif h == 4:
+            return x
+        elif h == 5:
+            return -x
+        elif h == 6:
+            return y
+        else:
+            return -y
     
     def _perlin_noise_2d(self, x: float, y: float) -> float:
-        """简单的2D Perlin-like噪声"""
-        # 使用多个频率叠加
-        val = 0.0
-        freq = self.noise_scale
-        amp = 1.0
+        """
+        真正的2D Perlin噪声 (梯度噪声)
         
-        for _ in range(4):
-            nx = (x + self.noise_offset) * freq
-            ny = (y + self.noise_offset) * freq
-            
-            # 简单的正弦叠加噪声
-            val += amp * (np.sin(nx * 2.1 + ny * 1.7) * 0.5 + 
-                         np.sin(nx * 1.3 + ny * 2.9) * 0.3 +
-                         np.sin(nx * 3.7 + ny * 0.7) * 0.2)
-            
-            freq *= 2.0
-            amp *= 0.5
+        避免假正弦波产生的网格伪影
+        """
+        # 坐标偏移
+        x += self.noise_offset
+        y += self.noise_offset
+        
+        # 整数坐标
+        xi = int(np.floor(x)) & 255
+        yi = int(np.floor(y)) & 255
+        
+        # 小数坐标
+        xf = x - np.floor(x)
+        yf = y - np.floor(y)
+        
+        # 淡入淡出
+        u = self._fade(xf)
+        v = self._fade(yf)
+        
+        # 哈希角点
+        aa = self.permutation[self.permutation[xi] + yi]
+        ab = self.permutation[self.permutation[xi] + yi + 1]
+        ba = self.permutation[self.permutation[xi + 1] + yi]
+        bb = self.permutation[self.permutation[xi + 1] + yi + 1]
+        
+        # 计算梯度
+        x1 = self._lerp(self._grad(aa, xf, yf), self._grad(ba, xf - 1, yf), u)
+        x2 = self._lerp(self._grad(ab, xf, yf - 1), self._grad(bb, xf - 1, yf - 1), u)
+        
+        # 组合并归一化
+        val = self._lerp(x1, x2, v)
         
         # 归一化到 [0, 1]
         return (val + 1.0) / 2.0
+    
+    def _fbm_noise(self, x: float, y: float, octaves: int = 4) -> float:
+        """
+        分形布朗运动 (FBM) - 多层Perlin噪声叠加
+        
+        参数:
+            x, y: 坐标
+            octaves: 叠加的八度音阶数
+        
+        返回:
+            噪声值 [0, 1]
+        """
+        val = 0.0
+        freq = self.noise_scale
+        amp = 1.0
+        max_val = 0.0
+        
+        for _ in range(octaves):
+            val += amp * self._perlin_noise_2d(x * freq, y * freq)
+            max_val += amp
+            freq *= 2.0
+            amp *= 0.5
+        
+        return (val / max_val + 1.0) / 2.0
     
     def get_chunk_coords(self, x: float, y: float) -> Tuple[int, int]:
         """获取坐标所在的区块坐标"""
@@ -104,24 +208,44 @@ class ChunkManager:
         chunk_key = (chunk_x, chunk_y)
         
         if chunk_key in self.chunks:
+            # 更新访问时间
+            self.chunk_access[chunk_key] = self._current_frame
             return self.chunks[chunk_key]
         
         # 基于区块坐标生成确定性数据
         chunk_seed = self.seed + hash(chunk_key) % 100000
         chunk_rng = np.random.RandomState(chunk_seed)
         
-        # 食物分布 (基于噪声)
+        # 食物分布 (基于真实Perlin噪声的FBM)
         foods = []
-        n_food_approx = 3 + int(self._perlin_noise_2d(chunk_x * 0.5, chunk_y * 0.5) * 4)
+        # 使用FBM产生更自然的分布，避免网格伪影
+        noise_val = self._fbm_noise(chunk_x * 0.5, chunk_y * 0.5, octaves=4)
+        n_food_approx = 3 + int(noise_val * 4)
         
-        for _ in range(n_food_approx):
+        # 使用泊松盘采样思想：避免食物过于密集
+        min_dist = 8.0
+        attempts = 0
+        max_attempts = 20
+        
+        while len(foods) < n_food_approx and attempts < max_attempts:
             fx = chunk_x * self.CHUNK_SIZE + chunk_rng.uniform(5, self.CHUNK_SIZE - 5)
             fy = chunk_y * self.CHUNK_SIZE + chunk_rng.uniform(5, self.CHUNK_SIZE - 5)
-            foods.append((fx, fy))
+            
+            # 检查与现有食物的距离
+            too_close = False
+            for ex, ey in foods:
+                if np.sqrt((fx - ex)**2 + (fy - ey)**2) < min_dist:
+                    too_close = True
+                    break
+            
+            if not too_close:
+                foods.append((fx, fy))
+            attempts += 1
         
         # 障碍物 (稀少的墙壁)
         walls = []
-        if chunk_rng.random() < 0.2:  # 20%概率有墙
+        wall_noise = self._fbm_noise(chunk_x * 0.3 + 100, chunk_y * 0.3 + 100)
+        if wall_noise > 0.7:  # 约20%概率有墙
             n_walls = chunk_rng.randint(0, 2)
             for _ in range(n_walls):
                 wx1 = chunk_x * self.CHUNK_SIZE + chunk_rng.uniform(10, self.CHUNK_SIZE - 20)
@@ -142,6 +266,7 @@ class ChunkManager:
         }
         
         self.chunks[chunk_key] = chunk_data
+        self.chunk_access[chunk_key] = self._current_frame
         return chunk_data
     
     def get_foods_in_range(self, x: float, y: float, sensor_range: float) -> List[Tuple[float, float]]:
@@ -185,6 +310,14 @@ class ChunkManager:
     
     def ensure_chunks_loaded(self, agents: List, sensor_range: float, current_step: int):
         """确保Agent感知范围内的区块已加载"""
+        # 更新当前帧
+        self._current_frame = current_step
+        
+        # 定期清理不活跃区块 (每_cleanup_interval帧)
+        if current_step - self._last_cleanup_frame > self._cleanup_interval:
+            self._last_cleanup_frame = current_step
+            self.cleanup_inactive_chunks(current_step)
+        
         for agent in agents:
             if not hasattr(agent, 'is_alive') or not agent.is_alive:
                 continue
@@ -1524,21 +1657,21 @@ class Environment:
                 nearest = min(foods, key=lambda f: f[2])
                 target_x, target_y, dist = nearest
                 
-                # 计算传感器值
+                # 计算传感器值 (传递环形世界尺寸)
                 sensor_values = compute_sensor_vectorized(
                     agent.x, agent.y, agent.theta,
                     target_x, target_y,
-                    sensor_range
+                    sensor_range, self.width, self.height
                 )
             else:
                 # 无食物时返回低信号
                 sensor_values = np.array([0.1, 0.1])
         else:
-            # 标准模式
+            # 标准模式 (传递环形世界尺寸)
             sensor_values = compute_sensor_vectorized(
                 agent.x, agent.y, agent.theta,
                 self.target_pos[0], self.target_pos[1],
-                sensor_range
+                sensor_range, self.width, self.height
             )
         
         # v7.0: 不透明障碍物 - 射线检测
