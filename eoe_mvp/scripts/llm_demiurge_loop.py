@@ -548,6 +548,193 @@ class LLMDemiurge:
 # ============================================================
 # 5. 主入口 - 运行 Demiurge Loop
 # ============================================================
+# 5.5. 纪元报告生成器 - 四大维度数据提取
+# ============================================================
+
+def generate_epoch_report(epoch_data: Dict[str, Any]) -> str:
+    """
+    生成纪元报告 - 四大维度信息提取
+    
+    Args:
+        epoch_data: 包含以下键的字典:
+            - generation: 当前代数
+            - agents: List[Agent] - 所有Agent对象
+            - env: Environment - 环境对象
+            - start_step: 纪元起始步数
+            - end_step: 纪元结束步数
+    
+    Returns:
+        str: 格式化的报告文本，直接用于发送给DeepSeek
+    """
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from core.eoe.agent import Agent
+    
+    generation = epoch_data.get('generation', 0)
+    agents = epoch_data.get('agents', [])
+    env = epoch_data.get('env', None)
+    
+    # ========== 1. 生存与死亡 ==========
+    alive_agents = [a for a in agents if a.is_alive]
+    dead_agents = [a for a in agents if not a.is_alive]
+    
+    steps_alive = [a.steps_alive for a in agents if hasattr(a, 'steps_alive')]
+    avg_steps = np.mean(steps_alive) if steps_alive else 0
+    max_steps = max(steps_alive) if steps_alive else 0
+    min_steps = min(steps_alive) if steps_alive else 0
+    
+    # 死亡原因分析
+    death_starvation = 0  # 饿死 (能量<=0)
+    death_cold = 0       # 冻死 (体温过低)
+    death_age = 0        # 老死
+    death_other = 0      # 其他
+    
+    if env and hasattr(env, 'cold_damage_threshold'):
+        cold_threshold = env.cold_damage_threshold
+    else:
+        cold_threshold = -5.0
+    
+    for agent in dead_agents:
+        if hasattr(agent, 'age') and agent.age >= getattr(agent, 'max_age', 100):
+            death_age += 1
+        elif hasattr(agent, 'body_temperature') and agent.body_temperature < cold_threshold:
+            death_cold += 1
+        elif getattr(agent, 'internal_energy', 0) <= 0:
+            death_starvation += 1
+        else:
+            death_other += 1
+    
+    total_deaths = len(dead_agents)
+    starvation_ratio = (death_starvation / total_deaths * 100) if total_deaths > 0 else 0
+    cold_ratio = (death_cold / total_deaths * 100) if total_deaths > 0 else 0
+    
+    # ========== 2. 行为里程碑 ==========
+    total_food_touched = 0      # 碰触食物次数
+    total_food_carried_steps = 0  # 携带食物总步数
+    total_food_stored = 0       # 成功搬入巢穴的食物数
+    
+    for agent in agents:
+        total_food_touched += getattr(agent, 'food_eaten', 0)
+        total_food_touched += getattr(agent, 'food_carried', 0)
+        total_food_carried_steps += getattr(agent, 'food_carried', 0) * getattr(agent, 'steps_alive', 0)
+        total_food_stored += getattr(agent, 'food_stored', 0)
+    
+    # ========== 3. 能量收支 ==========
+    energy_in = []   # 摄入热量
+    energy_out = []  # 消耗热量
+    
+    for agent in agents:
+        if hasattr(agent, 'energy_gained'):
+            energy_in.append(agent.energy_gained)
+        if hasattr(agent, 'energy_spent'):
+            energy_out.append(agent.energy_spent)
+    
+    avg_energy_in = np.mean(energy_in) if energy_in else 0
+    avg_energy_out = np.mean(energy_out) if energy_out else 0
+    total_energy_in = sum(energy_in)
+    total_energy_out = sum(energy_out)
+    
+    # ========== 4. 脑容积趋势 ==========
+    node_counts = []
+    edge_counts = []
+    
+    for agent in agents:
+        if hasattr(agent, 'genome') and agent.genome:
+            info = agent.genome.get_info()
+            node_counts.append(info.get('total_nodes', 0))
+            edge_counts.append(info.get('enabled_edges', 0))
+    
+    avg_nodes = np.mean(node_counts) if node_counts else 0
+    avg_edges = np.mean(edge_counts) if edge_counts else 0
+    max_nodes = max(node_counts) if node_counts else 0
+    max_edges = max(edge_counts) if edge_counts else 0
+    
+    # 复杂度变化趋势
+    complexity_trend = "上升" if avg_nodes > 5 else "稳定"
+    if avg_nodes < 3:
+        complexity_trend = "下降/简化"
+    
+    # ========== 构建报告文本 ==========
+    report = f"""
+================================================================================
+                     📊 第 {generation} 纪元 - 生存战报
+================================================================================
+
+【维度一】🩺 生存与死亡
+────────────────────────────────────────────────────────────────────────────────
+  存活Agent数: {len(alive_agents)} / {len(agents)}
+  平均存活步数: {avg_steps:.1f} 步
+  最长存活: {max_steps} 步 | 最短存活: {min_steps} 步
+  
+  死亡分析 (总计 {total_deaths} 具):
+    • 饿死: {death_starvation} ({starvation_ratio:.1f}%)
+    • 冻死: {death_cold} ({cold_ratio:.1f}%)
+    • 老死: {death_age}
+    • 其他: {death_other}
+  
+  ⚡ 关键信号: {"饿死占比过高! Agent可能还没学会贮粮就饿死了" if starvation_ratio > 50 else "死亡分布正常"}
+
+【维度二】🎯 行为里程碑
+────────────────────────────────────────────────────────────────────────────────
+  碰触食物总数: {total_food_touched}
+  携带食物总步数: {total_food_carried_steps}
+  成功搬入巢穴: {total_food_stored}
+  
+  贮粮效率: {total_food_stored / max(1, total_food_touched) * 100:.1f}%
+  
+  ⚡ 关键信号: {"❌ 贮粮行为未涌现! 尚未发现将食物搬入巢穴的行为" if total_food_stored == 0 and generation > 50 else "✅ 已有贮粮行为"}
+
+【维度三】⚡ 能量收支
+────────────────────────────────────────────────────────────────────────────────
+  总能量摄入: {total_energy_in:.1f}
+  总能量消耗: {total_energy_out:.1f}
+  净能量: {total_energy_in - total_energy_out:.1f}
+  
+  平均每Agent摄入: {avg_energy_in:.1f}
+  平均每Agent消耗: {avg_energy_out:.1f}
+  
+  能量效率: {total_energy_in / max(1, total_energy_out) * 100:.1f}%
+
+【维度四】🧠 脑容积趋势
+────────────────────────────────────────────────────────────────────────────────
+  平均节点数: {avg_nodes:.1f}
+  平均边数: {avg_edges:.1f}
+  最大节点: {max_nodes} | 最大边: {max_edges}
+  
+  复杂度趋势: {complexity_trend}
+  
+  {"⚠️ 脑复杂度偏低，神经网络可能过于简单" if avg_nodes < 5 else "✅ 神经复杂度正常"}
+
+================================================================================
+                           当前物理环境参数
+================================================================================
+"""
+    
+    # 添加当前物理参数
+    if env:
+        report += f"""
+  代谢alpha: {getattr(env, 'metabolic_alpha', 'N/A')}
+  代谢beta: {getattr(env, 'metabolic_beta', 'N/A')}
+  传感器范围: {getattr(env, 'sensor_range', 'N/A')}
+  食物能量: {getattr(env, 'food_energy', 'N/A')}
+  季节长度: {getattr(env, 'season_length', 'N/A')}
+  冬季代谢倍率: {getattr(env, 'winter_metabolic_multiplier', 'N/A')}
+  
+  疲劳系统: {getattr(env, 'fatigue_system_enabled', False)}
+  热力学庇护所: {getattr(env, 'thermal_sanctuary_enabled', False)}
+  形态计算: {getattr(env, 'morphological_computation_enabled', False)}
+"""
+    
+    report += """
+================================================================================
+                         请分析以上数据并给出调整建议
+================================================================================
+"""
+    
+    return report
+
+
+# ============================================================
 
 def run_demiurge_loop(
     env: Environment,
