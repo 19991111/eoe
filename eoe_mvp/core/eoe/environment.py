@@ -426,6 +426,9 @@ class Environment:
         self.height = height
         self.pure_survival_mode = pure_survival_mode  # v0.74
         self.agents: List[Agent] = []
+        
+        # v1.3: 可配置的物理常量 (解耦硬编码)
+        self.CHUNK_SIZE = getattr(self, 'CHUNK_SIZE', 50.0)  # 默认值，保持兼容
 
         # v5.2: 步数计数器
         self.step_count = 0  # 用于预测偏差计算
@@ -1821,11 +1824,12 @@ class Environment:
 
         # 检查放电信号
         if len(actuator_outputs) > 1 and actuator_outputs[1] > self.discharge_threshold:
-            # 检查是否在巢穴附近
+            # 检查是否在巢穴附近 - 使用环形世界距离
             if self.nest_enabled:
-                dx = agent.x - self.nest_position[0]
-                dy = agent.y - self.nest_position[1]
-                dist = np.sqrt(dx**2 + dy**2)
+                dist = self._toroidal_distance(
+                    agent.x, agent.y, 
+                    self.nest_position[0], self.nest_position[1]
+                )
 
                 if dist < self.nest_radius:
                     # 成功存储！
@@ -1943,13 +1947,12 @@ class Environment:
         检查 Agent 是否吃到食物
 
         v5.4: 应用能量吸收率 η_plant (80%)
+        v1.3: 使用环形世界距离
         """
         eat_distance = 3.0  # 吃到的距离阈值
 
         for i, food_pos in enumerate(self.food_positions):
-            dx = agent.x - food_pos[0]
-            dy = agent.y - food_pos[1]
-            dist = np.sqrt(dx**2 + dy**2)
+            dist = self._toroidal_distance(agent.x, agent.y, food_pos[0], food_pos[1])
 
             if dist < eat_distance:
                 # 吃到食物!
@@ -2041,9 +2044,9 @@ class Environment:
             # 收集所有目标信息
             targets = []
 
-            # 1. 食物 (type=0)
+            # 1. 食物 (type=0) - 使用环形世界距离
             for fx, fy in self.food_positions[:5]:  # 最多5个
-                dx, dy = fx - agent.x, fy - agent.y
+                dx, dy = self._toroidal_distance_components(agent.x, agent.y, fx, fy)
                 dist = np.sqrt(dx**2 + dy**2)
                 if dist < sensor_range:
                     angle = np.degrees(np.arctan2(dy, dx) - agent.theta) % 360
@@ -2053,10 +2056,10 @@ class Environment:
                         'type': 0  # food
                     })
 
-            # 2. 巢穴 (type=1)
+            # 2. 巢穴 (type=1) - 使用环形世界距离
             if getattr(self, 'nest_enabled', False):
                 nx, ny = self.nest_position
-                dx, dy = nx - agent.x, ny - agent.y
+                dx, dy = self._toroidal_distance_components(agent.x, agent.y, nx, ny)
                 dist = np.sqrt(dx**2 + dy**2)
                 if dist < sensor_range * 1.5:
                     angle = np.degrees(np.arctan2(dy, dx) - agent.theta) % 360
@@ -2167,9 +2170,9 @@ class Environment:
         - 记住光源的历史位置
         - 使用DELAY回路来预测光源轨迹
         """
-        # 目标向量 (光源)
-        dx = self.light_pos[0] - agent.x
-        dy = self.light_pos[1] - agent.y
+        # 目标向量 (光源) - 使用环形世界距离
+        dx, dy = self._toroidal_distance_components(agent.x, agent.y, 
+                                                     self.light_pos[0], self.light_pos[1])
         distance = np.sqrt(dx**2 + dy**2)
 
         if distance < 0.1:
@@ -2238,9 +2241,10 @@ class Environment:
         - 演化出"回巢"本能
         - 计算探索vs返回的权衡
         """
-        # 相对于原点的位移
-        rel_x = agent.x - self.origin_x
-        rel_y = agent.y - self.origin_y
+        # 相对于原点的位移 - 使用环形世界距离
+        rel_x, rel_y = self._toroidal_distance_components(
+            agent.x, agent.y, self.origin_x, self.origin_y
+        )
 
         # 距离
         distance = np.sqrt(rel_x**2 + rel_y**2)
@@ -2262,6 +2266,27 @@ class Environment:
             normalized_dist,       # 归一化距离
             normalized_bearing     # 归一化朝向
         ])
+
+    # ============================================================
+    # v1.3: 环形世界距离计算 (修复边界Bug)
+    # ============================================================
+    
+    def _toroidal_distance(self, x1: float, y1: float, x2: float, y2: float) -> float:
+        """计算环形世界中的最短距离"""
+        dx = x2 - x1
+        dy = y2 - y1
+        # 取最短路径
+        dx = dx - self.width * np.floor(dx / self.width + 0.5)
+        dy = dy - self.height * np.floor(dy / self.height + 0.5)
+        return np.sqrt(dx**2 + dy**2)
+    
+    def _toroidal_distance_components(self, x1: float, y1: float, x2: float, y2: float):
+        """计算环形世界中的距离分量(返回最短路径的dx, dy)"""
+        dx = x2 - x1
+        dy = y2 - y1
+        dx = dx - self.width * np.floor(dx / self.width + 0.5)
+        dy = dy - self.height * np.floor(dy / self.height + 0.5)
+        return dx, dy
 
     def _compute_compass_sensor(self, agent: Agent) -> np.ndarray:
         """
@@ -2830,9 +2855,10 @@ class Environment:
             # 如果Agent带着食物回到巢穴，存储起来
             # ============================================================
             if self.nest_enabled and agent.food_carried > 0:
-                dx = agent.x - self.nest_position[0]
-                dy = agent.y - self.nest_position[1]
-                dist = np.sqrt(dx**2 + dy**2)
+                dist = self._toroidal_distance(
+                    agent.x, agent.y,
+                    self.nest_position[0], self.nest_position[1]
+                )
 
                 if dist < self.nest_radius:
                     # 存储食物到巢穴
