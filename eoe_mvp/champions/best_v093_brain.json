@@ -1,0 +1,393 @@
+{
+  "version": "v0.93",
+  "description": "EOE\u7ec8\u6781\u5927\u5956\u8111 - \u9002\u5e94\u5ea613029",
+  "nodes": [
+    {
+      "id": 0,
+      "type": "NodeType.SENSOR",
+      "activation": 0.9999998939629126
+    },
+    {
+      "id": 1,
+      "type": "NodeType.SENSOR",
+      "activation": 0.27291835480696836
+    },
+    {
+      "id": 2,
+      "type": "NodeType.ACTUATOR",
+      "activation": 0.8761226260020968
+    },
+    {
+      "id": 3,
+      "type": "NodeType.ACTUATOR",
+      "activation": 0.0
+    },
+    {
+      "id": 4,
+      "type": "NodeType.PREDICTOR",
+      "activation": 0.1159707907910349
+    },
+    {
+      "id": 5,
+      "type": "NodeType.PREDICTOR",
+      "activation": -0.4558862672144201
+    },
+    {
+      "id": 100,
+      "type": "NodeType.PORT_MOTION",
+      "activation": 0.0
+    },
+    {
+      "id": 101,
+      "type": "NodeType.PORT_MOTION",
+      "activation": 0.0
+    },
+    {
+      "id": 102,
+      "type": "NodeType.PORT_REPAIR",
+      "activation": 0.0
+    },
+    {
+      "id": 103,
+      "type": "NodeType.PORT_OFFENSE",
+      "activation": 0.0
+    },
+    {
+      "id": 104,
+      "type": "NodeType.PORT_DEFENSE",
+      "activation": 0.0
+    },
+    {
+      "id": 10,
+      "type": "NodeType.DELAY",
+      "activation": 0.0
+    },
+    {
+      "id": 9,
+      "type": "NodeType.PREDICTOR",
+      "activation": 0.0
+    },
+    {
+      "id": 7,
+      "type": "NodeType.THRESHOLD",
+      "activation": 1.0
+    },
+    {
+      "id": 8,
+      "type": "NodeType.THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 105,
+      "type": "NodeType.META_NODE",
+      "activation": 0.0
+    },
+    {
+      "id": 106,
+      "type": "NodeType.ADD",
+      "activation": 0.0
+    },
+    {
+      "id": 107,
+      "type": "NodeType.ADD",
+      "activation": -0.0017487815392626003
+    },
+    {
+      "id": 108,
+      "type": "NodeType.PREDICTOR",
+      "activation": 0.23508498792045907
+    },
+    {
+      "id": 109,
+      "type": "NodeType.THRESHOLD",
+      "activation": 1.0
+    },
+    {
+      "id": 110,
+      "type": "NodeType.THRESHOLD",
+      "activation": 0.0
+    },
+    {
+      "id": 111,
+      "type": "NodeType.MULTIPLY",
+      "activation": 0.1159707907910349
+    },
+    {
+      "id": 112,
+      "type": "NodeType.PREDICTOR",
+      "activation": 0.23508498792045907
+    }
+  ],
+  "edges": [
+    {
+      "source": 0,
+      "target": 2,
+      "weight": 1.0
+    },
+    {
+      "source": 1,
+      "target": 3,
+      "weight": 0.7525835273570574
+    },
+    {
+      "source": 0,
+      "target": 3,
+      "weight": -0.2975701365165323
+    },
+    {
+      "source": 1,
+      "target": 2,
+      "weight": -0.453898632242718
+    },
+    {
+      "source": 2,
+      "target": 10,
+      "weight": 0.9998586792013002
+    },
+    {
+      "source": 10,
+      "target": 2,
+      "weight": 0.7961188926496113
+    },
+    {
+      "source": 10,
+      "target": 3,
+      "weight": 1.0
+    },
+    {
+      "source": 10,
+      "target": 4,
+      "weight": 0.45614339178083235
+    },
+    {
+      "source": 4,
+      "target": 5,
+      "weight": 0.47293468272773065
+    },
+    {
+      "source": 5,
+      "target": 7,
+      "weight": -0.31272680979908773
+    },
+    {
+      "source": 7,
+      "target": 4,
+      "weight": 0.8332647947419959
+    },
+    {
+      "source": 1,
+      "target": 5,
+      "weight": 0.12854755065479867
+    },
+    {
+      "source": 9,
+      "target": 5,
+      "weight": 0.7512709094118017
+    },
+    {
+      "source": 4,
+      "target": 10,
+      "weight": 5.9773858678467684e-05
+    },
+    {
+      "source": 1,
+      "target": 8,
+      "weight": -0.3548458511820654
+    },
+    {
+      "source": 0,
+      "target": 105,
+      "weight": 0.830016037382557
+    },
+    {
+      "source": 2,
+      "target": 105,
+      "weight": 1.0
+    },
+    {
+      "source": 10,
+      "target": 106,
+      "weight": 0.9778732179324197
+    },
+    {
+      "source": 106,
+      "target": 2,
+      "weight": 0.313335549805634
+    },
+    {
+      "source": 10,
+      "target": 107,
+      "weight": 0.9623005120344305
+    },
+    {
+      "source": 107,
+      "target": 4,
+      "weight": 0.41246140401299514
+    },
+    {
+      "source": 106,
+      "target": 9,
+      "weight": 0.37250170129174637
+    },
+    {
+      "source": 107,
+      "target": 106,
+      "weight": -0.27181284352796065
+    },
+    {
+      "source": 10,
+      "target": 7,
+      "weight": 0.6336582842761463
+    },
+    {
+      "source": 0,
+      "target": 7,
+      "weight": 0.3957061195971952
+    },
+    {
+      "source": 106,
+      "target": 10,
+      "weight": 0.5330055066436136
+    },
+    {
+      "source": 1,
+      "target": 107,
+      "weight": -0.006407709516274532
+    },
+    {
+      "source": 1,
+      "target": 108,
+      "weight": 0.8613747803321314
+    },
+    {
+      "source": 108,
+      "target": 5,
+      "weight": 0.04076210117302192
+    },
+    {
+      "source": 2,
+      "target": 109,
+      "weight": 1.0
+    },
+    {
+      "source": 109,
+      "target": 10,
+      "weight": 0.8171189538405552
+    },
+    {
+      "source": 4,
+      "target": 2,
+      "weight": -0.05753350870645512
+    },
+    {
+      "source": 107,
+      "target": 8,
+      "weight": -0.8795168682976774
+    },
+    {
+      "source": 10,
+      "target": 9,
+      "weight": -0.1515341496739297
+    },
+    {
+      "source": 107,
+      "target": 9,
+      "weight": 0.3015418477593447
+    },
+    {
+      "source": 107,
+      "target": 3,
+      "weight": 0.3619775097573297
+    },
+    {
+      "source": 108,
+      "target": 7,
+      "weight": 0.007457793594020972
+    },
+    {
+      "source": 0,
+      "target": 4,
+      "weight": 0.11715925155223117
+    },
+    {
+      "source": 0,
+      "target": 5,
+      "weight": -0.5107329305194946
+    },
+    {
+      "source": 108,
+      "target": 10,
+      "weight": -0.02508943798473892
+    },
+    {
+      "source": 1,
+      "target": 4,
+      "weight": -0.004354592928757199
+    },
+    {
+      "source": 0,
+      "target": 10,
+      "weight": -0.33935250644079273
+    },
+    {
+      "source": 10,
+      "target": 5,
+      "weight": -0.673766847094718
+    },
+    {
+      "source": 10,
+      "target": 109,
+      "weight": 0.048393231437845574
+    },
+    {
+      "source": 4,
+      "target": 110,
+      "weight": 0.8288420900649035
+    },
+    {
+      "source": 110,
+      "target": 2,
+      "weight": 0.00874007277408642
+    },
+    {
+      "source": 5,
+      "target": 8,
+      "weight": -0.6420307030288378
+    },
+    {
+      "source": 5,
+      "target": 110,
+      "weight": -0.3427027327987056
+    },
+    {
+      "source": 107,
+      "target": 2,
+      "weight": 0.32809865760820084
+    },
+    {
+      "source": 4,
+      "target": 111,
+      "weight": 1.0
+    },
+    {
+      "source": 111,
+      "target": 110,
+      "weight": 0.8288420900649035
+    },
+    {
+      "source": 108,
+      "target": 112,
+      "weight": 1.0
+    },
+    {
+      "source": 112,
+      "target": 7,
+      "weight": 0.007892721828642188
+    }
+  ],
+  "metadata": {
+    "fitness": 13029,
+    "n_nodes": 23,
+    "n_edges": 53
+  }
+}

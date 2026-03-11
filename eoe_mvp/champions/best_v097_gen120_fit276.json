@@ -1,0 +1,518 @@
+{
+  "nodes": [
+    {
+      "node_id": 0,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "left_sensor",
+      "delay_steps": 1,
+      "innovation_id": 81169,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        -0.13063417400815477,
+        0.1534885402954385,
+        -0.022995069638304704,
+        -0.2460917111083301,
+        0.09759769637921421,
+        -0.19894242132305406,
+        -0.0517060968754036,
+        -0.09854427930846447
+      ],
+      "distance_weights": [
+        0.32553925936883493,
+        0.61439471804152,
+        -0.06006601185927606
+      ],
+      "target_type_weights": [
+        -0.14856112655048054,
+        -0.09898386355246676,
+        -0.3956387060121577,
+        0.3568162933107389
+      ]
+    },
+    {
+      "node_id": 1,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "right_sensor",
+      "delay_steps": 1,
+      "innovation_id": 81170,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        -0.06269686047077769,
+        0.049133893723599706,
+        -0.0650558990859284,
+        0.3920030987490814,
+        0.08169253493175292,
+        -0.09080684517391022,
+        -0.09544587272390875,
+        -0.1631649854541417
+      ],
+      "distance_weights": [
+        -0.11641364227487568,
+        0.2915717742276879,
+        0.592014574517147
+      ],
+      "target_type_weights": [
+        0.07533227884349583,
+        0.08476824446828585,
+        0.38803076148025933,
+        0.4518687055458298
+      ]
+    },
+    {
+      "node_id": 2,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "left_actuator",
+      "delay_steps": 1,
+      "innovation_id": 81171,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 3,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "right_actuator",
+      "delay_steps": 1,
+      "innovation_id": 81172,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 4,
+      "node_type": "PREDICTOR",
+      "constant_value": 0.0,
+      "name": "left_predictor",
+      "delay_steps": 1,
+      "innovation_id": 81173,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 5,
+      "node_type": "ADD",
+      "constant_value": 0.0,
+      "name": "ADD_5",
+      "delay_steps": 1,
+      "innovation_id": 81174,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 100,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 81175,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 101,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 81176,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 102,
+      "node_type": "PORT_REPAIR",
+      "constant_value": 0.0,
+      "name": "PORT_REPAIR",
+      "delay_steps": 1,
+      "innovation_id": 81177,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 103,
+      "node_type": "PORT_OFFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_OFFENSE",
+      "delay_steps": 1,
+      "innovation_id": 81178,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 104,
+      "node_type": "PORT_DEFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_DEFENSE",
+      "delay_steps": 1,
+      "innovation_id": 81179,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 10,
+      "node_type": "DELAY",
+      "constant_value": 0.0,
+      "name": "DELAY_10",
+      "delay_steps": 44,
+      "innovation_id": 81180,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 9,
+      "node_type": "ADD",
+      "constant_value": 0.0,
+      "name": "ADD_9",
+      "delay_steps": 1,
+      "innovation_id": 81181,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 7,
+      "node_type": "THRESHOLD",
+      "constant_value": 0.0,
+      "name": "T1",
+      "delay_steps": 1,
+      "innovation_id": 81182,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 8,
+      "node_type": "ADD",
+      "constant_value": 0.0,
+      "name": "ADD_8",
+      "delay_steps": 1,
+      "innovation_id": 81183,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 105,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 81184,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 106,
+      "node_type": "THRESHOLD",
+      "constant_value": 0.0,
+      "name": "THRESHOLD_106",
+      "delay_steps": 1,
+      "innovation_id": 81185,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 107,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 81186,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 108,
+      "node_type": "DELAY",
+      "constant_value": 0.0,
+      "name": "DELAY_108",
+      "delay_steps": 21,
+      "innovation_id": 81187,
+      "is_frozen": false,
+      "stability": 0.8429431933839266
+    },
+    {
+      "node_id": 109,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 81188,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 110,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 81189,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 111,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 81190,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    },
+    {
+      "node_id": 112,
+      "node_type": "DELAY",
+      "constant_value": 0.0,
+      "name": "DELAY_112",
+      "delay_steps": 24,
+      "innovation_id": 81191,
+      "is_frozen": false,
+      "stability": 0.49483865960020695
+    }
+  ],
+  "edges": [
+    {
+      "source_id": 0,
+      "target_id": 2,
+      "weight": 0.9806830194747711,
+      "enabled": true,
+      "learning_rate": 0.022083736747196464,
+      "innovation_id": 64421
+    },
+    {
+      "source_id": 1,
+      "target_id": 3,
+      "weight": 0.9610145116206319,
+      "enabled": true,
+      "learning_rate": 0.015524077732241116,
+      "innovation_id": 64422
+    },
+    {
+      "source_id": 0,
+      "target_id": 3,
+      "weight": -0.4188797483183894,
+      "enabled": true,
+      "learning_rate": 0.011495363543768379,
+      "innovation_id": 64423
+    },
+    {
+      "source_id": 1,
+      "target_id": 2,
+      "weight": -0.29982604790794026,
+      "enabled": true,
+      "learning_rate": 0.08980043808326611,
+      "innovation_id": 64424
+    },
+    {
+      "source_id": 2,
+      "target_id": 10,
+      "weight": 0.9896657519638983,
+      "enabled": true,
+      "learning_rate": 0.08566284005011389,
+      "innovation_id": 64425
+    },
+    {
+      "source_id": 10,
+      "target_id": 2,
+      "weight": 0.7170635238192667,
+      "enabled": true,
+      "learning_rate": 0.07408324840223253,
+      "innovation_id": 64426
+    },
+    {
+      "source_id": 10,
+      "target_id": 3,
+      "weight": 0.7548820497458731,
+      "enabled": true,
+      "learning_rate": 0.013926060932036438,
+      "innovation_id": 64427
+    },
+    {
+      "source_id": 10,
+      "target_id": 4,
+      "weight": 0.6341238818079351,
+      "enabled": true,
+      "learning_rate": 0.00490867268852144,
+      "innovation_id": 64428
+    },
+    {
+      "source_id": 4,
+      "target_id": 5,
+      "weight": 0.4171538710769775,
+      "enabled": true,
+      "learning_rate": 0.06714342064564138,
+      "innovation_id": 64429
+    },
+    {
+      "source_id": 5,
+      "target_id": 7,
+      "weight": -0.3357083231446996,
+      "enabled": true,
+      "learning_rate": 0.005830537600604393,
+      "innovation_id": 64430
+    },
+    {
+      "source_id": 7,
+      "target_id": 4,
+      "weight": 0.9771274506211962,
+      "enabled": true,
+      "learning_rate": 0.011485475363736262,
+      "innovation_id": 64431
+    },
+    {
+      "source_id": 1,
+      "target_id": 105,
+      "weight": 0.939358137189927,
+      "enabled": true,
+      "learning_rate": 0.023225505395566653,
+      "innovation_id": 64432
+    },
+    {
+      "source_id": 3,
+      "target_id": 105,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.0317395145247337,
+      "innovation_id": 64433
+    },
+    {
+      "source_id": 4,
+      "target_id": 106,
+      "weight": 1.031205900034514,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 64434
+    },
+    {
+      "source_id": 10,
+      "target_id": 106,
+      "weight": 0.9998408039561844,
+      "enabled": true,
+      "learning_rate": 0.09042684917427861,
+      "innovation_id": 64435
+    },
+    {
+      "source_id": 4,
+      "target_id": 8,
+      "weight": -0.6307255126132734,
+      "enabled": true,
+      "learning_rate": 0.027265118581927907,
+      "innovation_id": 64436
+    },
+    {
+      "source_id": 10,
+      "target_id": 107,
+      "weight": 0.8386338793674037,
+      "enabled": true,
+      "learning_rate": 0.08257914802783614,
+      "innovation_id": 64437
+    },
+    {
+      "source_id": 105,
+      "target_id": 107,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.04984997374936715,
+      "innovation_id": 64438
+    },
+    {
+      "source_id": 1,
+      "target_id": 108,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.020737004583966285,
+      "innovation_id": 64439
+    },
+    {
+      "source_id": 3,
+      "target_id": 108,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.050549185644771,
+      "innovation_id": 64440
+    },
+    {
+      "source_id": 105,
+      "target_id": 109,
+      "weight": 0.9617778558654092,
+      "enabled": true,
+      "learning_rate": 0.08772697563656004,
+      "innovation_id": 64441
+    },
+    {
+      "source_id": 107,
+      "target_id": 109,
+      "weight": 0.9678685559665519,
+      "enabled": false,
+      "learning_rate": 0.020470209083456852,
+      "innovation_id": 64442
+    },
+    {
+      "source_id": 1,
+      "target_id": 110,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.06254581930906394,
+      "innovation_id": 64443
+    },
+    {
+      "source_id": 3,
+      "target_id": 110,
+      "weight": 0.9757248758539145,
+      "enabled": true,
+      "learning_rate": 0.08852601355178549,
+      "innovation_id": 64444
+    },
+    {
+      "source_id": 10,
+      "target_id": 9,
+      "weight": -0.1051205487346666,
+      "enabled": true,
+      "learning_rate": 0.033688753999631386,
+      "innovation_id": 64445
+    },
+    {
+      "source_id": 0,
+      "target_id": 111,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.005123987100744468,
+      "innovation_id": 64446
+    },
+    {
+      "source_id": 2,
+      "target_id": 111,
+      "weight": 0.9888898600669853,
+      "enabled": true,
+      "learning_rate": 0.06747570768093354,
+      "innovation_id": 64447
+    },
+    {
+      "source_id": 9,
+      "target_id": 106,
+      "weight": -0.06385769487305748,
+      "enabled": true,
+      "learning_rate": 0.07782439071626196,
+      "innovation_id": 64448
+    },
+    {
+      "source_id": 107,
+      "target_id": 112,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 64449
+    },
+    {
+      "source_id": 112,
+      "target_id": 109,
+      "weight": 0.9678685559665519,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 64450
+    }
+  ]
+}

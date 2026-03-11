@@ -1,0 +1,4909 @@
+{
+  "version": "v0.96",
+  "fitness": 7026.4,
+  "total_gen": 700,
+  "n_nodes": 19,
+  "n_edges": 24,
+  "stats": [
+    {
+      "gen": 0,
+      "phase": 0,
+      "fitness": 23.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 1,
+      "phase": 0,
+      "fitness": 1027.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 2,
+      "phase": 0,
+      "fitness": 4018.3,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 3,
+      "phase": 0,
+      "fitness": 1017.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 4,
+      "phase": 0,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 5,
+      "phase": 0,
+      "fitness": 19.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 6,
+      "phase": 0,
+      "fitness": 1015.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 7,
+      "phase": 0,
+      "fitness": 18.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 8,
+      "phase": 0,
+      "fitness": 1028.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 9,
+      "phase": 0,
+      "fitness": 23.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 10,
+      "phase": 0,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 11,
+      "phase": 0,
+      "fitness": 18.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 12,
+      "phase": 0,
+      "fitness": 4014.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 13,
+      "phase": 0,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 14,
+      "phase": 0,
+      "fitness": 14.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 15,
+      "phase": 0,
+      "fitness": 1012.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 16,
+      "phase": 0,
+      "fitness": 1027.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 17,
+      "phase": 0,
+      "fitness": 4025.1,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 18,
+      "phase": 0,
+      "fitness": 24.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 19,
+      "phase": 0,
+      "fitness": 22.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 20,
+      "phase": 0,
+      "fitness": 1017.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 21,
+      "phase": 0,
+      "fitness": 23.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 22,
+      "phase": 0,
+      "fitness": 1009.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 23,
+      "phase": 0,
+      "fitness": 1018.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 24,
+      "phase": 0,
+      "fitness": 17.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 25,
+      "phase": 0,
+      "fitness": 22.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 26,
+      "phase": 0,
+      "fitness": 21.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 27,
+      "phase": 0,
+      "fitness": 20.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 28,
+      "phase": 0,
+      "fitness": 1030.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 29,
+      "phase": 0,
+      "fitness": 12.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 30,
+      "phase": 0,
+      "fitness": 5029.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 31,
+      "phase": 0,
+      "fitness": 1034.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 32,
+      "phase": 0,
+      "fitness": 20.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 33,
+      "phase": 0,
+      "fitness": 16.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 34,
+      "phase": 0,
+      "fitness": 19.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 35,
+      "phase": 0,
+      "fitness": 19.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 36,
+      "phase": 0,
+      "fitness": 5001.2,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 37,
+      "phase": 0,
+      "fitness": 15.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 38,
+      "phase": 0,
+      "fitness": 1019.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 39,
+      "phase": 0,
+      "fitness": 22.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 40,
+      "phase": 0,
+      "fitness": 18.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 41,
+      "phase": 0,
+      "fitness": 5022.3,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 42,
+      "phase": 0,
+      "fitness": 18.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 43,
+      "phase": 0,
+      "fitness": 19.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 44,
+      "phase": 0,
+      "fitness": 1020.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 45,
+      "phase": 0,
+      "fitness": 17.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 46,
+      "phase": 0,
+      "fitness": 22.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 47,
+      "phase": 0,
+      "fitness": 20.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 48,
+      "phase": 0,
+      "fitness": 17.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 49,
+      "phase": 0,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 50,
+      "phase": 0,
+      "fitness": 15.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 51,
+      "phase": 0,
+      "fitness": 22.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 52,
+      "phase": 0,
+      "fitness": 15.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 53,
+      "phase": 0,
+      "fitness": 1014.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 54,
+      "phase": 0,
+      "fitness": 20.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 55,
+      "phase": 0,
+      "fitness": 14.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 56,
+      "phase": 0,
+      "fitness": 24.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 57,
+      "phase": 0,
+      "fitness": 20.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 58,
+      "phase": 0,
+      "fitness": 1018.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 59,
+      "phase": 0,
+      "fitness": 19.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 60,
+      "phase": 0,
+      "fitness": 22.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 61,
+      "phase": 0,
+      "fitness": 21.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 62,
+      "phase": 0,
+      "fitness": 1013.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 63,
+      "phase": 0,
+      "fitness": 19.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 64,
+      "phase": 0,
+      "fitness": 21.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 65,
+      "phase": 0,
+      "fitness": 23.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 66,
+      "phase": 0,
+      "fitness": 5009.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 67,
+      "phase": 0,
+      "fitness": 12.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 68,
+      "phase": 0,
+      "fitness": 20.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 69,
+      "phase": 0,
+      "fitness": 1024.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 70,
+      "phase": 0,
+      "fitness": 4011.4,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 71,
+      "phase": 0,
+      "fitness": 30.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 72,
+      "phase": 0,
+      "fitness": 19.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 73,
+      "phase": 0,
+      "fitness": 19.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 74,
+      "phase": 0,
+      "fitness": 17.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 75,
+      "phase": 0,
+      "fitness": 19.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 76,
+      "phase": 0,
+      "fitness": 21.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 77,
+      "phase": 0,
+      "fitness": 21.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 78,
+      "phase": 0,
+      "fitness": 17.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 79,
+      "phase": 0,
+      "fitness": 23.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 80,
+      "phase": 0,
+      "fitness": 15.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 81,
+      "phase": 0,
+      "fitness": 15.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 82,
+      "phase": 0,
+      "fitness": 1012.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 83,
+      "phase": 0,
+      "fitness": 17.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 84,
+      "phase": 0,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 85,
+      "phase": 0,
+      "fitness": 19.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 86,
+      "phase": 0,
+      "fitness": 19.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 87,
+      "phase": 0,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 88,
+      "phase": 0,
+      "fitness": 24.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 89,
+      "phase": 0,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 90,
+      "phase": 0,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 91,
+      "phase": 0,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 92,
+      "phase": 0,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 93,
+      "phase": 0,
+      "fitness": 21.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 94,
+      "phase": 0,
+      "fitness": 15.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 95,
+      "phase": 0,
+      "fitness": 4012.3,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 96,
+      "phase": 0,
+      "fitness": 19.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 97,
+      "phase": 0,
+      "fitness": 15.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 98,
+      "phase": 0,
+      "fitness": 19.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 99,
+      "phase": 0,
+      "fitness": 1011.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 100,
+      "phase": 1,
+      "fitness": 1033.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 101,
+      "phase": 1,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 102,
+      "phase": 1,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 103,
+      "phase": 1,
+      "fitness": 17.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 104,
+      "phase": 1,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 105,
+      "phase": 1,
+      "fitness": 7026.4,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 106,
+      "phase": 1,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 107,
+      "phase": 1,
+      "fitness": 22.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 108,
+      "phase": 1,
+      "fitness": 24.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 109,
+      "phase": 1,
+      "fitness": 24.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 110,
+      "phase": 1,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 111,
+      "phase": 1,
+      "fitness": 15.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 112,
+      "phase": 1,
+      "fitness": 25.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 113,
+      "phase": 1,
+      "fitness": 24.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 114,
+      "phase": 1,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 115,
+      "phase": 1,
+      "fitness": 1026.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 116,
+      "phase": 1,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 117,
+      "phase": 1,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 118,
+      "phase": 1,
+      "fitness": 24.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 119,
+      "phase": 1,
+      "fitness": 20.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 120,
+      "phase": 1,
+      "fitness": 18.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 121,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 122,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 123,
+      "phase": 1,
+      "fitness": 16.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 124,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 125,
+      "phase": 1,
+      "fitness": 1025.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 126,
+      "phase": 1,
+      "fitness": 13.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 127,
+      "phase": 1,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 128,
+      "phase": 1,
+      "fitness": 1024.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 129,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 130,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 131,
+      "phase": 1,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 132,
+      "phase": 1,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 133,
+      "phase": 1,
+      "fitness": 1024.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 134,
+      "phase": 1,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 135,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 136,
+      "phase": 1,
+      "fitness": 1026.9,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 137,
+      "phase": 1,
+      "fitness": 20.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 138,
+      "phase": 1,
+      "fitness": 1026.0,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 139,
+      "phase": 1,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 140,
+      "phase": 1,
+      "fitness": 20.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 141,
+      "phase": 1,
+      "fitness": 23.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 142,
+      "phase": 1,
+      "fitness": 1024.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 143,
+      "phase": 1,
+      "fitness": 27.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 144,
+      "phase": 1,
+      "fitness": 21.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 145,
+      "phase": 1,
+      "fitness": 21.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 146,
+      "phase": 1,
+      "fitness": 22.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 147,
+      "phase": 1,
+      "fitness": 28.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 148,
+      "phase": 1,
+      "fitness": 23.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 149,
+      "phase": 1,
+      "fitness": 24.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 150,
+      "phase": 1,
+      "fitness": 4022.2,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 151,
+      "phase": 1,
+      "fitness": 16.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 152,
+      "phase": 1,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 153,
+      "phase": 1,
+      "fitness": 18.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 154,
+      "phase": 1,
+      "fitness": 22.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 155,
+      "phase": 1,
+      "fitness": 23.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 156,
+      "phase": 1,
+      "fitness": 21.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 157,
+      "phase": 1,
+      "fitness": 23.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 158,
+      "phase": 1,
+      "fitness": 21.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 159,
+      "phase": 1,
+      "fitness": 17.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 160,
+      "phase": 1,
+      "fitness": 19.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 161,
+      "phase": 1,
+      "fitness": 20.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 162,
+      "phase": 1,
+      "fitness": 25.4,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 163,
+      "phase": 1,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 164,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 165,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 166,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 167,
+      "phase": 1,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 168,
+      "phase": 1,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 169,
+      "phase": 1,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 170,
+      "phase": 1,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 171,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 172,
+      "phase": 1,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 173,
+      "phase": 1,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 174,
+      "phase": 1,
+      "fitness": 20.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 175,
+      "phase": 1,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 176,
+      "phase": 1,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 177,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 178,
+      "phase": 1,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 179,
+      "phase": 1,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 180,
+      "phase": 1,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 181,
+      "phase": 1,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 182,
+      "phase": 1,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 183,
+      "phase": 1,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 184,
+      "phase": 1,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 185,
+      "phase": 1,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 186,
+      "phase": 1,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 187,
+      "phase": 1,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 188,
+      "phase": 1,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 189,
+      "phase": 1,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 190,
+      "phase": 1,
+      "fitness": 4022.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 191,
+      "phase": 1,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 192,
+      "phase": 1,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 193,
+      "phase": 1,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 194,
+      "phase": 1,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 195,
+      "phase": 1,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 196,
+      "phase": 1,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 197,
+      "phase": 1,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 198,
+      "phase": 1,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 199,
+      "phase": 1,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 200,
+      "phase": 2,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 201,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 202,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 203,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 204,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 205,
+      "phase": 2,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 206,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 207,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 208,
+      "phase": 2,
+      "fitness": 4022.5,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 209,
+      "phase": 2,
+      "fitness": 24.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 210,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 211,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 212,
+      "phase": 2,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 213,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 214,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 215,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 216,
+      "phase": 2,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 217,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 218,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 219,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 220,
+      "phase": 2,
+      "fitness": 26.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 221,
+      "phase": 2,
+      "fitness": 1013.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 222,
+      "phase": 2,
+      "fitness": 70.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 223,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 224,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 225,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 226,
+      "phase": 2,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 227,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 228,
+      "phase": 2,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 229,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 230,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 231,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 232,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 233,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 234,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 235,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 236,
+      "phase": 2,
+      "fitness": 19.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 237,
+      "phase": 2,
+      "fitness": 1027.2,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 238,
+      "phase": 2,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 239,
+      "phase": 2,
+      "fitness": 1026.3,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 240,
+      "phase": 2,
+      "fitness": 1026.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 241,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 242,
+      "phase": 2,
+      "fitness": 19.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 243,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 244,
+      "phase": 2,
+      "fitness": 18.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 245,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 246,
+      "phase": 2,
+      "fitness": 24.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 247,
+      "phase": 2,
+      "fitness": 4024.3,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 248,
+      "phase": 2,
+      "fitness": 25.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 249,
+      "phase": 2,
+      "fitness": 20.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 250,
+      "phase": 2,
+      "fitness": 22.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 251,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 252,
+      "phase": 2,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 253,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 254,
+      "phase": 2,
+      "fitness": 17.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 255,
+      "phase": 2,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 256,
+      "phase": 2,
+      "fitness": 15.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 257,
+      "phase": 2,
+      "fitness": 23.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 258,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 259,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 260,
+      "phase": 2,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 261,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 262,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 263,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 264,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 265,
+      "phase": 2,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 266,
+      "phase": 2,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 267,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 268,
+      "phase": 2,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 269,
+      "phase": 2,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 270,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 271,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 272,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 273,
+      "phase": 2,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 274,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 275,
+      "phase": 2,
+      "fitness": 4024.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 276,
+      "phase": 2,
+      "fitness": 1026.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 277,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 278,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 279,
+      "phase": 2,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 280,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 281,
+      "phase": 2,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 282,
+      "phase": 2,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 283,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 284,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 285,
+      "phase": 2,
+      "fitness": 5027.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 286,
+      "phase": 2,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 287,
+      "phase": 2,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 288,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 289,
+      "phase": 2,
+      "fitness": 15.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 290,
+      "phase": 2,
+      "fitness": 4018.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 291,
+      "phase": 2,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 292,
+      "phase": 2,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 293,
+      "phase": 2,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 294,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 295,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 296,
+      "phase": 2,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 297,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 298,
+      "phase": 2,
+      "fitness": 25.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 299,
+      "phase": 2,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 300,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 301,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 302,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 303,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 304,
+      "phase": 3,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 305,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 306,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 307,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 308,
+      "phase": 3,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 309,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 310,
+      "phase": 3,
+      "fitness": 5026.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 311,
+      "phase": 3,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 312,
+      "phase": 3,
+      "fitness": 24.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 313,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 314,
+      "phase": 3,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 315,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 316,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 317,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 318,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 319,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 320,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 321,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 322,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 323,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 324,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 325,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 326,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 327,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 328,
+      "phase": 3,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 329,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 330,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 331,
+      "phase": 3,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 332,
+      "phase": 3,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 333,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 334,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 335,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 336,
+      "phase": 3,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 337,
+      "phase": 3,
+      "fitness": 5025.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 338,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 339,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 340,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 341,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 342,
+      "phase": 3,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 343,
+      "phase": 3,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 344,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 345,
+      "phase": 3,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 346,
+      "phase": 3,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 347,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 348,
+      "phase": 3,
+      "fitness": 4022.8,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 349,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 350,
+      "phase": 3,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 351,
+      "phase": 3,
+      "fitness": 4017.8,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 352,
+      "phase": 3,
+      "fitness": 4.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 353,
+      "phase": 3,
+      "fitness": 1026.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 354,
+      "phase": 3,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 355,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 356,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 357,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 358,
+      "phase": 3,
+      "fitness": 20.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 359,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 360,
+      "phase": 3,
+      "fitness": 1025.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 361,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 362,
+      "phase": 3,
+      "fitness": 25.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 363,
+      "phase": 3,
+      "fitness": 18.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 364,
+      "phase": 3,
+      "fitness": 1000.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 365,
+      "phase": 3,
+      "fitness": 4021.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 366,
+      "phase": 3,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 367,
+      "phase": 3,
+      "fitness": 20.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 368,
+      "phase": 3,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 369,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 370,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 371,
+      "phase": 3,
+      "fitness": 21.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 372,
+      "phase": 3,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 373,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 374,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 375,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 376,
+      "phase": 3,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 377,
+      "phase": 3,
+      "fitness": 19.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 378,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 379,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 380,
+      "phase": 3,
+      "fitness": 15.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 381,
+      "phase": 3,
+      "fitness": 1027.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 382,
+      "phase": 3,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 383,
+      "phase": 3,
+      "fitness": 17.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 384,
+      "phase": 3,
+      "fitness": 1025.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 385,
+      "phase": 3,
+      "fitness": 25.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 386,
+      "phase": 3,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 387,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 388,
+      "phase": 3,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 389,
+      "phase": 3,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 390,
+      "phase": 3,
+      "fitness": 20.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 391,
+      "phase": 3,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 392,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 393,
+      "phase": 3,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 394,
+      "phase": 3,
+      "fitness": 1027.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 395,
+      "phase": 3,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 396,
+      "phase": 3,
+      "fitness": 8.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 397,
+      "phase": 3,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 398,
+      "phase": 3,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 399,
+      "phase": 3,
+      "fitness": 1026.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 400,
+      "phase": 4,
+      "fitness": 1026.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 401,
+      "phase": 4,
+      "fitness": 24.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 402,
+      "phase": 4,
+      "fitness": 1026.5,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 403,
+      "phase": 4,
+      "fitness": 4.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 404,
+      "phase": 4,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 405,
+      "phase": 4,
+      "fitness": 1026.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 406,
+      "phase": 4,
+      "fitness": 5027.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 407,
+      "phase": 4,
+      "fitness": 5026.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 408,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 409,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 410,
+      "phase": 4,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 411,
+      "phase": 4,
+      "fitness": 4025.8,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 412,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 413,
+      "phase": 4,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 414,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 415,
+      "phase": 4,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 416,
+      "phase": 4,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 417,
+      "phase": 4,
+      "fitness": 4017.8,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 418,
+      "phase": 4,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 419,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 420,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 421,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 422,
+      "phase": 4,
+      "fitness": 5030.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 423,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 424,
+      "phase": 4,
+      "fitness": 4.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 425,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 426,
+      "phase": 4,
+      "fitness": 5027.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 427,
+      "phase": 4,
+      "fitness": 5028.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 428,
+      "phase": 4,
+      "fitness": 5027.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 429,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 430,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 431,
+      "phase": 4,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 432,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 433,
+      "phase": 4,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 434,
+      "phase": 4,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 435,
+      "phase": 4,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 436,
+      "phase": 4,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 437,
+      "phase": 4,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 438,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 439,
+      "phase": 4,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 440,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 441,
+      "phase": 4,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 442,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 443,
+      "phase": 4,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 444,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 445,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 446,
+      "phase": 4,
+      "fitness": 16.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 447,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 448,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 449,
+      "phase": 4,
+      "fitness": 1024.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 450,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 451,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 452,
+      "phase": 4,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 453,
+      "phase": 4,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 454,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 455,
+      "phase": 4,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 456,
+      "phase": 4,
+      "fitness": 4025.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 457,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 458,
+      "phase": 4,
+      "fitness": 23.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 459,
+      "phase": 4,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 460,
+      "phase": 4,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 461,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 462,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 463,
+      "phase": 4,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 464,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 465,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 466,
+      "phase": 4,
+      "fitness": 1027.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 467,
+      "phase": 4,
+      "fitness": 4024.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 468,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 469,
+      "phase": 4,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 470,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 471,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 472,
+      "phase": 4,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 473,
+      "phase": 4,
+      "fitness": 4023.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 474,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 475,
+      "phase": 4,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 476,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 477,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 478,
+      "phase": 4,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 479,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 480,
+      "phase": 4,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 481,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 482,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 483,
+      "phase": 4,
+      "fitness": 1026.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 484,
+      "phase": 4,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 485,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 486,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 487,
+      "phase": 4,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 488,
+      "phase": 4,
+      "fitness": 25.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 489,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 490,
+      "phase": 4,
+      "fitness": 1025.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 491,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 492,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 493,
+      "phase": 4,
+      "fitness": 1026.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 494,
+      "phase": 4,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 495,
+      "phase": 4,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 496,
+      "phase": 4,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 497,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 498,
+      "phase": 4,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 499,
+      "phase": 4,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 500,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 501,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 502,
+      "phase": 5,
+      "fitness": 1026.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 503,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 504,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 505,
+      "phase": 5,
+      "fitness": 5027.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 506,
+      "phase": 5,
+      "fitness": 1024.6,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 507,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 508,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 509,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 510,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 511,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 512,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 513,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 514,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 515,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 516,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 517,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 518,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 519,
+      "phase": 5,
+      "fitness": 1026.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 520,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 521,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 522,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 523,
+      "phase": 5,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 524,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 525,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 526,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 527,
+      "phase": 5,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 528,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 529,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 530,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 531,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 532,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 533,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 534,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 535,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 536,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 537,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 538,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 539,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 540,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 541,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 542,
+      "phase": 5,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 543,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 544,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 545,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 546,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 547,
+      "phase": 5,
+      "fitness": 19.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 548,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 549,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 550,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 551,
+      "phase": 5,
+      "fitness": 4019.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 552,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 553,
+      "phase": 5,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 554,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 555,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 556,
+      "phase": 5,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 557,
+      "phase": 5,
+      "fitness": 5000.6,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 558,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 559,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 560,
+      "phase": 5,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 561,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 562,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 563,
+      "phase": 5,
+      "fitness": 1026.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 564,
+      "phase": 5,
+      "fitness": 22.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 565,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 566,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 567,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 568,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 569,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 570,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 571,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 572,
+      "phase": 5,
+      "fitness": 25.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 573,
+      "phase": 5,
+      "fitness": 15.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 574,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 575,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 576,
+      "phase": 5,
+      "fitness": 18.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 577,
+      "phase": 5,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 578,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 579,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 580,
+      "phase": 5,
+      "fitness": 4020.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 581,
+      "phase": 5,
+      "fitness": 1026.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 582,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 583,
+      "phase": 5,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 584,
+      "phase": 5,
+      "fitness": 4020.7,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 585,
+      "phase": 5,
+      "fitness": 17.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 586,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 587,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 588,
+      "phase": 5,
+      "fitness": 24.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 589,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 590,
+      "phase": 5,
+      "fitness": 1025.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 591,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 592,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 593,
+      "phase": 5,
+      "fitness": 22.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 594,
+      "phase": 5,
+      "fitness": 21.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 595,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 596,
+      "phase": 5,
+      "fitness": 20.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 597,
+      "phase": 5,
+      "fitness": 23.8,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 598,
+      "phase": 5,
+      "fitness": 1024.7,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 599,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 600,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 601,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 602,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 603,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 604,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 605,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 606,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 607,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 608,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 609,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 610,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 611,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 612,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 613,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 614,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 615,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 616,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 617,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 618,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 619,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 620,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 621,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 622,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 623,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 624,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 625,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 626,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 627,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 628,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 629,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 630,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 631,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 632,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 633,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 634,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 635,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 636,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 637,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 638,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 639,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 640,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 641,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 642,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 643,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 644,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 645,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 646,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 647,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 648,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 649,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 650,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 651,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 652,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 653,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 654,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 655,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 656,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 657,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 658,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 659,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 660,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 661,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 662,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 663,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 664,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 665,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 666,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 667,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 668,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 669,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 670,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 671,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 672,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 673,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 674,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 675,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 676,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 677,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 678,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 679,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 680,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 681,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 682,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 683,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 684,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 685,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 686,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 687,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 688,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 689,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 690,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 691,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 692,
+      "phase": 5,
+      "fitness": 6999.9,
+      "carry": 0,
+      "store": 1
+    },
+    {
+      "gen": 693,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 694,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 695,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 696,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 697,
+      "phase": 5,
+      "fitness": -0.1,
+      "carry": 0,
+      "store": 0
+    },
+    {
+      "gen": 698,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    },
+    {
+      "gen": 699,
+      "phase": 5,
+      "fitness": 3999.9,
+      "carry": 1,
+      "store": 0
+    }
+  ]
+}

@@ -1,0 +1,624 @@
+{
+  "nodes": [
+    {
+      "node_id": 0,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "left_sensor",
+      "delay_steps": 1,
+      "innovation_id": 198248,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        0.02734394054941885,
+        0.2530261617009826,
+        -0.16230550839534205,
+        0.1000713558117644,
+        -0.11970807953214202,
+        0.12567076137398323,
+        -0.12775020424657912,
+        -0.08412397889974102
+      ],
+      "distance_weights": [
+        0.14572594016501778,
+        -0.13446726767972492,
+        -0.7198067809386848
+      ],
+      "target_type_weights": [
+        -0.03981579561021213,
+        -0.49152190277545715,
+        0.24999648674139002,
+        0.21866580607350347
+      ]
+    },
+    {
+      "node_id": 1,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "right_sensor",
+      "delay_steps": 1,
+      "innovation_id": 198249,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        -0.047586159674781144,
+        -0.1830446543250736,
+        0.18973736544492298,
+        0.0499313029272651,
+        0.01933190862166207,
+        -0.3198712565026917,
+        0.04205284779627542,
+        -0.1484444954087285
+      ],
+      "distance_weights": [
+        -0.27676256941941746,
+        0.25966841478246055,
+        -0.46356900628208453
+      ],
+      "target_type_weights": [
+        0.3015380641954124,
+        -0.40728077291693876,
+        0.08874461802971192,
+        0.20243653487933638
+      ]
+    },
+    {
+      "node_id": 2,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "left_actuator",
+      "delay_steps": 1,
+      "innovation_id": 198250,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 3,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "right_actuator",
+      "delay_steps": 1,
+      "innovation_id": 198251,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 4,
+      "node_type": "PREDICTOR",
+      "constant_value": 0.0,
+      "name": "left_predictor",
+      "delay_steps": 1,
+      "innovation_id": 198252,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 5,
+      "node_type": "PREDICTOR",
+      "constant_value": 0.0,
+      "name": "right_predictor",
+      "delay_steps": 1,
+      "innovation_id": 198253,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 100,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 198254,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 101,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 198255,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 102,
+      "node_type": "PORT_REPAIR",
+      "constant_value": 0.0,
+      "name": "PORT_REPAIR",
+      "delay_steps": 1,
+      "innovation_id": 198256,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 103,
+      "node_type": "PORT_OFFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_OFFENSE",
+      "delay_steps": 1,
+      "innovation_id": 198257,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 104,
+      "node_type": "PORT_DEFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_DEFENSE",
+      "delay_steps": 1,
+      "innovation_id": 198258,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 10,
+      "node_type": "DELAY",
+      "constant_value": 0.0,
+      "name": "DELAY",
+      "delay_steps": 4,
+      "innovation_id": 198259,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 9,
+      "node_type": "MULTIPLY",
+      "constant_value": 0.0,
+      "name": "MULTIPLY_9",
+      "delay_steps": 1,
+      "innovation_id": 198260,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 7,
+      "node_type": "THRESHOLD",
+      "constant_value": 0.0,
+      "name": "T1",
+      "delay_steps": 1,
+      "innovation_id": 198261,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 8,
+      "node_type": "MULTIPLY",
+      "constant_value": 0.0,
+      "name": "MULTIPLY_8",
+      "delay_steps": 1,
+      "innovation_id": 198262,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 105,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198263,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 106,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198264,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 107,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198265,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 108,
+      "node_type": "MULTIPLY",
+      "constant_value": 0.0,
+      "name": "MULTIPLY_108",
+      "delay_steps": 1,
+      "innovation_id": 198266,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 109,
+      "node_type": "MULTIPLY",
+      "constant_value": 0.0,
+      "name": "MULTIPLY_109",
+      "delay_steps": 1,
+      "innovation_id": 198267,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 110,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198268,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 111,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198269,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 112,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198270,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    },
+    {
+      "node_id": 113,
+      "node_type": "META_NODE",
+      "constant_value": 0.0,
+      "name": "META",
+      "delay_steps": 1,
+      "innovation_id": 198271,
+      "is_frozen": false,
+      "stability": 0.9702989999999999
+    }
+  ],
+  "edges": [
+    {
+      "source_id": 0,
+      "target_id": 2,
+      "weight": 0.9729282538060344,
+      "enabled": true,
+      "learning_rate": 0.09584743047298756,
+      "innovation_id": 194854
+    },
+    {
+      "source_id": 1,
+      "target_id": 3,
+      "weight": 0.9709255496917335,
+      "enabled": true,
+      "learning_rate": 0.025623783609094293,
+      "innovation_id": 194855
+    },
+    {
+      "source_id": 0,
+      "target_id": 3,
+      "weight": -0.5593994942087215,
+      "enabled": true,
+      "learning_rate": 0.06077633524849574,
+      "innovation_id": 194856
+    },
+    {
+      "source_id": 1,
+      "target_id": 2,
+      "weight": -0.529862921996023,
+      "enabled": false,
+      "learning_rate": 0.0,
+      "innovation_id": 194857
+    },
+    {
+      "source_id": 2,
+      "target_id": 10,
+      "weight": 0.9999706767243507,
+      "enabled": false,
+      "learning_rate": 0.068282942082973,
+      "innovation_id": 194858
+    },
+    {
+      "source_id": 10,
+      "target_id": 2,
+      "weight": 0.9098393987860252,
+      "enabled": true,
+      "learning_rate": 0.04194178552804643,
+      "innovation_id": 194859
+    },
+    {
+      "source_id": 10,
+      "target_id": 3,
+      "weight": 0.6160279663578183,
+      "enabled": true,
+      "learning_rate": 0.06426901647972014,
+      "innovation_id": 194860
+    },
+    {
+      "source_id": 10,
+      "target_id": 4,
+      "weight": 0.8793871142440564,
+      "enabled": true,
+      "learning_rate": 0.08863297697413691,
+      "innovation_id": 194861
+    },
+    {
+      "source_id": 4,
+      "target_id": 5,
+      "weight": 0.5059762841664716,
+      "enabled": true,
+      "learning_rate": 0.08500075481969518,
+      "innovation_id": 194862
+    },
+    {
+      "source_id": 5,
+      "target_id": 7,
+      "weight": -0.25096050675724285,
+      "enabled": true,
+      "learning_rate": 0.03185210683426073,
+      "innovation_id": 194863
+    },
+    {
+      "source_id": 7,
+      "target_id": 4,
+      "weight": 0.9664468525949623,
+      "enabled": true,
+      "learning_rate": 0.04949806083520326,
+      "innovation_id": 194864
+    },
+    {
+      "source_id": 4,
+      "target_id": 105,
+      "weight": 0.9431384207796182,
+      "enabled": true,
+      "learning_rate": 0.044242016515186784,
+      "innovation_id": 194865
+    },
+    {
+      "source_id": 10,
+      "target_id": 105,
+      "weight": 0.9897938795582838,
+      "enabled": true,
+      "learning_rate": 0.0881232444679412,
+      "innovation_id": 194866
+    },
+    {
+      "source_id": 1,
+      "target_id": 106,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.020762487835100433,
+      "innovation_id": 194867
+    },
+    {
+      "source_id": 3,
+      "target_id": 106,
+      "weight": 0.7975534636889362,
+      "enabled": true,
+      "learning_rate": 0.036432180885380895,
+      "innovation_id": 194868
+    },
+    {
+      "source_id": 2,
+      "target_id": 107,
+      "weight": 0.792019644514549,
+      "enabled": true,
+      "learning_rate": 0.06644090706882833,
+      "innovation_id": 194869
+    },
+    {
+      "source_id": 10,
+      "target_id": 107,
+      "weight": 0.9969196694866177,
+      "enabled": true,
+      "learning_rate": 0.06942065276788957,
+      "innovation_id": 194870
+    },
+    {
+      "source_id": 1,
+      "target_id": 10,
+      "weight": 0.8749861165296026,
+      "enabled": true,
+      "learning_rate": 0.007326462772378351,
+      "innovation_id": 194871
+    },
+    {
+      "source_id": 10,
+      "target_id": 9,
+      "weight": 0.13996567262609164,
+      "enabled": true,
+      "learning_rate": 0.009147103736534747,
+      "innovation_id": 194872
+    },
+    {
+      "source_id": 0,
+      "target_id": 9,
+      "weight": 0.35867905245942333,
+      "enabled": true,
+      "learning_rate": 0.08980885972158036,
+      "innovation_id": 194873
+    },
+    {
+      "source_id": 2,
+      "target_id": 108,
+      "weight": 0.9784741110044634,
+      "enabled": true,
+      "learning_rate": 0.03567660707668065,
+      "innovation_id": 194874
+    },
+    {
+      "source_id": 108,
+      "target_id": 10,
+      "weight": 0.9203730367488808,
+      "enabled": true,
+      "learning_rate": 0.02641747581929281,
+      "innovation_id": 194875
+    },
+    {
+      "source_id": 1,
+      "target_id": 109,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.014527153416097734,
+      "innovation_id": 194876
+    },
+    {
+      "source_id": 109,
+      "target_id": 2,
+      "weight": -0.6462381425069067,
+      "enabled": true,
+      "learning_rate": 0.004216294004254613,
+      "innovation_id": 194877
+    },
+    {
+      "source_id": 2,
+      "target_id": 110,
+      "weight": 0.7453029626337627,
+      "enabled": true,
+      "learning_rate": 0.02106371437562152,
+      "innovation_id": 194878
+    },
+    {
+      "source_id": 108,
+      "target_id": 110,
+      "weight": 0.9718481065507085,
+      "enabled": true,
+      "learning_rate": 0.09499839871514368,
+      "innovation_id": 194879
+    },
+    {
+      "source_id": 1,
+      "target_id": 111,
+      "weight": 0.8307200324323322,
+      "enabled": true,
+      "learning_rate": 0.027480340199768517,
+      "innovation_id": 194880
+    },
+    {
+      "source_id": 109,
+      "target_id": 111,
+      "weight": 1.0,
+      "enabled": true,
+      "learning_rate": 0.08513725506152993,
+      "innovation_id": 194881
+    },
+    {
+      "source_id": 9,
+      "target_id": 5,
+      "weight": -0.3182709781948437,
+      "enabled": true,
+      "learning_rate": 0.06323255443735057,
+      "innovation_id": 194882
+    },
+    {
+      "source_id": 0,
+      "target_id": 112,
+      "weight": 0.9748605076114406,
+      "enabled": true,
+      "learning_rate": 0.09447275217665889,
+      "innovation_id": 194883
+    },
+    {
+      "source_id": 2,
+      "target_id": 112,
+      "weight": 0.9785464727739107,
+      "enabled": true,
+      "learning_rate": 0.08267263942291848,
+      "innovation_id": 194884
+    },
+    {
+      "source_id": 10,
+      "target_id": 108,
+      "weight": 0.18049374978323554,
+      "enabled": true,
+      "learning_rate": 0.07269906899318583,
+      "innovation_id": 194885
+    },
+    {
+      "source_id": 8,
+      "target_id": 108,
+      "weight": 0.03877750926708134,
+      "enabled": true,
+      "learning_rate": 0.04540938983025735,
+      "innovation_id": 194886
+    },
+    {
+      "source_id": 5,
+      "target_id": 2,
+      "weight": 0.8572438362926665,
+      "enabled": true,
+      "learning_rate": 0.023595582063085475,
+      "innovation_id": 194887
+    },
+    {
+      "source_id": 1,
+      "target_id": 113,
+      "weight": 0.993059859481182,
+      "enabled": true,
+      "learning_rate": 0.062784856392036,
+      "innovation_id": 194888
+    },
+    {
+      "source_id": 109,
+      "target_id": 113,
+      "weight": 0.8874353587245943,
+      "enabled": true,
+      "learning_rate": 0.01397468117248938,
+      "innovation_id": 194889
+    },
+    {
+      "source_id": 8,
+      "target_id": 109,
+      "weight": -0.11345585934406704,
+      "enabled": true,
+      "learning_rate": 0.09255105769832198,
+      "innovation_id": 194890
+    },
+    {
+      "source_id": 0,
+      "target_id": 5,
+      "weight": -0.2897398379562049,
+      "enabled": true,
+      "learning_rate": 0.07321409946340582,
+      "innovation_id": 194891
+    },
+    {
+      "source_id": 9,
+      "target_id": 4,
+      "weight": -0.44248352130394697,
+      "enabled": true,
+      "learning_rate": 0.08823539848359224,
+      "innovation_id": 194892
+    },
+    {
+      "source_id": 10,
+      "target_id": 109,
+      "weight": -0.062066931446077375,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 194893
+    },
+    {
+      "source_id": 109,
+      "target_id": 3,
+      "weight": -0.04424638793840019,
+      "enabled": true,
+      "learning_rate": 0.08064884220997194,
+      "innovation_id": 194894
+    },
+    {
+      "source_id": 9,
+      "target_id": 8,
+      "weight": -0.8497736204260479,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 194895
+    }
+  ]
+}

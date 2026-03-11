@@ -1,0 +1,12 @@
+{
+  "version": "v0.95",
+  "fitness": 9029,
+  "description": "终极挑战 - 混合地形+气味盲区+物流大考",
+  "n_nodes": 32,
+  "n_edges": 52,
+  "stats": {
+    "carry": 2,
+    "store": 0,
+    "detour": 0
+  }
+}
