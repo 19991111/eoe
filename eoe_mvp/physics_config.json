@@ -24,8 +24,7 @@
   "ontogenetic_phase": {
     "enabled": true,
     "juvenile_duration": 60,
-    "juvenile_metabolic_rate": 0.25,
-    "juvenile_cold_immunity": true
+    "juvenile_metabolic_rate": 0.25
   },
-  "notes": "Updated by LLM Demiurge"
+  "notes": "\u6e29\u67d4\u521d\u59cb\u914d\u7f6e"
 }

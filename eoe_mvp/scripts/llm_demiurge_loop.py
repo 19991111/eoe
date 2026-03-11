@@ -722,25 +722,99 @@ def generate_epoch_report(epoch_data: Dict[str, Any]) -> str:
     total_energy_in = sum(energy_in)
     total_energy_out = sum(energy_out)
     
-    # ========== 4. 脑容积趋势 ==========
+    # ========== 4. 脑容积趋势 + 脑部热图 ==========
     node_counts = []
     edge_counts = []
+    elite_nodes = []  # 精英个体的节点数
+    elite_edges = []  # 精英个体的边数
+    operator_counts = {
+        'SENSOR': 0, 'DELAY': 0, 'MOTOR': 0, 
+        'META': 0, 'COMPOSITE': 0, 'THRESHOLD': 0
+    }
+    
+    # 找出精英个体 (适应度前20%)
+    fitnesses = [getattr(a, 'fitness', 0) for a in agents if hasattr(a, 'fitness')]
+    if fitnesses:
+        threshold = np.percentile(fitnesses, 80)  # 前20%
+    else:
+        threshold = 0
     
     for agent in agents:
         if hasattr(agent, 'genome') and agent.genome:
             info = agent.genome.get_info()
             node_counts.append(info.get('total_nodes', 0))
             edge_counts.append(info.get('enabled_edges', 0))
+            
+            # 统计精英个体
+            fitness = getattr(agent, 'fitness', 0)
+            if fitness >= threshold and fitness > 0:
+                elite_nodes.append(info.get('total_nodes', 0))
+                elite_edges.append(info.get('enabled_edges', 0))
+            
+            # 统计算子分布
+            if 'operator_distribution' in info:
+                for op, count in info['operator_distribution'].items():
+                    operator_counts[op] = operator_counts.get(op, 0) + count
     
     avg_nodes = np.mean(node_counts) if node_counts else 0
     avg_edges = np.mean(edge_counts) if edge_counts else 0
     max_nodes = max(node_counts) if node_counts else 0
     max_edges = max(edge_counts) if edge_counts else 0
     
+    # 精英个体脑部统计
+    avg_elite_nodes = np.mean(elite_nodes) if elite_nodes else 0
+    avg_elite_edges = np.mean(elite_edges) if elite_edges else 0
+    
+    # 连接密度 = 边数 / (节点数*(节点数-1)/2)
+    connection_density = avg_edges / max(1, avg_nodes * (avg_nodes - 1) / 2) if avg_nodes > 1 else 0
+    
     # 复杂度变化趋势
     complexity_trend = "上升" if avg_nodes > 5 else "稳定"
     if avg_nodes < 3:
         complexity_trend = "下降/简化"
+    
+    # ========== 5. 适应度瓶颈检测 ==========
+    bottleneck_warning = ""
+    if total_food_stored == 0 and generation > 50:
+        # 检查是否是冬天太早或吸附太弱
+        winter_length = getattr(env, 'season_length', 50) if env else 50
+        winter_multiplier = getattr(env, 'winter_metabolic_multiplier', 2.0) if env else 2.0
+        adhesion_range = getattr(env, 'adhesion_range', 2.0) if env else 2.0
+        
+        bottleneck_warning = f"""
+================================================================================
+                         🚨 适应度瓶颈警告
+================================================================================
+
+经过 {generation} 代演化，种群尚未发现贮粮机制！
+
+可能原因分析:
+1. 冬天过早降临: 季节长度={winter_length}帧, 冬季代谢倍率={winter_multiplier}x
+   → Agent可能在学会贮粮前就冻死
+
+2. 吸附力过弱: 吸附范围={adhesion_range}
+   → Agent可能无法有效携带食物
+
+3. 代谢压力过大: 当前环境可能不适合长链路行为涌现
+
+建议调整方向:
+- 延长夏天，给Agent足够时间学习贮粮
+- 增强吸附力（提高adhesion_range）
+- 降低冬季代谢惩罚
+- 或增强贮粮奖励（food_stored奖励）
+"""
+    
+    # 累积贮粮统计（如果有历史数据）
+    cumulative_stored = total_food_stored
+    if hasattr(env, 'nest_stored_food'):
+        cumulative_stored = env.nest_stored_food
+    
+    if cumulative_stored == 0 and generation > 100:
+        bottleneck_warning += f"""
+
+⚠️ 重要: 经过100+代仍无贮粮行为，这是关键的演化瓶颈！
+建议: 考虑大幅降低冬天压力或增加贮粮激励
+"""
     
     # ========== 构建报告文本 ==========
     report = f"""
@@ -783,20 +857,37 @@ def generate_epoch_report(epoch_data: Dict[str, Any]) -> str:
   
   能量效率: {total_energy_in / max(1, total_energy_out) * 100:.1f}%
 
-【维度四】🧠 脑容积趋势
+【维度四】🧠 脑容积趋势 + 脑部热图
 ────────────────────────────────────────────────────────────────────────────────
   平均节点数: {avg_nodes:.1f}
   平均边数: {avg_edges:.1f}
   最大节点: {max_nodes} | 最大边: {max_edges}
+  连接密度: {connection_density:.2%}
   
   复杂度趋势: {complexity_trend}
   
+  精英个体(前20%)脑部统计:
+    • 平均节点: {avg_elite_nodes:.1f}
+    • 平均边数: {avg_elite_edges:.1f}
+  
+  算子分布 (Operator Distribution):
+    • SENSOR: {operator_counts.get('SENSOR', 0)}
+    • DELAY: {operator_counts.get('DELAY', 0)}
+    • MOTOR: {operator_counts.get('MOTOR', 0)}
+    • META: {operator_counts.get('META', 0)}
+    • THRESHOLD: {operator_counts.get('THRESHOLD', 0)}
+  
   {"⚠️ 脑复杂度偏低，神经网络可能过于简单" if avg_nodes < 5 else "✅ 神经复杂度正常"}
+
+{bottleneck_warning}
 
 ================================================================================
                            当前物理环境参数
 ================================================================================
 """
+    
+    # 格式化bottleneck_warning
+    bottleneck_warning = bottleneck_warning if bottleneck_warning else ""
     
     # 添加当前物理参数
     if env:
