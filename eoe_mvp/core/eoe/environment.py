@@ -849,6 +849,7 @@ class Environment:
         self.stress_field_enabled = stress_field_enabled
         self.base_diffusion_rate = field_diffusion_rate  # 保存基准值
         self.base_decay_rate = field_decay_rate          # 保存基准值
+        self.stress_metabolic_multiplier = 1.0           # ESF 代谢调制
         
         if stress_field_enabled:
             # 初始化应力场
@@ -3325,6 +3326,9 @@ class Environment:
         # v0.78: 冬天代谢加成
         if self.seasonal_cycle and self.current_season == "winter":
             metabolic_multiplier *= self.winter_metabolic_multiplier
+        # v13.0: ESF 应力场调制
+        if self.stress_field_enabled:
+            metabolic_multiplier *= self.stress_metabolic_multiplier
 
         # ============================================================
         # v4.0: 更新诱饵位置

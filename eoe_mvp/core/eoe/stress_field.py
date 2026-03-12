@@ -230,9 +230,9 @@ class StressField:
             # 限制最大增幅
             np.clip(env.impedance_field.field, 0, 1000, out=env.impedance_field.field)
         
-        # 3. 应力 → 代谢倍率
+        # 3. 应力 → 代谢倍率 (存储到环境属性)
         met_stress = stress_vals.get('metabolic', 1.0)
-        env.metabolic_multiplier *= met_stress
+        env.stress_metabolic_multiplier = met_stress  # 供 step() 读取
         
     def get_heatmap_data(self) -> np.ndarray:
         """获取热力图数据"""
