@@ -1281,6 +1281,15 @@ class Population:
             self.environment.step()
             
             # ============================================================
+            # v13.0: 早停检查 (能量 <= 0 立即终止)
+            # ============================================================
+            for agent in self.agents:
+                if agent.is_alive and hasattr(agent, 'internal_energy'):
+                    if agent.internal_energy <= 0:
+                        agent.is_alive = False
+                        agent.steps_alive = step  # 记录存活步数
+            
+            # ============================================================
             # v4.1: 内部循环噪声 (当传感器输入低时)
             # ============================================================
             for agent in self.agents:
@@ -1652,6 +1661,16 @@ class Population:
         self.agents = new_agents
         self.environment.agents = new_agents
         self.generation += 1
+        
+        # ============================================================
+        # v13.0: 跨代生态遗产 - ISF场衰减保留
+        # 代际更替时，保留信息场但做衰减，让跨代路径可继承
+        # ============================================================
+        if hasattr(self.environment, 'stigmergy_field_enabled') and self.environment.stigmergy_field_enabled:
+            if hasattr(self.environment, 'stigmergy_field') and self.environment.stigmergy_field:
+                # ISF 衰减50% (保留跨代路径)
+                self.environment.stigmergy_field.field *= 0.5
+                print(f"  [ISF] Trans-generational遗产保留: 衰减50%")
         
         # v0.80: 红皇后 - 定时刷新敌对
         if self.red_queen:
@@ -2296,7 +2315,7 @@ def demo_evolution():
     pop = Population(
         population_size=50,   # 50 个智能体
         elite_ratio=0.2,      # top 20% 精英
-        lifespan=200,         # 200 步生命周期
+        lifespan=1500,        # v13.0: 1500 步生命周期 (适应场扩散物理)
         metabolic_alpha=0.1,  # 节点代谢惩罚
         metabolic_beta=0.05   # 边代谢惩罚
     )

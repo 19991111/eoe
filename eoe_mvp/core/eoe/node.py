@@ -75,6 +75,41 @@ class NodeType(Enum):
     POLY = auto()           # 多项式算子
     SWITCH = auto()         # 开关算子
     MACRO_EX = auto()       # 扩展宏算子
+    
+    # ============================================================
+    # v13.0 统一场物理系统 - 传感器节点
+    # 输入层：直接感知四个场的中心值与梯度
+    # ============================================================
+    # EPF 能量场感知 (3节点)
+    SENSE_EPF_CENTER = auto()   # 能量场中心值 E(x,y)
+    SENSE_EPF_GRAD_X = auto()   # 能量梯度 ∂E/∂x
+    SENSE_EPF_GRAD_Y = auto()   # 能量梯度 ∂E/∂y
+    
+    # KIF 阻抗场感知 (3节点)
+    SENSE_KIF_CENTER = auto()   # 阻抗场中心值 Z(x,y)
+    SENSE_KIF_GRAD_X = auto()   # 阻抗梯度 ∂Z/∂x
+    SENSE_KIF_GRAD_Y = auto()   # 阻抗梯度 ∂Z/∂y
+    
+    # ISF 压痕场感知 (3节点)
+    SENSE_ISF_CENTER = auto()   # 压痕场中心值 S(x,y)
+    SENSE_ISF_GRAD_X = auto()   # 压痕梯度 ∂S/∂x
+    SENSE_ISF_GRAD_Y = auto()   # 压痕梯度 ∂S/∂y
+    
+    # ESF 应力场感知 (1节点)
+    SENSE_ESF_VAL = auto()      # 应力值 σ(t)
+    
+    # 内部状态感知 (1节点)
+    SENSE_INTERNAL_ENERGY = auto()  # 体内能量余额
+    
+    # ============================================================
+    # v13.0 统一场物理系统 - 执行器节点
+    # 输出层：严格绑定激活函数的物理致动器
+    # ============================================================
+    ACTUATOR_PERMEABILITY = auto()  # κ 渗透率 [0,1] - Sigmoid
+    ACTUATOR_THRUST_X = auto()      # Fx 推力X [-1,1] - Tanh
+    ACTUATOR_THRUST_Y = auto()      # Fy 推力Y [-1,1] - Tanh
+    ACTUATOR_SIGNAL = auto()        # λ 信号强度 [0,1] - ReLU/Sigmoid
+    ACTUATOR_DEFENSE = auto()       # S 防御刚性 [0,1] - Sigmoid
 
 
 class Node:

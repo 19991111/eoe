@@ -871,6 +871,17 @@ class Environment:
             self.stress_law = None
 
         # ============================================================
+        # v13.0: 预计算梯度矩阵 (性能优化)
+        # 在Environment层级全局计算一次，Agent只做O(1)索引
+        # ============================================================
+        self.epf_grad_x: Optional[np.ndarray] = None
+        self.epf_grad_y: Optional[np.ndarray] = None
+        self.kif_grad_x: Optional[np.ndarray] = None
+        self.kif_grad_y: Optional[np.ndarray] = None
+        self.isf_grad_x: Optional[np.ndarray] = None
+        self.isf_grad_y: Optional[np.ndarray] = None
+
+        # ============================================================
         # 多食物系统 (马尔萨斯竞速)
         # ============================================================
         self.n_food = n_food
@@ -3278,6 +3289,19 @@ class Environment:
         # ============================================================
         if self.stress_field_enabled and self.stress_field:
             self.stress_field.apply_coupling(self, self.step_count)
+
+        # ============================================================
+        # v13.0: 预计算梯度矩阵 (性能优化)
+        # 在环境层级计算一次梯度，Agent只做O(1)索引
+        # ============================================================
+        if self.energy_field_enabled and self.energy_field:
+            self.epf_grad_y, self.epf_grad_x = np.gradient(self.energy_field.field)
+        
+        if self.impedance_field_enabled and self.impedance_field:
+            self.kif_grad_y, self.kif_grad_x = np.gradient(self.impedance_field.field)
+        
+        if self.stigmergy_field_enabled and self.stigmergy_field:
+            self.isf_grad_y, self.isf_grad_x = np.gradient(self.stigmergy_field.field)
 
         # ============================================================
         # v8.0: 无尽边疆 - 区块加载
