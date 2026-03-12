@@ -29,9 +29,10 @@ python -c "from core.eoe.brain_manager import BrainManager; mgr = BrainManager()
 
 ## 当前版本
 
-- **核心引擎**: v12.6
+- **核心引擎**: v13.0 (GPU重构版)
 - **物理法则**: 8个已注册
-- **实验脚本**: v11.1
+- **GPU加速**: 210x (PyTorch + VRAM常驻)
+- **实验脚本**: v13.0 (main_v13_gpu.py)
 
 ---
 

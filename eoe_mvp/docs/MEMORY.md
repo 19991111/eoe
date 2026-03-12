@@ -36,15 +36,17 @@
 
 | 组件 | 版本 | 说明 |
 |------|------|------|
-| **核心引擎** | v13.0 | EnergyField物理系统 + ThermodynamicLaw |
+| **核心引擎** | v13.0 | EnergyField物理系统 + GPU批量系统 |
 | **物理法则** | v13.0 | 能量场+渗透膜+热力学交换 |
+| **GPU加速** | v13.0 | PyTorch张量 + VRAM常驻 |
 | **大脑管理** | v1.0 | BrainManager |
-| **实验脚本** | v13.0 | 待开发 |
+| **实验脚本** | v13.0 | main_v13_gpu.py |
 
 ### 2.3 版本历史
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| v13.0 | 2026-03-12 | **GPU重构** - fields模块 + batch模块 + 统一API (210x加速) |
 | v13.0 | 2026-03-12 | **能量场物理系统** - 连续标量场E(x,y)替代离散食物、扩散方程、能量源、渗透膜κ、热力学交换法则 |
 | v12.6 | 2026-03-12 | 全部8个PhysicalLaw迁移完成 |
 | v12.5 | 2026-03-12 | MechanismRegistry注册系统 |
@@ -59,19 +61,52 @@
 
 ## 三、架构体系
 
-### 3.1 核心模块
+### 3.1 核心模块 (v13.0 GPU架构)
 
 ```
 core/eoe/
-├── manifest.py              # 唯一配置源 (SSOT) - 38参数
-├── environment_v12.py       # 活跃环境 (基于manifest)
-├── agent.py                 # 智能体定义
+├── __init__.py              # 统一API导出
+├── version.py               # 版本信息
+│
+├── fields/                  # [NEW] 物理场模块
+│   ├── __init__.py
+│   ├── base.py             # Field抽象基类
+│   ├── energy.py           # EPF能量场
+│   ├── impedance.py        # KIF阻抗场
+│   └── stigmergy.py        # ISF压痕场
+│
+├── batch/                   # [NEW] 批量GPU系统
+│   ├── __init__.py
+│   ├── state.py            # AgentState容器
+│   ├── thermo.py           # 热力学定律
+│   └── simulation.py       # 统一仿真入口
+│
+├── agent.py                 # 智能体定义 (CPU兼容)
 ├── genome.py                # 基因组与演化
 ├── node.py                  # 神经网络节点
 ├── population.py            # 种群管理
 ├── brain_manager.py         # 大脑管理系统
+├── manifest.py              # 物理法则配置
+├── environment.py           # CPU环境 (向后兼容)
+├── environment_gpu.py       # GPU环境 (旧版)
 └── _archive/                # 已归档代码
     └── environment_v11.py   # 旧版环境
+```
+
+### 3.2 新API使用
+
+```python
+# 方式1: 一行启动 (推荐)
+from core.eoe import run
+history = run(n_agents=1000, steps=1500)
+
+# 方式2: 详细控制
+from core.eoe import Simulation
+sim = Simulation(n_agents=1000, device='cuda:0')
+history = sim.run()
+
+# 方式3: 命令行
+python main_v13_gpu.py --agents 1000 --steps 1500
 ```
 
 ### 3.2 物理法则 (8个已注册)
@@ -118,23 +153,24 @@ core/eoe/
 
 | 文档 | 状态 | 说明 |
 |------|------|------|
-| PROJECT_TRACKER.md | 活跃 | 核心追踪器 |
-| EOE_PROJECT_STATE.md | 活跃 | 跨会话状态同步 |
-| MECHANISM_ARCHITECTURE.md | 活跃 | 机制架构总览 |
-| MIGRATION_GUIDE_v12.md | 活跃 | v12迁移指南 |
-| BRAIN_MANAGEMENT.md | 活跃 | 大脑管理方案 |
+| QUICKSTART.md | 活跃 | 快速入门 (v13.0) |
+| API_REFERENCE.md | 活跃 | API参考 (v13.0) |
+| ARCHITECTURE.md | 活跃 | 架构设计 (v13.0) |
+| REFACTORING_PLAN.md | 活跃 | 重构方案 |
 | VERSION_MANAGEMENT.md | 活跃 | 版本规范与历史 |
 | MEMORY.md | 活跃 | 本文件 - 项目记忆 |
 
 ### 4.2 脚本管理
 
-#### 活跃脚本 (4个)
+#### 活跃脚本 (v13.0)
 ```
 scripts/
-├── run_stage4_v111_crucible_test.py  → v11.1
-├── run_stage4_v110_fast.py           → v11.0
-├── run_stage4_v110.py                → v11.0
-└── test_crucible_mini.py             → v11.1
+├── main_v13_gpu.py                   # 统一入口 (v13.0 GPU)
+├── profile_v13_performance.py        # 性能探针
+├── profile_v13_simple.py             # 简化探针
+├── integrated_simulation.py          # 热力学集成
+├── demiurge_render.py                # 可视化渲染
+└── run_stage4_v111_crucible_test.py  # 旧版脚本 (保留)
 ```
 
 #### 归档脚本
@@ -228,7 +264,27 @@ eoe_mvp/
 
 ### 6.1 硬件
 - **GPU**: 4x NVIDIA A100 80GB
-- **环境**: conda IC
+- **PyTorch**: 2.9.1+cu128
+- **CuPy**: 13.6.0
+
+### 6.2 GPU性能 (v13.0)
+
+| 配置 | 每步耗时 | 吞吐量 | 加速比 |
+|------|---------|--------|--------|
+| CPU (原版) | ~350ms | 2.8K/s | 1x |
+| 100 agents GPU | ~15ms | 6.7K/s | 23x |
+| 500 agents GPU | ~16ms | 31K/s | 22x |
+| 1000 agents GPU | ~17ms | 59K/s | 21x |
+| 2000 agents GPU | ~18ms | 115K/s | 19x |
+
+**1500步完整代**: ~26秒 (vs CPU 525秒 = **20x加速**)
+
+### 6.3 关键技术
+
+- **100% VRAM常驻**: 无CPU-GPU数据传输
+- **批量张量操作**: 矩阵乘法替代循环
+- **预计算梯度**: O(1)查表
+- **F.conv2d**: ISF场扩散 (389x加速)
 
 ### 6.2 关键文件路径
 - 最佳大脑: `champions/stage4_v111_r3.json` (125节点)
@@ -238,8 +294,10 @@ eoe_mvp/
 
 ## 七、待办事项
 
-- [ ] 集成environment_v12到主流程
-- [ ] 启用GPU加速 (未来)
+- [x] v13.0 GPU重构 (fields + batch模块)
+- [x] 统一API (Simulation类)
+- [x] 文档更新 (QUICKSTART, API, ARCHITECTURE)
+- [ ] 清理旧environment.py代码
 - [ ] 阶段五: LLM Demiurge
 
 ---
