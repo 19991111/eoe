@@ -223,6 +223,25 @@ class OperatorGenome:
         gps_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.GPS_SENSOR]
         compass_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.COMPASS_SENSOR]
         
+        # ============================================================
+        # v13.0: 统一场物理传感器节点
+        # 11维输入: [EPF_CENTER, EPF_GRAD_X, EPF_GRAD_Y,
+        #           KIF_CENTER, KIF_GRAD_X, KIF_GRAD_Y,
+        #           ISF_CENTER, ISF_GRAD_X, ISF_GRAD_Y,
+        #           ESF_VAL, INTERNAL_ENERGY]
+        # ============================================================
+        v13_sensor_nodes = {}
+        v13_sensor_order = [
+            NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
+            NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
+            NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
+            NodeType.SENSE_ESF_VAL, NodeType.SENSE_INTERNAL_ENERGY
+        ]
+        for nt in v13_sensor_order:
+            nodes_of_type = [n for n in self.nodes.values() if n.node_type == nt]
+            if nodes_of_type:
+                v13_sensor_nodes[nt] = nodes_of_type[0]
+        
         # v7.0: 设置传感器输入
         # 传感器输入格式: [SENSOR_0, SENSOR_1, LIGHT_0, LIGHT_1, RADAR_0, RADAR_1, RADAR_2]
         
@@ -243,6 +262,18 @@ class OperatorGenome:
             if idx < len(sensor_inputs):
                 node.activation = sensor_inputs[idx]
         
+        # ============================================================
+        # v13.0: 设置统一场物理传感器输入
+        # 格式: [EPF×3, KIF×3, ISF×3, ESF×1, ENERGY×1] = 11维
+        # ============================================================
+        v13_input_offset = len(sensor_inputs) - 11 if len(sensor_inputs) >= 11 else 0
+        if v13_input_offset >= 0:
+            v13_inputs = sensor_inputs[v13_input_offset:]
+            v13_keys = list(v13_sensor_nodes.keys())
+            for i, nt in enumerate(v13_keys):
+                if i < len(v13_inputs):
+                    v13_sensor_nodes[nt].activation = v13_inputs[i]
+        
         # v8.0: GPS传感器 (node_id 11-14) - 从扩展输入获取
         # 格式: [GPS_X, GPS_Y, GPS_DIST, GPS_BEARING]
         # v8.0: COMPASS传感器 (node_id 15-17) - 从扩展输入获取
@@ -255,7 +286,12 @@ class OperatorGenome:
             # 跳过输入节点 (已设置)
             if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR, 
                                   NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR):
+                                  NodeType.COMPASS_SENSOR,
+                                  # v13.0: 统一场物理传感器
+                                  NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
+                                  NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
+                                  NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
+                                  NodeType.SENSE_ESF_VAL, NodeType.SENSE_INTERNAL_ENERGY):
                 continue
             
             # 跳过常数节点 (已设置)
@@ -359,7 +395,14 @@ class OperatorGenome:
         # 收集执行器输出 + 预测器输出
         actuator_nodes = [
             n for n in self.nodes.values() 
-            if n.node_type == NodeType.ACTUATOR
+            if n.node_type in (NodeType.ACTUATOR, 
+                               NodeType.PORT_MOTION, NodeType.PORT_OFFENSE,
+                               NodeType.PORT_DEFENSE, NodeType.PORT_REPAIR,
+                               NodeType.PORT_SIGNAL,
+                               # v13.0: 统一场物理执行器
+                               NodeType.ACTUATOR_PERMEABILITY, NodeType.ACTUATOR_THRUST_X,
+                               NodeType.ACTUATOR_THRUST_Y, NodeType.ACTUATOR_SIGNAL,
+                               NodeType.ACTUATOR_DEFENSE)
         ]
         predictor_nodes = [
             n for n in self.nodes.values()
@@ -370,8 +413,28 @@ class OperatorGenome:
         actuator_nodes.sort(key=lambda n: n.node_id)
         predictor_nodes.sort(key=lambda n: n.node_id)
         
-        # 输出 = 执行器输出 + 预测器输出
-        actuator_outputs = [n.activation for n in actuator_nodes]
+        # ============================================================
+        # v13.0: 激活函数钳制
+        # - ACTUATOR_PERMEABILITY, ACTUATOR_DEFENSE → Sigmoid [0,1]
+        # - ACTUATOR_THRUST_X/Y → Tanh [-1,1]
+        # - ACTUATOR_SIGNAL → ReLU [0,1]
+        # ============================================================
+        def sigmoid(x):
+            return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
+        
+        def apply_activation(node_type: str, value: float) -> float:
+            """应用物理致动器激活函数"""
+            if node_type in ('ACTUATOR_PERMEABILITY', 'ACTUATOR_DEFENSE', 'PORT_DEFENSE'):
+                return sigmoid(value)
+            elif node_type in ('ACTUATOR_THRUST_X', 'ACTUATOR_THRUST_Y', 'PORT_MOTION'):
+                return np.tanh(value)
+            elif node_type in ('ACTUATOR_SIGNAL', 'PORT_SIGNAL'):
+                return max(0.0, min(1.0, value))  # ReLU + clamp
+            else:
+                return np.tanh(value)  # 默认Tanh
+        
+        # 应用激活函数
+        actuator_outputs = [apply_activation(n.node_type.name, n.activation) for n in actuator_nodes]
         predictor_outputs = [n.activation for n in predictor_nodes]
         
         outputs = np.array(actuator_outputs + predictor_outputs)
@@ -404,7 +467,16 @@ class OperatorGenome:
                                   NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
                                   NodeType.ACTUATOR, NodeType.PORT_MOTION,
                                   NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL):
+                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
+                                  # v13.0: 统一场物理传感器
+                                  NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
+                                  NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
+                                  NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
+                                  NodeType.SENSE_ESF_VAL, NodeType.SENSE_INTERNAL_ENERGY,
+                                  # v13.0: 统一场物理执行器
+                                  NodeType.ACTUATOR_PERMEABILITY, NodeType.ACTUATOR_THRUST_X,
+                                  NodeType.ACTUATOR_THRUST_Y, NodeType.ACTUATOR_SIGNAL,
+                                  NodeType.ACTUATOR_DEFENSE):
                 continue
             
             # 检查输出是否活跃
@@ -436,7 +508,15 @@ class OperatorGenome:
                                   NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
                                   NodeType.ACTUATOR, NodeType.PORT_MOTION,
                                   NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL):
+                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
+                                  # v13.0: 统一场物理
+                                  NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
+                                  NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
+                                  NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
+                                  NodeType.SENSE_ESF_VAL, NodeType.SENSE_INTERNAL_ENERGY,
+                                  NodeType.ACTUATOR_PERMEABILITY, NodeType.ACTUATOR_THRUST_X,
+                                  NodeType.ACTUATOR_THRUST_Y, NodeType.ACTUATOR_SIGNAL,
+                                  NodeType.ACTUATOR_DEFENSE):
                 continue
             
             # 噪声阶段: stability < 0.5
@@ -520,6 +600,23 @@ class OperatorGenome:
                                   NodeType.ACTUATOR, NodeType.PORT_MOTION,
                                   NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
                                   NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL):
+                continue
+            
+            # 跳过传感器和端口
+            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR,
+                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
+                                  NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
+                                  NodeType.ACTUATOR, NodeType.PORT_MOTION,
+                                  NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
+                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
+                                  # v13.0: 统一场物理
+                                  NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
+                                  NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
+                                  NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
+                                  NodeType.SENSE_ESF_VAL, NodeType.SENSE_INTERNAL_ENERGY,
+                                  NodeType.ACTUATOR_PERMEABILITY, NodeType.ACTUATOR_THRUST_X,
+                                  NodeType.ACTUATOR_THRUST_Y, NodeType.ACTUATOR_SIGNAL,
+                                  NodeType.ACTUATOR_DEFENSE):
                 continue
             
             # 检查稳定性阈值

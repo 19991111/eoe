@@ -212,7 +212,7 @@ class Agent:
             [0] κ (permeability)    ∈ [0, 1]  - Sigmoid 激活
             [1] Fx (thrust_x)       ∈ [-1, 1] - Tanh 激活
             [2] Fy (thrust_y)       ∈ [-1, 1] - Tanh 激活  
-            [3] λ (signal)          ∈ [0, 1]  - Sigmoid 激活
+            [3] λ (signal)          ∈ [0, 1]  - ReLU + Clamp
             [4] S (stiffness)       ∈ [0, 1]  - Sigmoid 激活
             
         物理语义:
@@ -229,19 +229,26 @@ class Agent:
             self.defense_rigidity = 0.0
             return
         
-        # 1. 渗透率 κ ∈ [0, 1] (Sigmoid -> Clamp)
-        self.permeability = np.clip(brain_output[0], 0.0, 1.0)
+        # ============================================================
+        # v13.0: 激活函数钳制 (确保物理合法性)
+        # ============================================================
         
-        # 2. 推力矢量 Fx, Fy ∈ [-1, 1] (Tanh -> Clamp)
-        fx = np.clip(brain_output[1], -1.0, 1.0) if len(brain_output) > 1 else 0.0
-        fy = np.clip(brain_output[2], -1.0, 1.0) if len(brain_output) > 2 else 0.0
-        self.thrust_vector = (fx, fy)
+        # 1. 渗透率 κ ∈ [0, 1] - Sigmoid 激活
+        raw_kappa = brain_output[0]
+        self.permeability = 1.0 / (1.0 + np.exp(-np.clip(raw_kappa, -500, 500)))
         
-        # 3. 信号强度 λ ∈ [0, 1] (独立于移动!)
-        self.signal_intensity = np.clip(brain_output[3], 0.0, 1.0) if len(brain_output) > 3 else 0.0
+        # 2. 推力矢量 Fx, Fy ∈ [-1, 1] - Tanh 激活
+        raw_fx = brain_output[1] if len(brain_output) > 1 else 0.0
+        raw_fy = brain_output[2] if len(brain_output) > 2 else 0.0
+        self.thrust_vector = (np.tanh(raw_fx), np.tanh(raw_fy))
         
-        # 4. 防御刚性 S ∈ [0, 1]
-        self.defense_rigidity = np.clip(brain_output[4], 0.0, 1.0) if len(brain_output) > 4 else 0.0
+        # 3. 信号强度 λ ∈ [0, 1] - ReLU + Clamp (独立于移动!)
+        raw_signal = brain_output[3] if len(brain_output) > 3 else 0.0
+        self.signal_intensity = max(0.0, min(1.0, raw_signal))
+        
+        # 4. 防御刚性 S ∈ [0, 1] - Sigmoid 激活
+        raw_stiffness = brain_output[4] if len(brain_output) > 4 else 0.0
+        self.defense_rigidity = 1.0 / (1.0 + np.exp(-np.clip(raw_stiffness, -500, 500)))
     
     def get_controller_outputs(self) -> dict:
         """

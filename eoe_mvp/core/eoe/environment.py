@@ -2750,15 +2750,67 @@ class Environment:
             sensor_values = np.append(sensor_values, fatigue_sensor)
 
         # ============================================================
-        # v13.0: 能量场传感器 (Energy Field Gradient)
-        # 采样周围4个方向的能量梯度 + 中心能量
-        # 格式扩展: [前, 右, 后, 左, 中心]
+        # v13.0: 统一场物理传感器 (11维)
+        # 使用预计算的梯度矩阵 (O(1) 索引) 实现性能优化
+        # 格式: [EPF×3, KIF×3, ISF×3, ESF×1, ENERGY×1]
         # ============================================================
+        
+        # 计算网格坐标
+        gx = int(agent.x / self.energy_field.resolution) % self.energy_field.grid_width if self.energy_field else 0
+        gy = int(agent.y / self.energy_field.resolution) % self.energy_field.grid_height if self.energy_field else 0
+        
+        # EPF: 能量场感知 (3维: CENTER, GRAD_X, GRAD_Y)
         if self.energy_field_enabled and self.energy_field:
-            gradient = self.energy_field.sample_gradient(agent.x, agent.y)
-            # 归一化到 [0, 1] 范围 (假设最大能量 100)
-            gradient_normalized = [max(0.0, min(1.0, g / 100.0)) for g in gradient]
-            sensor_values = np.append(sensor_values, gradient_normalized)
+            epf_center = self.energy_field.sample(agent.x, agent.y)
+            # 使用预计算的梯度矩阵
+            epf_grad_x = self.epf_grad_x[gx, gy] if self.epf_grad_x is not None else 0.0
+            epf_grad_y = self.epf_grad_y[gx, gy] if self.epf_grad_y is not None else 0.0
+            # 归一化
+            epf_c = max(0.0, min(1.0, epf_center / 100.0))
+            epf_gx = max(-1.0, min(1.0, epf_grad_x / 10.0))
+            epf_gy = max(-1.0, min(1.0, epf_grad_y / 10.0))
+            sensor_values = np.append(sensor_values, [epf_c, epf_gx, epf_gy])
+        else:
+            sensor_values = np.append(sensor_values, [0.0, 0.0, 0.0])
+        
+        # KIF: 阻抗场感知 (3维: CENTER, GRAD_X, GRAD_Y)
+        if self.impedance_field_enabled and self.impedance_field:
+            kif_center = self.impedance_field.sample(agent.x, agent.y)
+            kif_grad_x = self.kif_grad_x[gx, gy] if self.kif_grad_x is not None else 0.0
+            kif_grad_y = self.kif_grad_y[gx, gy] if self.kif_grad_y is not None else 0.0
+            # 归一化
+            kif_c = max(0.0, min(1.0, kif_center / 100.0))
+            kif_gx = max(-1.0, min(1.0, kif_grad_x / 10.0))
+            kif_gy = max(-1.0, min(1.0, kif_grad_y / 10.0))
+            sensor_values = np.append(sensor_values, [kif_c, kif_gx, kif_gy])
+        else:
+            sensor_values = np.append(sensor_values, [0.0, 0.0, 0.0])
+        
+        # ISF: 压痕场感知 (3维: CENTER, GRAD_X, GRAD_Y)
+        if self.stigmergy_field_enabled and self.stigmergy_field:
+            isf_center = self.stigmergy_field.sample(agent.x, agent.y)
+            isf_grad_x = self.isf_grad_x[gx, gy] if self.isf_grad_x is not None else 0.0
+            isf_grad_y = self.isf_grad_y[gx, gy] if self.isf_grad_y is not None else 0.0
+            # 归一化
+            isf_c = max(0.0, min(1.0, isf_center / 10.0))
+            isf_gx = max(-1.0, min(1.0, isf_grad_x))
+            isf_gy = max(-1.0, min(1.0, isf_grad_y))
+            sensor_values = np.append(sensor_values, [isf_c, isf_gx, isf_gy])
+        else:
+            sensor_values = np.append(sensor_values, [0.0, 0.0, 0.0])
+        
+        # ESF: 应力场感知 (1维: VAL)
+        if self.stress_field_enabled and self.stress_field:
+            stress = getattr(agent, 'current_stress', 0.0)
+            stress_norm = max(-1.0, min(1.0, stress))
+            sensor_values = np.append(sensor_values, stress_norm)
+        else:
+            sensor_values = np.append(sensor_values, 0.0)
+        
+        # INTERNAL_ENERGY: 体内能量感知 (1维: 饱腹感)
+        agent_energy = getattr(agent, 'internal_energy', 150.0)
+        energy_norm = max(0.0, min(1.0, agent_energy / 200.0))  # 归一化到0-200范围
+        sensor_values = np.append(sensor_values, energy_norm)
 
         # ============================================================
         # v13.0: 阻抗场传感器 (Impedance Field)
@@ -2790,18 +2842,6 @@ class Environment:
             sensor_values = np.append(sensor_values, [signal_norm, grad_x_norm, grad_y_norm, grad_mag_norm])
 
         # ============================================================
-        # v13.0: 应力场传感器 (Stress Field)
-        # 采样当前应力 + 应力变化率
-        # 格式扩展: [当前应力, 变化率]
-        # ============================================================
-        if self.stress_field_enabled and self.stress_field:
-            stress = getattr(agent, 'current_stress', 0.0)
-            derivative = getattr(agent, 'stress_derivative', 0.0)
-            # 归一化: 假设应力范围 [-1, 1]
-            stress_norm = max(-1.0, min(1.0, stress))
-            derivative_norm = max(-1.0, min(1.0, derivative * 10))  # 放大变化率
-            sensor_values = np.append(sensor_values, [stress_norm, derivative_norm])
-
         return sensor_values
 
     def _compute_light_sensor(self, agent: Agent) -> np.ndarray:
