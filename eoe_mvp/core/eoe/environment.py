@@ -3926,37 +3926,16 @@ class Environment:
             surprise_cost = agent.prediction_error * self.surprise_penalty
 
             # ============================================================
-            # v5.1: 适应度硬化 (Fitness Hardening)
-            # 饥饿开关: 如果Food_Eaten==0,屏蔽Surprise和Distance加分
+            # v13.0: 极简热力学适应度
+            # 适应度 = 内部能量 (存活时)
+            # 死了 = 极低分 (仅给一点挣扎分)
             # ============================================================
-            if agent.food_eaten == 0:
-                # 饥饿模式: 仅基础代谢惩罚,强制捕食突破
-                # v9.1: 添加存活奖励，鼓励存活
-                survival_bonus = agent.steps_alive * 1.0  # 每步存活+1分
-                # v9.3: 添加复杂度奖励 - 鼓励内部算子 (DELAY特别奖励)
-                internal_nodes = [n for n in agent.genome.nodes.values()
-                                 if n.node_type.name in ['ADD', 'MULTIPLY', 'DELAY', 'THRESHOLD']]
-                # DELAY gets extra bonus for latency wall
-                delay_nodes = [n for n in agent.genome.nodes.values() if n.node_type.name == 'DELAY']
-                complexity_bonus = len(internal_nodes) * 15.0 + len(delay_nodes) * 25.0
-                agent.fitness = -metabolic_cost + survival_bonus + complexity_bonus
+            if agent.is_alive:
+                # 活着: 适应度 = 体内积蓄的能量 (可用于繁衍的资本)
+                agent.fitness = agent.internal_energy
             else:
-                # v9.1: 添加存活奖励
-                survival_bonus = agent.steps_alive * 1.0
-                # v9.3: 添加复杂度奖励
-                internal_nodes = [n for n in agent.genome.nodes.values()
-                                 if n.node_type.name in ['ADD', 'MULTIPLY', 'DELAY', 'THRESHOLD']]
-                complexity_bonus = len(internal_nodes) * 10.0
-                
-                # v0.74: 纯生存适应度模式
-                if getattr(self, 'pure_survival_mode', False):
-                    agent.fitness = agent.food_eaten * 1000.0 + survival_bonus + complexity_bonus
-                    if agent.steps_alive >= agent.max_age and agent.food_eaten == 0:
-                        agent.fitness = -500.0
-                else:
-                    # 捕食模式: 完整适应度
-                    food_bonus = agent.food_eaten * 100.0
-                    agent.fitness = -min_dist - metabolic_cost - surprise_cost + food_bonus + survival_bonus + complexity_bonus
+                # 死了: 仅给一点挣扎的同情分
+                agent.fitness = agent.steps_alive * 0.01
 
         # 清理死亡 agent (可选，保留以便统计)
 

@@ -66,17 +66,22 @@ class Agent:
         self.internal_energy: float = 150.0   # 初始能量 (可用完)
         self.max_energy: float = 100.0        # 最大能量上限
         self.is_alive: bool = True            # 存活状态
-        self.food_eaten: int = 0              # 吃到的食物数量
-        self.food_carried: int = 0            # 携带的食物(未存储)
-        self.food_stored: int = 0             # 存储到巢穴的食物
-        self.energy_from_food: float = 30.0   # 每个食物提供的能量
         self.steps_alive: int = 0             # 存活步数
         
         # ============================================================
-        # v0.99 辅助轮: 能量阈值（可演化参数）
-        # 当能量低于此比例时直接吃，高于此比例时携带
-        # 初始值0.5，之后可突变演化
-        self.energy_eat_threshold: float = 0.5
+        # v13.0: 统一场物理 - 兼容旧食物系统 (逐步移除)
+        # 保留属性以兼容环境中的旧逻辑
+        # 能量获取主要通过 EPF 能量场交换
+        # ============================================================
+        self.food_carried: int = 0            # 携带的食物 (旧系统兼容)
+        self.food_stored: int = 0             # 存储的食物 (旧系统兼容)
+        
+        # ============================================================
+        # v13.0: 兼容旧代谢系统 (逐步移除)
+        # ============================================================
+        self.metabolic_waste: float = 0.0     # 代谢浪费 (旧系统兼容)
+        self.attack_power: float = 0.0        # 攻击信号量 (旧系统兼容)
+        self.defense_power: float = 0.0       # 防御信号量 (旧系统兼容)
         
         # ============================================================
         # v6.0 GAIA 寿命与年龄系统 (Thermodynamics)
@@ -136,41 +141,17 @@ class Agent:
         self.node_activations: Dict[int, float] = {}  # 每步的节点激活
         
         # ============================================================
-        # v5.3 Battle Royale - 战斗属性
+        # v13.0: 行为状态解构
+        # 旧的状态标签 (is_sleeping, battle_wins) 已删除
+        # 睡眠涌现: F=0 且 κ=0 时代谢自动降低
+        # 战斗涌现: 近距离高 κ 尝试能量窃取
         # ============================================================
-        self.attack_power: float = 0.0     # 攻击信号量
-        self.defense_power: float = 0.0    # 防御信号量
-        self.battle_wins: int = 0          # 连胜次数
-        self.battle_losses: int = 0        # 连败次数
-        self.energy_stolen: float = 0.0    # 掠夺的能量
-        self.is_epic_motif: bool = False   # 史诗基因标志
-        self.predation_success: float = 0.0  # 捕食成功率
-        self.metabolic_waste: float = 0.0    # 代谢浪费
+        
+        # v13.0: 保留必要属性
         self.survival_time: float = 0.0      # 生存时间
         
         # ============================================================
-        # v0.97: 三大突破机制状态
-        # ============================================================
-        
-        # 方案1: 代谢疲劳 + 安全掩体
-        self.max_fatigue: float = 50.0       # 最大疲劳值
-        self.fatigue: float = 0.0            # 当前疲劳值
-        self.is_sleeping: bool = False       # 是否在睡眠
-        self.sleep_cycles: int = 0           # 睡眠次数
-        self.died_in_sleep: bool = False     # 睡眠中死亡
-        self.has_slept_with_food: bool = False  # 是否在携带食物时睡过觉
-        
-        # 方案2: 无聊信息素
-        self.pheromone_level: float = 0.0    # 自身散发的气味浓度
-        self.stationary_frames: int = 0      # 停留帧数计数
-        self.pheromone_sensor: float = 0.0   # 感知到的自身气味
-        
-        # 方案3: 夏日食物热力学
-        self.food_quality: float = 1.0       # 当前携带食物的质量
-        self.ate_poisoned: bool = False      # 是否吃了腐败食物
-        
-        # ============================================================
-        # v0.98: 热力学庇护所 - 温度感知
+        # v0.98: 热力学庇护所 - 温度感知 (兼容ESF)
         # ============================================================
         self.body_temperature: float = 25.0  # 体温
         self.temperature_sensors: List[float] = [0.5, 0.5, 0.5]  # [左温度, 右温度, 舒适度]

@@ -48,14 +48,14 @@ class SubgraphFreezer:
         self, 
         elite_agents: List['Agent'],
         generation: int,
-        avg_food: float = 0.0
+        avg_energy: float = 0.0
     ) -> List[MacroOperator]:
         """
         从精英智能体中提取子图并冻结
         
-        v5.1 宏算子准入制:
-        - 只有Food_Eaten > avg_food的个体才有资格提取
-        - 严禁从"零捕食"个体中提取宏算子
+        v13.0 宏算子准入制:
+        - 只有内部能量 > avg_energy的个体才有资格提取
+        - 严禁从"零能量"个体中提取宏算子
         
         算法:
         1. 过滤: 仅选择捕食成功的个体
@@ -64,8 +64,9 @@ class SubgraphFreezer:
         4. 提取连通子图
         5. 封装为MacroOperator
         """
-        # v5.1: 宏算子准入制 - 过滤捕食者
-        qualifying_agents = [a for a in elite_agents if a.food_eaten > avg_food]
+        # v13.0: 宏算子准入制 - 基于能量筛选
+        avg_energy = np.mean([a.internal_energy for a in elite_agents])
+        qualifying_agents = [a for a in elite_agents if a.internal_energy > avg_energy]
         
         if len(qualifying_agents) < 1:
             return []
@@ -766,29 +767,18 @@ class Population:
         # 对每个候选者计算"真实力"
         candidates = []
         for agent in alive_agents:
-            # 1. 计算基础指标
-            energy_efficiency = self._calculate_energy_efficiency(agent)
-            complexity_score = self._calculate_complexity_score(agent)
-            cockroach_penalty = self._calculate_cockroach_penalty(agent)
-            stress_bonus = self._calculate_stress_bonus(agent, env_pressure)
-            
-            # 2. 文明溢价公式
-            # Fitness_True = (Energy_Surplus / Metabolic) × log(META+1) × 逆境加成
-            true_fitness = energy_efficiency * complexity_score * stress_bonus
-            
-            # 3. 蟑螂惩罚
-            true_fitness *= (1.0 - cockroach_penalty * 0.9)
-            
-            # 4. 策略活跃度加成 (PREDICTOR和META是否在运算)
-            strategy_activity = self._calculate_strategy_activity(agent)
-            true_fitness *= (1.0 + strategy_activity * 0.5)
+            # ============================================================
+            # v13.0: 极简热力学适应度
+            # Fitness = Internal_Energy (存活时)
+            # ============================================================
+            true_fitness = agent.internal_energy
             
             candidates.append({
                 'agent': agent,
                 'true_fitness': true_fitness,
-                'energy_efficiency': energy_efficiency,
-                'complexity': complexity_score,
-                'strategy_activity': strategy_activity
+                'energy_efficiency': 0.0,
+                'complexity': 0.0,
+                'strategy_activity': 0.0
             })
         
         # 选择真实力最高的
@@ -1369,13 +1359,9 @@ class Population:
             # 探索奖励: 到访更多独特区域
             exploration = agent.get_exploration_score()
             
-            # v5.1: 适应度硬化 - 饥饿开关
-            # 只有吃到食物的个体才能获得探索/新颖度加分
-            if agent.food_eaten > 0:
+            # v13.0: 探索/新颖度加分 (所有存活个体)
+            if agent.is_alive and agent.internal_energy > 0:
                 agent.fitness = agent.fitness + novelty * novelty_weight + exploration * exploration_weight
-            else:
-                # 饥饿模式: 无探索奖励,只扣代谢
-                pass  # 保持原有fitness (只有代谢惩罚)
         
         # 重新计算统计
         fitnesses = [a.fitness for a in self.agents]
@@ -1439,9 +1425,6 @@ class Population:
             rival.theta = np.random.uniform(0, 2 * np.pi)
             rival.internal_energy = rival.max_energy
             rival.is_alive = True
-            rival.food_eaten = 0
-            rival.food_carried = 0
-            rival.food_stored = 0
             rival.steps_alive = 0
             
             self.rivals.append(rival)
@@ -1495,19 +1478,14 @@ class Population:
         w1, w2, w3 = 2.0, 1.0, 0.5  # 权重
         
         for agent in self.agents:
-            # 计算多目标适应度
-            predation = agent.food_eaten * 10.0  # 捕食成功
-            survival = agent.steps_alive * 0.5   # 生存时间
-            metabolic = agent.metabolic_waste    # 代谢浪费
-            
-            # 战斗奖励
-            battle_bonus = agent.battle_wins * 5.0 - agent.battle_losses * 2.0
-            
-            # Epic Motif 保护
-            epic_bonus = 20.0 if agent.is_epic_motif else 0.0
-            
-            # 组合适应度
-            agent.fitness = w1 * predation + w2 * survival - w3 * metabolic + battle_bonus + epic_bonus
+            # ============================================================
+            # v13.0: 极简热力学适应度
+            # Fitness = Internal_Energy (存活时) 或 steps_alive * 0.01 (死亡时)
+            # ============================================================
+            if agent.is_alive:
+                agent.fitness = agent.internal_energy
+            else:
+                agent.fitness = agent.steps_alive * 0.01
         
         # 按适应度排序 (降序)
         sorted_agents = sorted(self.agents, key=lambda a: a.fitness, reverse=True)
@@ -1518,10 +1496,10 @@ class Population:
         n_survivors = max(2, self.population_size // 2)  # 只保留50%
         sorted_agents = sorted_agents[:n_survivors]
         
-        # 存活且吃到食物的 agent 有更高优先级 - 按能量排序
-        survivors_with_food = [a for a in sorted_agents if a.is_alive and a.food_eaten > 0]
-        # v0.99: 按能量降序排序，确保选择能量更高的父母
-        survivors_with_food = sorted(survivors_with_food, key=lambda a: a.internal_energy, reverse=True)
+        # v13.0: 存活且有能量的 agent 有更高优先级 - 按能量排序
+        survivors_with_energy = [a for a in sorted_agents if a.is_alive and a.internal_energy > 0]
+        # 按能量降序排序，确保选择能量更高的父母
+        survivors_with_energy = sorted(survivors_with_energy, key=lambda a: a.internal_energy, reverse=True)
         
         # v6.0 GAIA: 精英选择时检查繁衍条件
         # 条件: Energy > 200% AND Age in [20%, 60%]
@@ -1531,15 +1509,15 @@ class Population:
             return (energy_pct > 200 and 20 <= age_pct <= 60)
         
         # 筛选可繁衍的精英
-        reproducibles = [a for a in survivors_with_food if can_reproduce(a)]
+        reproducibles = [a for a in survivors_with_energy if can_reproduce(a)]
         
-        # 精英选择: 优先选择可繁衍的,其次是有食物的,最后是活着的
+        # 精英选择: 优先选择可繁衍的,其次是有能量的,最后是活着的
         n_elites = int(self.population_size * self.elite_ratio)
         
         if reproducibles:
             elite_pool = reproducibles[:min(n_elites * 2, len(reproducibles))]
-        elif survivors_with_food:
-            elite_pool = survivors_with_food[:min(n_elites * 2, len(survivors_with_food))]
+        elif survivors_with_energy:
+            elite_pool = survivors_with_energy[:min(n_elites * 2, len(survivors_with_energy))]
         else:
             # v0.99 修复: 只选择活着的 agent 作为精英
             alive_agents = [a for a in sorted_agents if a.is_alive and a.internal_energy > 0]
@@ -1569,8 +1547,8 @@ class Population:
             micro_mutation_genomes.append(elites[i].genome.copy())
         
         if verbose:
-            food_stats = f", Food eaten: {sum(a.food_eaten for a in self.agents)}"
-            print(f"  Elites: {n_elites}, Best fitness: {elites[0].fitness:.2f}{food_stats}")
+            energy_stats = f", Total energy: {sum(a.internal_energy for a in self.agents):.1f}"
+            print(f"  Elites: {n_elites}, Best fitness: {elites[0].fitness:.2f}{energy_stats}")
         
         # 生成新一代
         new_agents: List[Agent] = []
@@ -1582,11 +1560,11 @@ class Population:
             if i < n_elite_persistent and i < len(persistent_genomes):
                 # Tier 1: 精英持久化 - 零突变 (直接保留)
                 child_genome = persistent_genomes[i].copy()
-                parent_food = elites[i].food_eaten if i < len(elites) else 0
+                parent_energy = elites[i].internal_energy if i < len(elites) else 0
             elif i < n_elite_persistent + n_micro_mutation and len(micro_mutation_genomes) > 0 and (i - n_elite_persistent) < len(micro_mutation_genomes):
                 # Tier 2: 微突变 - 仅权重小扰动
                 child_genome = micro_mutation_genomes[i - n_elite_persistent].copy()
-                parent_food = elites[min(i, len(elites)-1)].food_eaten
+                parent_energy = elites[min(i, len(elites)-1)].internal_energy
                 # 仅应用微权重突变
                 self._apply_micro_mutations(child_genome)
             else:
@@ -1608,7 +1586,7 @@ class Population:
                 # 轮盘赌选择
                 parent = elite_pool[np.random.choice(len(elite_pool), p=weights/weights.sum())]
                 child_genome = parent.genome.copy()
-                parent_food = parent.food_eaten
+                parent_energy = parent.internal_energy
                 
                 # 应用完整突变
                 self._apply_mutations(child_genome)
@@ -1656,10 +1634,9 @@ class Population:
             else:
                 child.energy_eat_threshold = 0.5  # 默认阈值
             
-            # v0.99: 能量继承修复 - 增加基础能量确保存活
-            # 基础能量 = 150 + 父母吃到的食物转化
-            # 150 能量足以支撑 50 帧低代谢生活
-            child.initial_energy = 150.0 + parent_food * self.environment.food_energy
+            # v13.0: 能量继承 - 父母能量的一定比例传承
+            # 基础能量 = 150 + 父母能量的50%
+            child.initial_energy = 150.0 + parent_energy * 0.5
             child.internal_energy = min(child.initial_energy, child.max_energy)
             # 注意: initial_energy 已经包含食物转化,无需重复计入 energy_gained
             
@@ -1939,14 +1916,14 @@ class Population:
                 n_elite = max(2, int(len(sorted_agents) * 0.05))
                 elite_agents = sorted_agents[:n_elite]
                 
-                # v5.1: 计算平均食物获取量
-                avg_food = np.mean([a.food_eaten for a in self.agents])
+                # v13.0: 计算平均能量
+                avg_energy = np.mean([a.internal_energy for a in self.agents])
                 
-                # 提取并冻结子图 (仅从捕食成功的个体)
+                # 提取并冻结子图 (仅从高能量个体)
                 new_macros = self.subgraph_freezer.extract_subgraphs(
                     elite_agents, 
                     self.generation + 1,
-                    avg_food=avg_food
+                    avg_energy=avg_energy
                 )
                 
                 # v5.0: 为新宏算子设置创建代
