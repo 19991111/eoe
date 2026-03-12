@@ -362,75 +362,65 @@ class EnvironmentGPU:
         positions: torch.Tensor
     ) -> torch.Tensor:
         """
-        批量采样场值 - F.grid_sample 实现
+        批量采样场值 - 索引查找实现
         
         Args:
             positions: Tensor [N, 2] (x, y) - GPU 上的坐标
         Returns:
-            Tensor [N, 6] - [EPF, EPF_gx, EPF_gy, KIF, KIF_gx, KIF_gy]
+            Tensor [N, 9] - [EPF×3, KIF×3, ISF×3]
         """
         N = positions.shape[0]
         
-        # 归一化坐标到 [-1, 1]
-        grid_x = (positions[:, 0] / self.width) * 2 - 1
-        grid_y = (positions[:, 1] / self.height) * 2 - 1
-        
-        # 构建 grid [N, 2] -> [N, 1, 1, 2]
-        grid = torch.stack([grid_x, grid_y], dim=1).unsqueeze(1).unsqueeze(1)
-        
+        # 使用索引查找 (比 grid_sample 更简单高效)
         results = []
         
-        # EPF 采样
+        # 计算网格坐标
+        gx_idx = (positions[:, 0] / self.resolution).long()
+        gy_idx = (positions[:, 1] / self.resolution).long()
+        
+        # 边界裁剪
+        max_x = self.energy_field.grid_width - 1 if self.energy_field_enabled else 99
+        max_y = self.energy_field.grid_height - 1 if self.energy_field_enabled else 99
+        gx_idx = torch.clamp(gx_idx, 0, max_x)
+        gy_idx = torch.clamp(gy_idx, 0, max_y)
+        
+        # EPF 采样 (中心 + 梯度)
         if self.energy_field_enabled:
-            epf_field = self.energy_field.field  # [1, 1, H, W]
+            epf_field = self.energy_field.field[0, 0]  # [H, W]
             
-            # CENTER
-            sampled = F.grid_sample(epf_field, grid, align_corners=False, mode='nearest')
-            epf_c = sampled.squeeze()  # [N]
-            
-            # GRADIENT (使用预计算的梯度)
-            # 采样位置对应的梯度
-            gx_idx = (positions[:, 0] / self.energy_field.resolution).long()
-            gy_idx = (positions[:, 1] / self.energy_field.resolution).long()
-            gx_idx = torch.clamp(gx_idx, 0, self.energy_field.grid_width - 1)
-            gy_idx = torch.clamp(gy_idx, 0, self.energy_field.grid_height - 1)
-            
-            epf_gx = self.epf_grad_x[0, 0, gy_idx, gx_idx]
-            epf_gy = self.epf_grad_y[0, 0, gy_idx, gx_idx]
+            epf_c = epf_field[gy_idx, gx_idx]
+            epf_gx = self.epf_grad_x[0, 0, gy_idx, gx_idx] if self.epf_grad_x is not None else torch.zeros(N, device=self.device)
+            epf_gy = self.epf_grad_y[0, 0, gy_idx, gx_idx] if self.epf_grad_y is not None else torch.zeros(N, device=self.device)
             
             results.extend([epf_c, epf_gx, epf_gy])
+        else:
+            results.extend([torch.zeros(N, device=self.device)] * 3)
         
         # KIF 采样
         if self.impedance_field_enabled:
-            kif_field = self.impedance_field.field
+            kif_field = self.impedance_field.field[0, 0]  # [H, W]
             
-            gx_idx = (positions[:, 0] / self.impedance_field.resolution).long()
-            gy_idx = (positions[:, 1] / self.impedance_field.resolution).long()
-            gx_idx = torch.clamp(gx_idx, 0, self.impedance_field.grid_width - 1)
-            gy_idx = torch.clamp(gy_idx, 0, self.impedance_field.grid_height - 1)
-            
-            kif_c = kif_field[0, 0, gy_idx, gx_idx]
-            kif_gx = self.kif_grad_x[0, 0, gy_idx, gx_idx]
-            kif_gy = self.kif_grad_y[0, 0, gy_idx, gx_idx]
+            kif_c = kif_field[gy_idx, gx_idx]
+            kif_gx = self.kif_grad_x[0, 0, gy_idx, gx_idx] if self.kif_grad_x is not None else torch.zeros(N, device=self.device)
+            kif_gy = self.kif_grad_y[0, 0, gy_idx, gx_idx] if self.kif_grad_y is not None else torch.zeros(N, device=self.device)
             
             results.extend([kif_c, kif_gx, kif_gy])
+        else:
+            results.extend([torch.zeros(N, device=self.device)] * 3)
         
         # ISF 采样
         if self.stigmergy_field_enabled:
-            isf_field = self.stigmergy_field.field
+            isf_field = self.stigmergy_field.field[0, 0]  # [H, W]
             
-            gx_idx = (positions[:, 0] / self.stigmergy_field.resolution).long()
-            gy_idx = (positions[:, 1] / self.stigmergy_field.resolution).long()
-            gx_idx = torch.clamp(gx_idx, 0, self.stigmergy_field.grid_width - 1)
-            gy_idx = torch.clamp(gy_idx, 0, self.stigmergy_field.grid_height - 1)
-            
-            isf_c = isf_field[0, 0, gy_idx, gx_idx]
-            isf_gx = self.isf_grad_x[0, 0, gy_idx, gx_idx]
-            isf_gy = self.isf_grad_y[0, 0, gy_idx, gx_idx]
+            isf_c = isf_field[gy_idx, gx_idx]
+            isf_gx = self.isf_grad_x[0, 0, gy_idx, gx_idx] if self.isf_grad_x is not None else torch.zeros(N, device=self.device)
+            isf_gy = self.isf_grad_y[0, 0, gy_idx, gx_idx] if self.isf_grad_y is not None else torch.zeros(N, device=self.device)
             
             results.extend([isf_c, isf_gx, isf_gy])
+        else:
+            results.extend([torch.zeros(N, device=self.device)] * 3)
         
-        return torch.stack(results, dim=1)  # [N, 6] or [N, 9]
+        return torch.stack(results, dim=1)  # [N, 9]
     
     def get_stats(self) -> dict:
         """获取性能统计"""
