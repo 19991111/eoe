@@ -116,6 +116,50 @@ class ThermodynamicLaw:
         force = (abs(left_force) + abs(right_force)) / 2.0
         # 非线性消耗 (平方关系)
         return self.move_cost_coeff * (force ** 2)
+    
+    def compute_signal_cost(
+        self,
+        signal_intensity: float
+    ) -> float:
+        """
+        v13.0 计算信息场信号释放能耗
+        
+        公式: E = λ² × signal_cost_coeff (非线性)
+        
+        物理意义:
+        - 信号强度越高，消耗呈平方增长
+        - 与移动推力解绑，允许"隐身策略"
+        
+        参数:
+            signal_intensity: λ ∈ [0, 1]
+        
+        返回:
+            能量消耗量
+        """
+        # 非线性代价 (平方关系)
+        signal_cost_coeff = 0.02
+        return (signal_intensity ** 2) * signal_cost_coeff
+    
+    def compute_defense_reduction(
+        self,
+        attack_amount: float,
+        defense_rigidity: float
+    ) -> float:
+        """
+        v13.0 计算防御刚性对能量窃取的减伤
+        
+        公式: E_lost = attack × (1 - S)
+        
+        参数:
+            attack_amount: 攻击方试图窃取的能量
+            defense_rigidity: S ∈ [0, 1]
+        
+        返回:
+            实际损失的能量 (防御后的值)
+        """
+        # S = 1: 完全防御，无损失
+        # S = 0: 无防御，全额损失
+        return attack_amount * (1.0 - defense_rigidity)
         
     def compute_waste_heat(
         self,
@@ -150,6 +194,7 @@ class ThermodynamicLaw:
         物理本质:
         - 渗透压竞争: 高能量方的能量自发流向低能量方
         - 取决于双方的渗透率差异
+        - 防御刚性 S 可降低损失
         
         参数:
             agent_a, agent_b: 两个Agent实例
@@ -178,6 +223,10 @@ class ThermodynamicLaw:
         if kappa_b > 0 and energy_diff > 0:
             # 窃取量 = 渗透率 × 能量差 × 效率
             steal_amount = kappa_b * energy_diff * self.theft_efficiency
+            
+            # A 的防御刚性 S 减伤
+            defense_rigidity_a = getattr(agent_a, 'defense_rigidity', 0.0)
+            steal_amount = self.compute_defense_reduction(steal_amount, defense_rigidity_a)
             
             # A 失去能量，B 获得能量
             return (-steal_amount, steal_amount)
@@ -237,6 +286,85 @@ class ThermodynamicLaw:
             'metabolic_cost': metabolic_cost,
             'waste_heat': waste_heat,
             'total_delta': total_delta
+        }
+    
+    def apply_v13_unified(
+        self,
+        agent,
+        env
+    ) -> dict:
+        """
+        v13.0 统一能量结算 - 所有能量得失通过场耦合计算
+        
+        四个物理参数:
+            κ (permeability): 渗透率 → EPF能量交换
+            F (thrust): 推力矢量 → KIF移动能耗
+            λ (signal): 信号强度 → ISF信息释放能耗
+            S (defense): 防御刚性 → 能量窃取减伤
+        
+        严禁手动修改 agent.energy，所有能量变化必须通过此方法
+        """
+        # === 1. EPF: 能量场交换 (通过 κ) ===
+        exchange = 0.0
+        if env.energy_field_enabled and env.energy_field:
+            kappa = agent.permeability  # κ ∈ [0, 1]
+            field_energy = env.energy_field.sample(agent.x, agent.y)
+            agent.field_energy = field_energy
+            
+            # 热力学公式: ΔE = κ × (E_field - E_agent)
+            # - 高能区: 能量流入 (进食)
+            # - 低能区: 能量流出 (排泄 - 物理涌现!)
+            exchange = kappa * (field_energy - agent.internal_energy)
+            
+            # 渗透膜维持代价
+            membrane_cost = kappa * self.permeability_cost
+            exchange -= membrane_cost
+        
+        # === 2. KIF: 移动能耗 (通过 F) ===
+        move_cost = 0.0
+        if env.impedance_field_enabled and env.kinetic_impedance_law:
+            fx, fy = agent.thrust_vector  # F ∈ [-1, 1]²
+            force_magnitude = np.sqrt(fx*fx + fy*fy)
+            # 获取当前位置阻抗
+            impedance = env.impedance_field.sample(agent.x, agent.y)
+            # 能耗 = c × |F|² × log(1+Z)
+            move_cost = self.move_cost_coeff * (force_magnitude ** 2) * np.log(1 + impedance)
+        
+        # === 3. ISF: 信息场信号能耗 (通过 λ - 独立于移动!) ===
+        signal_cost = 0.0
+        if env.stigmergy_field_enabled and agent.signal_intensity > 0:
+            signal_cost = self.compute_signal_cost(agent.signal_intensity)
+            
+            # 注入信号到压痕场
+            if env.stigmergy_field:
+                env.stigmergy_field.deposit(
+                    agent.x, agent.y,
+                    amount=agent.signal_intensity,
+                    agent_energy=agent.internal_energy
+                )
+        
+        # === 4. ESF: 代谢调制 (已由 env.step 处理) ===
+        # stress_metabolic_multiplier 已在 environment.py 中应用
+        
+        # === 5. 基础代谢 ===
+        metabolic_cost = 0.1  # 基础代谢
+        
+        # 总能量变化
+        total_delta = exchange - move_cost - signal_cost - metabolic_cost
+        
+        # 应用到 Agent (严禁手动修改!)
+        agent.internal_energy += total_delta
+        
+        # 更新统计
+        if hasattr(agent, 'energy_spent'):
+            agent.energy_spent += (move_cost + signal_cost + metabolic_cost)
+        
+        return {
+            'exchange': exchange,         # EPF 能量交换
+            'move_cost': move_cost,       # KIF 移动能耗
+            'signal_cost': signal_cost,   # ISF 信号能耗
+            'metabolic_cost': metabolic_cost,  # 基础代谢
+            'total_delta': total_delta    # 总变化
         }
 
 

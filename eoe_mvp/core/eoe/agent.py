@@ -183,14 +183,34 @@ class Agent:
         self.phase_transition_done: bool = False  # 是否已完成相变
         
         # ============================================================
-        # v13.0: 能量场物理系统 - 渗透率 (Permeability)
-        # 渗透率 κ ∈ [0, 1]
+        # v13.0: 统一场物理系统 - 控制器输出 (Controller Outputs)
+        # 四个纯物理参数，由大脑神经网络直接控制
+        # ============================================================
+        
+        # κ (Kappa) 渗透率 ∈ [0, 1]
         # - κ = 0: 封闭，不与环境交换能量
         # - κ = 1: 完全开放，与环境能量场平衡
-        # 开启渗透膜有能量代价，详见 ThermodynamicLaw
-        # ============================================================
-        self.permeability: float = 0.0         # 渗透率 (由大脑输出控制)
+        # 热力学公式: ΔE = κ × (E_env - E_agent)
+        #   - 高能区: 能量流入 (进食)
+        #   - 低能区: 能量自然流出 (排泄/失血)
+        self.permeability: float = 0.0
+        
+        # F (Force) 推力矢量 ∈ [-1, 1]²
+        # 控制智能体在空间中的受力方向和大小
+        self.thrust_vector: Tuple[float, float] = (0.0, 0.0)
+        
+        # λ (Lambda) 信号强度 ∈ [0, 1]
+        # 独立于移动的信号释放，用于 ISF 信息场
+        # 允许"隐身策略" (移动但不释放信号)
+        self.signal_intensity: float = 0.0
+        
+        # S (Stiffness) 防御刚性 ∈ [0, 1]
+        # 控制对外部能量剥夺的抵抗力
+        self.defense_rigidity: float = 0.0
+        
+        # 物理状态缓存
         self.field_energy: float = 0.0         # 所在位置的环境能量 (采样值)
+        self.velocity_actual: float = 0.0      # 实际速度 (经阻抗调制)
         
         # 创建大脑
         self.genome = OperatorGenome()
@@ -202,6 +222,56 @@ class Agent:
             add_agent_radar=add_agent_radar,
             add_gps_sensors=add_gps_sensors
         )
+    
+    def update_physics_states(self, brain_output: np.ndarray) -> None:
+        """
+        v13.0 神经拓扑对接 - 将大脑输出映射到物理状态
+        
+        假设 brain_output 是神经网络最后一层的输出向量 (5维):
+            [0] κ (permeability)    ∈ [0, 1]  - Sigmoid 激活
+            [1] Fx (thrust_x)       ∈ [-1, 1] - Tanh 激活
+            [2] Fy (thrust_y)       ∈ [-1, 1] - Tanh 激活  
+            [3] λ (signal)          ∈ [0, 1]  - Sigmoid 激活
+            [4] S (stiffness)       ∈ [0, 1]  - Sigmoid 激活
+            
+        物理语义:
+            κ → 毛孔开合程度 (能量交换率)
+            F  → 肌肉收缩方向 (空间受力)
+            λ  → 信息素释放强度 (独立于移动)
+            S  → 防御刚性 (抗能量剥夺)
+        """
+        if brain_output is None or len(brain_output) < 5:
+            # 默认状态：封闭、不动、无信号、软防御
+            self.permeability = 0.0
+            self.thrust_vector = (0.0, 0.0)
+            self.signal_intensity = 0.0
+            self.defense_rigidity = 0.0
+            return
+        
+        # 1. 渗透率 κ ∈ [0, 1] (Sigmoid -> Clamp)
+        self.permeability = np.clip(brain_output[0], 0.0, 1.0)
+        
+        # 2. 推力矢量 Fx, Fy ∈ [-1, 1] (Tanh -> Clamp)
+        fx = np.clip(brain_output[1], -1.0, 1.0) if len(brain_output) > 1 else 0.0
+        fy = np.clip(brain_output[2], -1.0, 1.0) if len(brain_output) > 2 else 0.0
+        self.thrust_vector = (fx, fy)
+        
+        # 3. 信号强度 λ ∈ [0, 1] (独立于移动!)
+        self.signal_intensity = np.clip(brain_output[3], 0.0, 1.0) if len(brain_output) > 3 else 0.0
+        
+        # 4. 防御刚性 S ∈ [0, 1]
+        self.defense_rigidity = np.clip(brain_output[4], 0.0, 1.0) if len(brain_output) > 4 else 0.0
+    
+    def get_controller_outputs(self) -> dict:
+        """
+        v13.0 获取控制器输出 (供 ThermodynamicLaw 使用)
+        """
+        return {
+            'permeability': self.permeability,      # κ
+            'thrust': self.thrust_vector,           # F
+            'signal': self.signal_intensity,        # λ
+            'stiffness': self.defense_rigidity      # S
+        }
     
     def _init_base_nodes(self, add_predictors: bool = True, add_light_sensor: bool = True, add_agent_radar: bool = True, add_gps_sensors: bool = True) -> None:
         """

@@ -3103,6 +3103,22 @@ class Environment:
                 agent.energy_spent += repair_cost  # v5.7 追踪
                 agent.age = max(0, agent.age - agent.port_repair * 0.5)  # 减少年龄
 
+        # ============================================================
+        # v13.0 神经拓扑对接 - 更新物理状态
+        # 将大脑输出映射到 κ, F, λ, S 四个物理参数
+        # ============================================================
+        # 构建 5 维大脑输出向量
+        brain_output = np.array([
+            agent.port_signal,          # κ (复用 port_signal 作为渗透率)
+            agent.port_motion,          # Fx (复用 port_motion)
+            agent.port_motion * 0.5,    # Fy (简化为单向推力)
+            agent.port_signal * 0.8,    # λ (独立信号，略微降低)
+            agent.port_defense          # S (防御刚性)
+        ])
+        
+        # 更新物理状态
+        agent.update_physics_states(brain_output)
+
         # v6.0 GAIA: 计算生态位偏好
         self._compute_niche_preference(agent)
 
