@@ -95,27 +95,38 @@ class ThermodynamicLaw:
     def compute_move_cost(
         self,
         left_force: float,
-        right_force: float
+        right_force: float,
+        agent_energy: float = 0.0
     ) -> float:
         """
         计算移动做功的能量消耗
         
-        公式: E = c × |F|²
+        公式: E = c × |F|² × (1 + mass_penalty)
         
         物理意义:
         - 速度越快，阻力越大
         - 消耗呈非线性增长
+        - 高能量(肥胖)会增加移动能耗 (质量惩罚)
         
         参数:
             left_force, right_force: 左右推进器输出力
+            agent_energy: Agent内部能量 (用于计算质量惩罚)
         
         返回:
             能量消耗量
         """
         # 合力
         force = (abs(left_force) + abs(right_force)) / 2.0
-        # 非线性消耗 (平方关系)
-        return self.move_cost_coeff * (force ** 2)
+        
+        # ============================================================
+        # v13.0 质量-能耗惩罚 (Mass-Energy Penalty)
+        # 体内能量越高，移动消耗越大
+        # 演化博弈: 必须卸载能量才能保持机动性
+        # ============================================================
+        mass_penalty = 1.0 + (agent_energy * 0.01)  # 每100能量 +100%能耗
+        
+        # 非线性消耗 (平方关系) × 质量惩罚
+        return self.move_cost_coeff * (force ** 2) * mass_penalty
     
     def compute_signal_cost(
         self,
@@ -327,8 +338,15 @@ class ThermodynamicLaw:
             force_magnitude = np.sqrt(fx*fx + fy*fy)
             # 获取当前位置阻抗
             impedance = env.impedance_field.sample(agent.x, agent.y)
-            # 能耗 = c × |F|² × log(1+Z)
-            move_cost = self.move_cost_coeff * (force_magnitude ** 2) * np.log(1 + impedance)
+            
+            # ============================================================
+            # v13.0 质量惩罚: 高能量 = 高移动能耗
+            # mass_penalty = 1 + E_agent * 0.01
+            # ============================================================
+            mass_penalty = 1.0 + (agent.internal_energy * 0.01)
+            
+            # 能耗 = c × |F|² × log(1+Z) × mass_penalty
+            move_cost = self.move_cost_coeff * (force_magnitude ** 2) * np.log(1 + impedance) * mass_penalty
         
         # === 3. ISF: 信息场信号能耗 (通过 λ - 独立于移动!) ===
         signal_cost = 0.0
