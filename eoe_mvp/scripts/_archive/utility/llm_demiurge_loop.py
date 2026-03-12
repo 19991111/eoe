@@ -337,6 +337,41 @@ class WarReportGenerator:
 
 
 # ============================================================
+# v10.0: 参数平滑缓冲系统 (Environmental Inertia)
+# ============================================================
+class ParameterBuffer:
+    """参数平滑缓冲 - 防止适应度悬崖"""
+    
+    def __init__(self, transition_generations: int = 15):
+        self.transition_generations = transition_generations
+        self.pending_params = {}
+        self.start_values = {}
+        self.current_values = {}
+        self.generations_remaining = {}
+    
+    def request_change(self, param: str, target_value: float, current_value: float):
+        self.pending_params[param] = target_value
+        self.start_values[param] = current_value
+        self.current_values[param] = current_value
+        self.generations_remaining[param] = self.transition_generations
+    
+    def get_value(self, param: str, default: float) -> float:
+        if param not in self.pending_params:
+            return default
+        remaining = self.generations_remaining.get(param, 0)
+        if remaining <= 0:
+            return self.pending_params[param]
+        start = self.start_values[param]
+        target = self.pending_params[param]
+        progress = 1.0 - (remaining / self.transition_generations)
+        return start + (target - start) * progress
+    
+    def tick(self):
+        for param in list(self.generations_remaining.keys()):
+            self.generations_remaining[param] -= 1
+
+
+# ============================================================
 # 4. API 请求与物理法则热更新
 # ============================================================
 
@@ -522,45 +557,107 @@ class LLMDemiurge:
             return None
     
     def _apply_config(self, new_config: Dict, env: Environment) -> bool:
-        """应用新的物理配置到环境"""
+        """应用新的物理配置到环境 - 使用柔性截断避免死锁"""
         try:
             pc = new_config['physics_config']
             
-            # 校验调整幅度 (< 20%)
-            old_alpha = getattr(env, 'metabolic_alpha', 0.05)
-            new_alpha = pc['metabolic_alpha']
-            if abs(new_alpha - old_alpha) / old_alpha > 0.2:
-                print(f"⚠️ 调整幅度过大: {old_alpha} -> {new_alpha}")
-                return False
+            # 定义参数的合理范围
+            # 格式: (key, min_ratio, max_ratio, default_min, default_max, special_clip)
+            # special_clip=None 表示使用比例截断，否则使用绝对范围截断
+            param_limits = {
+                'metabolic_alpha': (0.5, 1.5, None),      # 允许 ±50%
+                'metabolic_beta': (0.5, 1.5, None),       # 允许 ±50%
+                'sensor_range': (0.5, 1.5, None),         # 允许 ±50%
+                'season_length': (0.7, 1.3, None),        # 允许 ±30% (季节不宜剧烈变化)
+                'winter_metabolic_multiplier': (0.8, 1.2, (1.0, 3.0)),  # 允许 ±20% 或绝对范围 [1.0, 3.0]
+                'fatigue_build_rate': (0.5, 1.5, None),   # 允许 ±50%
+                'food_energy': (0.3, 3.0, (5.0, 200.0)),  # 允许 -70% ~ +200% 或绝对范围 [5.0, 200.0]
+                'winter_temperature': (0.5, 1.5, (-20.0, 30.0)),  # 允许 ±50% 或绝对范围
+            }
             
-            # 应用配置
-            env.metabolic_alpha = pc['metabolic_alpha']
-            env.metabolic_beta = pc['metabolic_beta']
-            env.sensor_range = pc['sensor_range']
-            env.season_length = pc['season_length']
-            env.winter_metabolic_multiplier = pc['winter_metabolic_multiplier']
-            env.food_energy = pc['food_energy']
+            # 逐参数应用柔性截断
+            clipped_params = {}
+            for key, value in pc.items():
+                if key in param_limits and value is not None:
+                    old_value = getattr(env, key, None)
+                    if old_value is None:
+                        old_value = value  # 如果环境没有这个参数，使用新值
+                    
+                    min_ratio, max_ratio, special_clip = param_limits[key]
+                    
+                    # 计算截断边界
+                    lower_bound = old_value * min_ratio
+                    upper_bound = old_value * max_ratio
+                    
+                    # 如果有特殊绝对范围限制，使用更宽松的边界
+                    if special_clip is not None:
+                        abs_min, abs_max = special_clip
+                        lower_bound = max(lower_bound, abs_min)
+                        upper_bound = min(upper_bound, abs_max)
+                    
+                    # 柔性截断
+                    if value < lower_bound:
+                        print(f"⚠️ 参数 {key} 调整幅度过大: {old_value:.4f} -> {value:.4f}, 已截断至 {lower_bound:.4f}")
+                        clipped_params[key] = lower_bound
+                    elif value > upper_bound:
+                        print(f"⚠️ 参数 {key} 调整幅度过大: {old_value:.4f} -> {value:.4f}, 已截断至 {upper_bound:.4f}")
+                        clipped_params[key] = upper_bound
+                    else:
+                        clipped_params[key] = value
+                else:
+                    clipped_params[key] = value
             
-            # 启用/禁用系统
-            if 'enable_fatigue_system' in pc:
-                if pc['enable_fatigue_system'] and not env.fatigue_system_enabled:
-                    env.enable_fatigue_system()
+            # 应用截断后的配置
+            for key, value in clipped_params.items():
+                # 修复布尔值解析：将字符串 "true"/"false" 转换为 Python bool
+                if isinstance(value, str):
+                    if value.lower() == 'true':
+                        value = True
+                    elif value.lower() == 'false':
+                        value = False
+                
+                # 数值型参数直接设置
+                if hasattr(env, key) and not key.startswith('enable_'):
+                    setattr(env, key, value)
+                
+                # 布尔型参数需要调用专门的 enable/disable 方法
+                elif key == 'enable_fatigue_system' and value is not None:
+                    if value and not env.fatigue_system_enabled:
+                        env.enable_fatigue_system(enabled=True, max_fatigue=100.0, fatigue_build_rate=0.3)
+                        print(f"[INFO] 疲劳系统已启用")
+                    elif not value and env.fatigue_system_enabled:
+                        env.fatigue_system_enabled = False
+                        print(f"[INFO] 疲劳系统已禁用")
+                
+                elif key == 'enable_thermal_sanctuary' and value is not None:
+                    if value and not env.thermal_sanctuary_enabled:
+                        env.enable_thermal_sanctuary(enabled=True)
+                        print(f"[INFO] 热力学庇护所已启用")
+                    elif not value and env.thermal_sanctuary_enabled:
+                        env.thermal_sanctuary_enabled = False
+                        print(f"[INFO] 热力学庇护所已禁用")
+                
+                elif key == 'enable_morphological_computation' and value is not None:
+                    if value and not env.morphological_computation_enabled:
+                        env.enable_morphological_computation(enabled=True)
+                        print(f"[INFO] 形态计算已启用")
+                    elif not value and env.morphological_computation_enabled:
+                        env.morphological_computation_enabled = False
+                        print(f"[INFO] 形态计算已禁用")
             
-            if 'enable_thermal_sanctuary' in pc:
-                if pc['enable_thermal_sanctuary'] and not env.thermal_sanctuary_enabled:
-                    env.enable_thermal_sanctuary()
-            
-            if 'enable_morphological_computation' in pc:
-                if pc['enable_morphological_computation'] and not env.morphological_computation_enabled:
-                    env.enable_morphological_computation()
+            # 打印成功日志
+            print(f"[SUCCESS] 物理参数已热更新: alpha={env.metabolic_alpha}, beta={env.metabolic_beta}, "
+                  f"sensor={env.sensor_range}, food_energy={env.food_energy}, season={env.season_length}")
             
             # 保存到文件
-            self._save_config(PhysicsConfig(**pc))
+            self._save_config(PhysicsConfig(**clipped_params))
             
             return True
             
         except Exception as e:
+            import traceback
             print(f"⚠️ 配置应用失败: {e}")
+            print(f"⚠️ 异常堆栈: {traceback.format_exc()}")
             return False
     
     def run_epoch(self, env: Environment, population: Population, generation: int) -> bool:

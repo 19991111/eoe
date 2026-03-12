@@ -9,18 +9,19 @@ Modules:
 - node: Node, NodeType, SuperNode
 - genome: OperatorGenome
 - agent: Agent
-- environment: Environment, ChunkManager
+- environment: Environment (v12), ChunkManager
 - population: Population
-- modules: SubgraphFreezer, SpontaneousActivity, MultiLevelPredictor
+- manifest: PhysicsManifest (SSOT)
+- brain_manager: BrainManager
 """
 
 from .node import Node, NodeType, SuperNode
 from .genome import OperatorGenome
 from .agent import Agent
-from .environment import Environment, ChunkManager
+from .environment import Environment
 from .population import Population
 
-__version__ = "9.3"
+__version__ = "12.6"
 __all__ = [
     "Node",
     "NodeType", 
@@ -28,6 +29,5 @@ __all__ = [
     "OperatorGenome",
     "Agent",
     "Environment",
-    "ChunkManager",
     "Population",
 ]

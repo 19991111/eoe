@@ -1,0 +1,194 @@
+{
+  "version": "1.0",
+  "brains": [
+    {
+      "path": "best_v086_genius.json",
+      "stage": 8,
+      "experiment": "v86",
+      "fitness": 0,
+      "nodes": 33,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "best_v097_gen280_fit651.json",
+      "stage": 9,
+      "experiment": "v97",
+      "fitness": 0,
+      "nodes": 37,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage1_best_brain.json",
+      "stage": 1,
+      "experiment": "stage1",
+      "fitness": 0,
+      "nodes": 11,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage2_champion.json",
+      "stage": 2,
+      "experiment": "stage2",
+      "fitness": 0,
+      "nodes": 22,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage3_champion.json",
+      "stage": 3,
+      "experiment": "stage3",
+      "fitness": 0,
+      "nodes": 37,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_round1_champ.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 37,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r1.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 43,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r2.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 43,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r3.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 45,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r4.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 45,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r5.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 66,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r6.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 86,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r7.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 101,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r8.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 106,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r9.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 113,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v110_r10.json",
+      "stage": 4,
+      "experiment": "v110",
+      "fitness": 0,
+      "nodes": 114,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v111_r1.json",
+      "stage": 4,
+      "experiment": "v111",
+      "fitness": 0,
+      "nodes": 122,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v111_mini.json",
+      "stage": 4,
+      "experiment": "v111",
+      "fitness": 0,
+      "nodes": 119,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v111_20gen.json",
+      "stage": 4,
+      "experiment": "v111",
+      "fitness": 0,
+      "nodes": 124,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v111_r2.json",
+      "stage": 4,
+      "experiment": "v111",
+      "fitness": 0,
+      "nodes": 122,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    },
+    {
+      "path": "stage4_v111_r3.json",
+      "stage": 4,
+      "experiment": "v111",
+      "fitness": 0,
+      "nodes": 125,
+      "updated_at": "2026-03-12T00:00:00Z",
+      "legacy": true
+    }
+  ]
+}

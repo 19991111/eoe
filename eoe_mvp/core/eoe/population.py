@@ -548,7 +548,7 @@ class Population:
         env_width: float = 100.0,
         env_height: float = 100.0,
         target_pos: Optional[Tuple[float, float]] = None,
-        metabolic_alpha: float = 0.05,  # v9.0: 降低代谢
+        metabolic_alpha: float = 0.003,  # v10.4: 低代谢允许大脑复杂度
         metabolic_beta: float = 0.05,
         lifespan: int = 500,
         n_food: int = 5,              # 食物数量
@@ -557,6 +557,7 @@ class Population:
         n_walls: int = 0,             # 障碍物数量 (v3.0)
         day_night_cycle: bool = True, # 昼夜循环 (v3.0)
         use_champion: bool = False,   # v4.1: 使用冠军结构初始化
+        champion_brain: dict = None,  # v0.98: 从JSON加载冠军大脑
         pure_survival_mode: bool = False,  # v0.74: 纯生存适应度
         # v0.78: 季节系统
         seasonal_cycle: bool = False,       # 启用季节循环
@@ -566,14 +567,25 @@ class Population:
         # v0.80: 红皇后假说
         red_queen: bool = False,            # 启用红皇后(敌对竞争)
         n_rivals: int = 3,                  # 敌对Agent数量
-        rival_refresh_interval: int = 40    # 敌对刷新间隔(代)
+        rival_refresh_interval: int = 40,   # 敌对刷新间隔(代)
+        # v0.99: 即时进食模式（降维打击）
+        immediate_eating: bool = False,      # 拾取食物立即恢复能量
+        # v0.99: 性能优化 - 禁用食物逃逸系统
+        disable_food_escape: bool = True,     # 禁用食物逃逸(55%性能提升)
+        # v11.0: 三大突破机制 (2026-03-12)
+        energy_decay_k: float = 0.0,          # 能量衰减系数 (k×E²)
+        port_interference_gamma: float = 0.0, # 端口干涉gamma值
+        season_jitter: float = 0.0,           # 季节波动率 (±X%)
+        nest_tax: float = 0.0                 # 入库税率
     ):
         self.population_size = population_size
         self.elite_ratio = elite_ratio
         self.lifespan = lifespan
         self.generation = 0
         self.use_champion = use_champion
+        self.champion_brain = champion_brain  # v0.98: JSON格式的大脑数据
         self.pure_survival_mode = pure_survival_mode  # v0.74
+        self.immediate_eating = immediate_eating  # v0.99
         
         # 突变概率配置
         self.mutation_rates = {
@@ -598,6 +610,7 @@ class Population:
         self.rivals: List['Agent'] = []  # 敌对Agent列表
         self.rival_timer = 0
         
+        # v11.0: 直接使用函数参数
         self.environment = Environment(
             width=env_width,
             height=env_height,
@@ -614,7 +627,14 @@ class Population:
             seasonal_cycle=seasonal_cycle,
             season_length=season_length,
             winter_food_multiplier=winter_food_multiplier,
-            winter_metabolic_multiplier=winter_metabolic_multiplier
+            winter_metabolic_multiplier=winter_metabolic_multiplier,
+            # v0.99: 即时进食模式
+            immediate_eating=immediate_eating,
+            # v11.0: 三大突破机制
+            energy_decay_k=energy_decay_k,
+            port_interference_gamma=port_interference_gamma,
+            season_jitter=season_jitter,
+            nest_tax=nest_tax
         )
         
         # ============================================================
@@ -629,8 +649,44 @@ class Population:
             max_macros=10
         )
         
+        # ============================================================
+        # v11.1: 压力梯度熔炉 (Stress-Gradient Crucible)
+        # 防止"电子蟑螂" - 只保存真正有智力的个体
+        # ============================================================
+        self.hall_of_fame = []  # 英雄冢: 历史上最强的个体
+        self.hof_max_size = 5   # 最多保存5个历史冠军
+        # v12.6: 移除"智力补贴" - 大脑代谢压力
+        # 不再奖励复杂度,而是惩罚无效的神经回路
+        self.complexity_premium = 0.0  # 删除复杂度奖励!
+        self.brain_metabolic_alpha = 0.2  # 每个节点能耗 (超极强!)
+        self.brain_metabolic_beta = 0.1   # 每条边能耗 (超极强!)
+        self.stress_test_enabled = True  # 启用灭绝压测
+        
+        # v0.99: 性能优化 - 默认禁用食物逃逸系统
+        if disable_food_escape:
+            self.environment.food_escape_enabled = False
+        
         # v5.2: 创建深度冷冻的Basic_Navigator宏算子
         self._create_basic_navigator()
+        
+        # 自发活动
+        self.spontaneous_activity = SpontaneousActivity(
+            threshold=0.1,
+            noise_scale=0.05,
+            enable_prob=0.3
+        )
+        
+        # 多级预测驱动
+        self.multi_predictor = MultiLevelPredictor(
+            num_targets=2,
+            prediction_weight=2.0
+        )
+        
+        # ============================================================
+        # 初始化种群
+        # ============================================================
+        self.agents: List[Agent] = []
+        self._init_population()
     
     def _create_basic_navigator(self) -> None:
         """
@@ -679,21 +735,254 @@ class Population:
         self.subgraph_freezer.operator_pool.append(basic_nav)
         
         # 内部循环噪声
-        self.spontaneous_activity = SpontaneousActivity(
-            threshold=0.1,
-            noise_scale=0.05,
-            enable_prob=0.3
-        )
+    
+    # ============================================================
+    # v11.1: 压力梯度熔炉 (Stress-Gradient Crucible)
+    # 核心逻辑：不再只看能量，而是看"智力性价比"
+    # ============================================================
+    
+    def select_true_champion(self, agents: List['Agent']) -> 'Agent':
+        """
+        选择"真正的冠军" - 不是最强的，而是最聪明的
         
-        # 多级预测驱动
-        self.multi_predictor = MultiLevelPredictor(
-            num_targets=2,
-            prediction_weight=2.0
-        )
+        筛选标准:
+        1. 文明溢价: Energy_Surplus / Energy_Metabolic × log(META_Nodes+1)
+        2. 蟑螂系数: 节点利用率 < 0.3 则惩罚
+        3. 逆境韧性: 环境压力越大，复杂度权重越高
         
-        # 初始化种群
-        self.agents: List[Agent] = []
-        self._init_population()
+        返回: 真正的冠军个体
+        """
+        if not agents:
+            return None
+        
+        # 过滤存活个体
+        alive_agents = [a for a in agents if a.is_alive]
+        if not alive_agents:
+            return max(agents, key=lambda a: a.fitness)
+        
+        # 计算环境压力因子
+        env_pressure = self._calculate_environmental_pressure()
+        
+        # 对每个候选者计算"真实力"
+        candidates = []
+        for agent in alive_agents:
+            # 1. 计算基础指标
+            energy_efficiency = self._calculate_energy_efficiency(agent)
+            complexity_score = self._calculate_complexity_score(agent)
+            cockroach_penalty = self._calculate_cockroach_penalty(agent)
+            stress_bonus = self._calculate_stress_bonus(agent, env_pressure)
+            
+            # 2. 文明溢价公式
+            # Fitness_True = (Energy_Surplus / Metabolic) × log(META+1) × 逆境加成
+            true_fitness = energy_efficiency * complexity_score * stress_bonus
+            
+            # 3. 蟑螂惩罚
+            true_fitness *= (1.0 - cockroach_penalty * 0.9)
+            
+            # 4. 策略活跃度加成 (PREDICTOR和META是否在运算)
+            strategy_activity = self._calculate_strategy_activity(agent)
+            true_fitness *= (1.0 + strategy_activity * 0.5)
+            
+            candidates.append({
+                'agent': agent,
+                'true_fitness': true_fitness,
+                'energy_efficiency': energy_efficiency,
+                'complexity': complexity_score,
+                'strategy_activity': strategy_activity
+            })
+        
+        # 选择真实力最高的
+        best = max(candidates, key=lambda x: x['true_fitness'])
+        
+        if self.generation % 10 == 0:
+            print(f"  [熔炉] 真冠军: fit={best['true_fitness']:.1f} "
+                  f"效率={best['energy_efficiency']:.2f} "
+                  f"复杂度={best['complexity']:.2f} "
+                  f"策略活跃={best['strategy_activity']:.2f}")
+        
+        return best['agent']
+    
+    def _calculate_environmental_pressure(self) -> float:
+        """计算当前环境压力 (0-1, 越高越恶劣)"""
+        pressure = 0.0
+        
+        # 食物密度压力
+        if self.environment.n_food > 0:
+            food_density = self.environment.n_food / (self.environment.width * self.environment.height)
+            pressure += (1.0 - min(food_density * 1000, 1.0)) * 0.3
+        
+        # 季节压力 (冬天加成)
+        if self.environment.seasonal_cycle:
+            if self.environment.current_season == "winter":
+                pressure += 0.4
+            # 季节长度不确定性
+            pressure += self.environment.season_jitter * 0.2 if hasattr(self.environment, 'season_jitter') else 0
+        
+        # 能量衰减压力
+        if hasattr(self.environment, 'energy_decay_k') and self.environment.energy_decay_k > 0:
+            pressure += 0.3
+        
+        return min(pressure, 1.0)
+    
+    def _calculate_energy_efficiency(self, agent: 'Agent') -> float:
+        """计算能量效率: 剩余能量 / 代谢消耗"""
+        if agent.energy_spent <= 0:
+            return 0.0
+        # 剩余能量相对于消耗的比例
+        efficiency = (agent.internal_energy + agent.energy_gained) / max(agent.energy_spent, 1.0)
+        return max(efficiency, 0.0)
+    
+    def _calculate_complexity_score(self, agent: 'Agent') -> float:
+        """
+        v12.6: 复杂度评分改为"大脑代谢惩罚"
+        
+        核心思想: 大脑很贵!
+        - 每增加一个节点,增加成本 α
+        - 每增加一条边,增加成本 β
+        - 但收益(高级节点)有 diminishing returns
+        
+        这样演化会偏向: 用更少的节点做更多的事 (稀疏编码)
+        """
+        genome = agent.genome
+        
+        # 大脑成本 = 节点数×α + 边数×β
+        total_nodes = len(genome.nodes)
+        total_edges = len(genome.edges)
+        brain_cost = (total_nodes * self.brain_metabolic_alpha + 
+                      total_edges * self.brain_metabolic_beta)
+        
+        # 基础得分 (越小越好 = 惩罚大大脑)
+        import math
+        # 使用平方惩罚: 成本越高,分数越低
+        base_score = 1.0 / (brain_cost + 0.1)
+        
+        # 复杂度得分 = 基础分 × log(高级节点+1) 的小部分
+        # 这样大大脑仍能从高级节点获益,但会被成本抵消
+        meta_nodes = sum(1 for n in genome.nodes.values() 
+                        if n.node_type.name == 'META_NODE')
+        predictor_nodes = sum(1 for n in genome.nodes.values() 
+                             if n.node_type.name == 'PREDICTOR')
+        delay_nodes = sum(1 for n in genome.nodes.values() 
+                         if n.node_type.name == 'DELAY')
+        
+        advanced_nodes = meta_nodes + predictor_nodes + delay_nodes
+        
+        # 小修正: 高级节点给一点奖励,但被成本压制
+        complexity_score = base_score * (1.0 + math.log(advanced_nodes + 1) * 0.1)
+        
+        return max(complexity_score, 0.01)
+    
+    def _calculate_cockroach_penalty(self, agent: 'Agent') -> float:
+        """
+        计算"蟑螂系数"惩罚
+        如果节点利用率极低（大部分节点沉默），则是低复杂度生存，惩罚！
+        """
+        genome = agent.genome
+        total_nodes = len(genome.nodes)
+        
+        if total_nodes <= 0:
+            return 0.0
+        
+        # 活跃节点: 激活值 > 0.01
+        active_nodes = sum(1 for n in genome.nodes.values() if abs(n.activation) > 0.01)
+        usage_ratio = active_nodes / total_nodes
+        
+        # 如果利用率 < 0.3，则是"蟑螂策略"
+        if usage_ratio < 0.3:
+            return 1.0 - (usage_ratio / 0.3)  # 最高惩罚1.0
+        return 0.0
+    
+    def _calculate_stress_bonus(self, agent: 'Agent', env_pressure: float) -> float:
+        """
+        逆境加成
+        环境越恶劣，复杂大脑的加成越高
+        """
+        # 基础加成 = 1 + 压力^2
+        base_bonus = 1.0 + (env_pressure ** 2)
+        
+        # 高复杂度个体在高压下额外加成
+        complexity = self._calculate_complexity_score(agent)
+        if env_pressure > 0.5 and complexity > 2.0:
+            base_bonus *= 1.5  # 高压+高复杂度 = 额外50%加成
+        
+        return base_bonus
+    
+    def _calculate_strategy_activity(self, agent: 'Agent') -> float:
+        """
+        计算策略活跃度: PREDICTOR和META节点的输出方差
+        如果大脑在恶劣环境下"停摆"，那只是在等死，不是在思考
+        """
+        genome = agent.genome
+        
+        # 收集预测器和元节点的激活值
+        activations = []
+        for n in genome.nodes.values():
+            if n.node_type.name in ['PREDICTOR', 'META_NODE', 'DELAY']:
+                activations.append(abs(n.activation))
+        
+        if not activations:
+            return 0.0
+        
+        # 计算方差 (高方差 = 活跃思考)
+        import numpy as np
+        variance = np.var(activations) if len(activations) > 1 else 0.0
+        
+        # 归一化到0-1
+        return min(variance * 10, 1.0)
+    
+    def update_hall_of_fame(self, champion: 'Agent') -> bool:
+        """
+        更新英雄冢 (Hall of Fame)
+        只有当新冠军在同等压力下表现显著超过历史最强时才触发覆盖
+        
+        返回: 是否更新了冠军
+        """
+        if champion is None:
+            return False
+        
+        # 计算当前冠军的"真实力"
+        env_pressure = self._calculate_environmental_pressure()
+        energy_eff = self._calculate_energy_efficiency(champion)
+        complexity = self._calculate_complexity_score(champion)
+        stress_bonus = self._calculate_stress_bonus(champion, env_pressure)
+        
+        current_strength = energy_eff * complexity * stress_bonus
+        
+        # 如果英雄冢为空，直接添加
+        if not self.hall_of_fame:
+            self.hall_of_fame.append({
+                'agent': champion,
+                'fitness': current_strength,
+                'generation': self.generation,
+                'pressure': env_pressure
+            })
+            return True
+        
+        # 比较历史最强
+        best_history = max(self.hall_of_fame, key=lambda x: x['fitness'])
+        
+        # 只有当新冠军显著更强(>20%优势)时才覆盖
+        if current_strength > best_history['fitness'] * 1.2:
+            # 替换最差的
+            worst_idx = min(range(len(self.hall_of_fame)), key=lambda i: self.hall_of_fame[i]['fitness'])
+            self.hall_of_fame[worst_idx] = {
+                'agent': champion,
+                'fitness': current_strength,
+                'generation': self.generation,
+                'pressure': env_pressure
+            }
+            
+            if self.generation % 10 == 0:
+                print(f"  [英雄冢] 更新! Gen{self.generation} 实力={current_strength:.2f}")
+            return True
+        
+        return False
+    
+    def get_hall_of_fame_champion(self) -> 'Agent':
+        """获取英雄冢中最强的个体"""
+        if not self.hall_of_fame:
+            return None
+        return max(self.hall_of_fame, key=lambda x: x['fitness'])['agent']
     
     def _init_population(self) -> None:
         """初始化第一代种群"""
@@ -743,13 +1032,50 @@ class Population:
     
     def _init_champion_brain(self, agent: Agent) -> None:
         """
-        使用v4.1冠军结构初始化脑 (最佳记忆回路)
+        初始化冠军大脑
         
-        包含:
-        - 差分驱动连接
-        - DELAY记忆回路
-        - 预测回路
+        v0.98: 支持两种模式:
+        1. 从champion_brain JSON加载 (优先)
+        2. 使用v4.1预设冠军结构
         """
+        # v0.98: 如果有JSON数据，从文件加载
+        if self.champion_brain is not None:
+            try:
+                # 清除默认节点
+                agent.genome.nodes.clear()
+                agent.genome.edges.clear()
+                
+                # 从JSON加载节点
+                from core.eoe.node import Node
+                for node_data in self.champion_brain.get('nodes', []):
+                    node_id = node_data.get('node_id', node_data.get('id', 0))
+                    node_type_str = node_data.get('node_type', node_data.get('type', 'SENSOR'))
+                    node = Node(
+                        node_id=node_id,
+                        node_type=NodeType[node_type_str],
+                        name=node_data.get('name', f"node_{node_id}")
+                    )
+                    # 设置额外属性
+                    if 'delay_steps' in node_data:
+                        node.delay_steps = node_data['delay_steps']
+                    agent.genome.add_node(node)
+                
+                # 从JSON加载边
+                for edge_data in self.champion_brain.get('edges', []):
+                    agent.genome.add_edge(
+                        source_id=edge_data['source_id'],
+                        target_id=edge_data['target_id'],
+                        weight=edge_data.get('weight', 1.0),
+                        enabled=edge_data.get('enabled', True)
+                    )
+                
+                return  # 加载完成，跳过预设结构
+            except Exception as e:
+                print(f"警告: 加载冠军大脑失败: {e}")
+                print("回退到预设冠军结构...")
+        
+        # 预设冠军结构 (v4.1)
+        # ====================
         # 先添加额外节点
         # DELAY节点 (id=10)
         if 10 not in agent.genome.nodes:
@@ -942,6 +1268,15 @@ class Population:
         返回:
             统计信息字典
         """
+        # v0.99: 修复时间轴 - 在每一代开始时重置季节
+        # 确保每一代都从夏天第1帧开始，让Agent有"夏天积累"的机会
+        if self.environment.seasonal_cycle:
+            self.environment.current_season = "summer"
+            self.environment.season_frame = 0
+            # 重置昼夜时钟，确保第一帧是白天（低代谢）
+            self.environment.is_day = True
+            self.environment.current_time = 0
+        
         # v0.80: 红皇后 - 第一代生成敌对
         if self.red_queen and self.generation == 0:
             self.spawn_rivals()
@@ -1046,6 +1381,17 @@ class Population:
         fitnesses = [a.fitness for a in self.agents]
         best_idx = np.argmax(fitnesses)
         
+                # v12.6: 计算大脑效率
+        def calc_brain_efficiency(agent):
+            genome = agent.genome
+            nodes = len(genome.nodes)
+            edges = len(genome.edges)
+            benefit = sum(1 for n in genome.nodes.values() 
+                         if n.node_type.name in ['META_NODE', 'PREDICTOR', 'DELAY'] 
+                         and abs(n.activation) > 0.01)
+            cost = nodes * self.brain_metabolic_alpha + edges * self.brain_metabolic_beta
+            return benefit / max(cost, 0.001)
+        
         return {
             'generation': self.generation,
             'best_fitness': fitnesses[best_idx],
@@ -1055,7 +1401,14 @@ class Population:
             'avg_nodes': np.mean([a.genome.get_info()['total_nodes'] for a in self.agents]),
             'avg_edges': np.mean([a.genome.get_info()['enabled_edges'] for a in self.agents]),
             'avg_novelty': np.mean([a.novelty_score for a in self.agents]),
-            'avg_exploration': np.mean([a.get_exploration_score() for a in self.agents])
+            'avg_exploration': np.mean([a.get_exploration_score() for a in self.agents]),
+            # v12.6: 大脑效率追踪
+            'avg_brain_efficiency': np.mean([calc_brain_efficiency(a) for a in self.agents]),
+            'brain_cost_per_agent': np.mean([
+                a.genome.get_info()['total_nodes'] * self.brain_metabolic_alpha + 
+                a.genome.get_info()['enabled_edges'] * self.brain_metabolic_beta 
+                for a in self.agents
+            ])
         }
     
     # ============================================================
@@ -1165,8 +1518,10 @@ class Population:
         n_survivors = max(2, self.population_size // 2)  # 只保留50%
         sorted_agents = sorted_agents[:n_survivors]
         
-        # 存活且吃到食物的 agent 有更高优先级
+        # 存活且吃到食物的 agent 有更高优先级 - 按能量排序
         survivors_with_food = [a for a in sorted_agents if a.is_alive and a.food_eaten > 0]
+        # v0.99: 按能量降序排序，确保选择能量更高的父母
+        survivors_with_food = sorted(survivors_with_food, key=lambda a: a.internal_energy, reverse=True)
         
         # v6.0 GAIA: 精英选择时检查繁衍条件
         # 条件: Energy > 200% AND Age in [20%, 60%]
@@ -1178,7 +1533,7 @@ class Population:
         # 筛选可繁衍的精英
         reproducibles = [a for a in survivors_with_food if can_reproduce(a)]
         
-        # 精英选择: 优先选择可繁衍的,其次是有食物的
+        # 精英选择: 优先选择可繁衍的,其次是有食物的,最后是活着的
         n_elites = int(self.population_size * self.elite_ratio)
         
         if reproducibles:
@@ -1186,7 +1541,13 @@ class Population:
         elif survivors_with_food:
             elite_pool = survivors_with_food[:min(n_elites * 2, len(survivors_with_food))]
         else:
-            elite_pool = sorted_agents[:n_elites]
+            # v0.99 修复: 只选择活着的 agent 作为精英
+            alive_agents = [a for a in sorted_agents if a.is_alive and a.internal_energy > 0]
+            if alive_agents:
+                elite_pool = alive_agents[:n_elites]
+            else:
+                # 如果没有活着的，选择能量最高的（即使已死）
+                elite_pool = sorted_agents[:n_elites]
         
         elites = elite_pool[:n_elites]
         
@@ -1284,9 +1645,21 @@ class Population:
             child = Agent(agent_id=i, x=x, y=y, theta=theta)
             child.genome = child_genome
             
-            # 能量继承: 父母吃到的食物转化为子代初始能量
-            # v5.7 物理规律: 初始能量 = 基础50 + 食物转化
-            child.initial_energy = 50.0 + parent_food * self.environment.food_energy
+            # v0.99: 辅助轮拆除 - 能量阈值可演化
+            # 从父母继承阈值，并有一定概率突变
+            # 如果没有parent（edge case），使用默认值0.5
+            if 'parent' in dir() and parent is not None:
+                child.energy_eat_threshold = parent.energy_eat_threshold
+                if np.random.random() < 0.1:  # 10%概率突变
+                    child.energy_eat_threshold += np.random.uniform(-0.1, 0.1)
+                    child.energy_eat_threshold = np.clip(child.energy_eat_threshold, 0.1, 0.9)
+            else:
+                child.energy_eat_threshold = 0.5  # 默认阈值
+            
+            # v0.99: 能量继承修复 - 增加基础能量确保存活
+            # 基础能量 = 150 + 父母吃到的食物转化
+            # 150 能量足以支撑 50 帧低代谢生活
+            child.initial_energy = 150.0 + parent_food * self.environment.food_energy
             child.internal_energy = min(child.initial_energy, child.max_energy)
             # 注意: initial_energy 已经包含食物转化,无需重复计入 energy_gained
             
@@ -1404,48 +1777,66 @@ class Population:
     def _apply_mutations(self, agent_or_genome) -> None:
         """对智能体应用随机突变 (支持Agent或Genome)
         
-        v5.1: 模拟退火突变 (Annealed Mutation)
-        - 随着节点数增加,突变概率指数下降
-        - μ_local = μ_0 * e^(-k * N_nodes)
-        - 大脑越大,核心越稳定,变异仅在边缘
+        v0.98: 重大升级
+        1. 废除节点惩罚 - 交给代谢税（自然选择）
+        2. 基于停滞期的动态突变 - 陷入局部最优时提升突变率
+        3. 权重高频微调 - 确保连续性探索
         """
         # 获取genome对象
         genome = getattr(agent_or_genome, 'genome', agent_or_genome)
         
-        # 计算模拟退火因子
-        n_nodes = len(genome.nodes)
-        k = 0.05  # 衰减系数
-        anneal_factor = np.exp(-k * n_nodes)  # 节点越多,因子越小
+        # ============================================================
+        # v0.98: 基于停滞期的动态突变
+        # ============================================================
+        if not hasattr(self, '_stagnation_counter'):
+            self._stagnation_counter = 0
+            self._last_best_fitness = -float('inf')
         
-        # 基础突变率
-        base_add_node = self.mutation_rates['add_node']
-        base_add_edge = self.mutation_rates['add_edge']
+        # 检查停滞
+        current_best = getattr(self, 'best_fitness_this_gen', -float('inf'))
+        if current_best <= self._last_best_fitness:
+            self._stagnation_counter += 1
+        else:
+            self._stagnation_counter = 0
+            self._last_best_fitness = current_best
         
-        # 模拟退火后的实际突变率
-        annealed_add_node = base_add_node * anneal_factor
-        annealed_add_edge = base_add_edge * anneal_factor
+        # 停滞20代时大幅提升突变率
+        if self._stagnation_counter >= 20:
+            mutation_boost = 3.0  # 3倍突变率
+        else:
+            mutation_boost = 1.0
         
-        # 添加节点突变 (边缘概率较高)
-        if n_nodes < 8 and np.random.random() < annealed_add_node:
-            genome.mutate_add_node()
-        elif n_nodes >= 8 and np.random.random() < annealed_add_node * 0.5:
-            # 大脑较大时,节点添加更保守
+        # 基础突变率 (不再基于节点数的模拟退火)
+        base_add_node = self.mutation_rates['add_node'] * mutation_boost
+        base_add_edge = self.mutation_rates['add_edge'] * mutation_boost
+        
+        # ============================================================
+        # v0.98: 废除节点惩罚
+        # 统一使用基础突变率，让自然选择（代谢税）去修剪
+        # ============================================================
+        if np.random.random() < base_add_node:
             genome.mutate_add_node()
         
         # 添加边突变
-        if np.random.random() < annealed_add_edge:
+        if np.random.random() < base_add_edge:
             genome.mutate_add_edge()
         
-        # 权重扰动 (相对稳定,稍微衰减)
-        weight_rate = self.mutation_rates['mutate_weight'] * (0.7 + 0.3 * anneal_factor)
-        if np.random.random() < weight_rate:
-            genome.mutate_weight(sigma=0.1 * anneal_factor, probability=0.2)
+        # ============================================================
+        # v0.98: 权重高频微调 (两层概率)
+        # - 个体层: 80% 概率进入权重突变
+        # - 边层: 15% 概率受高斯扰动
+        # 确保几乎每个新生儿都有轻微差异
+        # ============================================================
+        if np.random.random() < 0.8:  # 80% 个体层
+            # 基础sigma，稍微衰减但不至于太低
+            sigma = 0.1
+            genome.mutate_weight(sigma=sigma, probability=0.15)  # 15% 边层
         
         # v0.81: 传感器感知权重突变
         from .node import NodeType
         for node in genome.nodes.values():
             if node.node_type == NodeType.SENSOR and np.random.random() < 0.2:
-                node.mutate_sensor_weights(sigma=0.1 * anneal_factor)
+                node.mutate_sensor_weights(sigma=0.1)
     
     def _apply_micro_mutations(self, genome: 'OperatorGenome') -> None:
         """
@@ -1523,6 +1914,11 @@ class Population:
             # 运行一代
             stats = self.epoch(verbose=verbose)
             history.append(stats)
+            
+            # ============================================================
+            # v0.98: 设置停滞期跟踪器的当前最佳适应度
+            # ============================================================
+            self.best_fitness_this_gen = stats['best_fitness']
             
             if verbose:
                 print(f"  Best Fitness: {stats['best_fitness']:.2f}")

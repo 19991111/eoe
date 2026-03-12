@@ -1,30 +1,6 @@
 {
-  "metabolic_alpha": 0.03,
-  "metabolic_beta": 0.03,
-  "sensor_range": 40.0,
-  "season_length": 80,
-  "winter_metabolic_multiplier": 1.5,
-  "fatigue_build_rate": 0.2,
-  "food_energy": 40.0,
-  "enable_fatigue_system": true,
-  "enable_thermal_sanctuary": true,
-  "enable_morphological_computation": true,
-  "thermal_sanctuary": {
-    "summer_temperature": 25.0,
-    "winter_temperature": -5.0,
-    "food_heat_output": 18.0,
-    "food_heat_radius": 20.0,
-    "nest_insulation": 0.01
-  },
-  "morphological_computation": {
-    "adhesion_range": 3.5,
-    "carry_speed_penalty": 0.65,
-    "discharge_threshold": 0.7
-  },
-  "ontogenetic_phase": {
-    "enabled": true,
-    "juvenile_duration": 60,
-    "juvenile_metabolic_rate": 0.25
-  },
-  "notes": "\u6e29\u67d4\u521d\u59cb\u914d\u7f6e"
+  "_deprecated": true,
+  "_note": "请使用 core/eoe/manifest.py 作为唯一配置源 (SSOT)",
+  "_migration_date": "2026-03-12",
+  "see_also": "VERSION_MANAGEMENT.md"
 }

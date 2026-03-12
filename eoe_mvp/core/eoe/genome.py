@@ -590,9 +590,13 @@ class OperatorGenome:
         else:
             node_type = NodeType.PREDICTOR  # 预测节点
         
-        # v0.70: DELAY节点随机化delay_steps (8-50范围，支持长时间规划)
+        # ============================================================
+        # v0.98: 静默突变 - 插入"透明"节点
+        # 新节点初始时在数学上等同于"直通"，避免破坏性突变
+        # ============================================================
         if node_type == NodeType.DELAY:
-            delay_steps = np.random.randint(8, 51)  # 8到50帧
+            # DELAY: 初始 delay_steps=1（最小延迟），避免杀死救命信号
+            delay_steps = 1  # 原来是 np.random.randint(8, 51)
             new_node = Node(node_id=new_node_id, node_type=node_type, 
                           name=f"{node_type.name}_{new_node_id}", delay_steps=delay_steps)
         else:
@@ -604,7 +608,12 @@ class OperatorGenome:
         # 禁用原边
         edge['enabled'] = False
         
-        # 添加两条新边
+        # ============================================================
+        # v0.98: 静默突变 - 边权重设置为"透明"
+        # - source → new_node: weight=1.0 (恒等映射)
+        # - new_node → target: weight=edge['weight'] (保持原信号强度)
+        # 这样新节点初始时不改变信号传递，后续通过 mutate_weight 调节
+        # ============================================================
         self.add_edge(edge['source_id'], new_node_id, weight=1.0, enabled=True)
         self.add_edge(new_node_id, edge['target_id'], weight=edge['weight'], enabled=True)
         

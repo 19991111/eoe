@@ -1,0 +1,230 @@
+{
+  "nodes": [
+    {
+      "node_id": 0,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "left_sensor",
+      "delay_steps": 1,
+      "innovation_id": 848,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        -0.018733085500694014,
+        0.025068042405616525,
+        -0.38076693343316115,
+        0.03681371760845839,
+        -0.006481381973742803,
+        -0.10849409089915446,
+        0.2877079311334734,
+        0.13593481562746088
+      ],
+      "distance_weights": [
+        -0.3448742002489005,
+        0.2636680207429877,
+        0.39145777586260455
+      ],
+      "target_type_weights": [
+        0.04524944096672548,
+        0.12388225888345655,
+        0.11596644855685026,
+        -0.714901848165523
+      ]
+    },
+    {
+      "node_id": 1,
+      "node_type": "SENSOR",
+      "constant_value": 0.0,
+      "name": "right_sensor",
+      "delay_steps": 1,
+      "innovation_id": 849,
+      "is_frozen": false,
+      "stability": 1.0,
+      "angle_weights": [
+        -0.04936624509777433,
+        -0.06311476084486554,
+        0.37781113071538996,
+        0.0881625036187197,
+        -0.07862132710330079,
+        -0.023808688669123036,
+        0.2703527181716542,
+        -0.04876262313742405
+      ],
+      "distance_weights": [
+        -0.3646703044677664,
+        -0.1440003521501927,
+        0.49132933815900115
+      ],
+      "target_type_weights": [
+        0.3841133960921089,
+        0.03427070594755464,
+        0.1482829800430833,
+        -0.43333291017560527
+      ]
+    },
+    {
+      "node_id": 2,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "left_actuator",
+      "delay_steps": 1,
+      "innovation_id": 850,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 3,
+      "node_type": "ACTUATOR",
+      "constant_value": 0.0,
+      "name": "right_actuator",
+      "delay_steps": 1,
+      "innovation_id": 851,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 4,
+      "node_type": "PREDICTOR",
+      "constant_value": 0.0,
+      "name": "left_predictor",
+      "delay_steps": 1,
+      "innovation_id": 852,
+      "is_frozen": false,
+      "stability": 0.38104711810454983
+    },
+    {
+      "node_id": 5,
+      "node_type": "PREDICTOR",
+      "constant_value": 0.0,
+      "name": "right_predictor",
+      "delay_steps": 1,
+      "innovation_id": 853,
+      "is_frozen": false,
+      "stability": 0.38104711810454983
+    },
+    {
+      "node_id": 100,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 854,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 101,
+      "node_type": "PORT_MOTION",
+      "constant_value": 0.0,
+      "name": "PORT_MOTION",
+      "delay_steps": 1,
+      "innovation_id": 855,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 102,
+      "node_type": "PORT_REPAIR",
+      "constant_value": 0.0,
+      "name": "PORT_REPAIR",
+      "delay_steps": 1,
+      "innovation_id": 856,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 103,
+      "node_type": "PORT_OFFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_OFFENSE",
+      "delay_steps": 1,
+      "innovation_id": 857,
+      "is_frozen": false,
+      "stability": 1.0
+    },
+    {
+      "node_id": 104,
+      "node_type": "PORT_DEFENSE",
+      "constant_value": 0.0,
+      "name": "PORT_DEFENSE",
+      "delay_steps": 1,
+      "innovation_id": 858,
+      "is_frozen": false,
+      "stability": 1.0
+    }
+  ],
+  "edges": [
+    {
+      "source_id": 4,
+      "target_id": 2,
+      "weight": 0.3745118216262229,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 0
+    },
+    {
+      "source_id": 4,
+      "target_id": 2,
+      "weight": 0.056754449735780366,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 0
+    },
+    {
+      "source_id": 5,
+      "target_id": 2,
+      "weight": -0.42715710115210515,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 1
+    },
+    {
+      "source_id": 1,
+      "target_id": 3,
+      "weight": 0.5576102447955085,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 2
+    },
+    {
+      "source_id": 5,
+      "target_id": 3,
+      "weight": -0.7564951267249855,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 3
+    },
+    {
+      "source_id": 1,
+      "target_id": 3,
+      "weight": 1.2,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 2
+    },
+    {
+      "source_id": 0,
+      "target_id": 3,
+      "weight": -0.8,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 4
+    },
+    {
+      "source_id": 0,
+      "target_id": 2,
+      "weight": 1.2,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 5
+    },
+    {
+      "source_id": 1,
+      "target_id": 2,
+      "weight": -0.8,
+      "enabled": true,
+      "learning_rate": 0.0,
+      "innovation_id": 6
+    }
+  ]
+}

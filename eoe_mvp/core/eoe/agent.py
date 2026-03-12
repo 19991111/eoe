@@ -73,6 +73,11 @@ class Agent:
         self.steps_alive: int = 0             # 存活步数
         
         # ============================================================
+        # v0.99 辅助轮: 能量阈值（可演化参数）
+        # 当能量低于此比例时直接吃，高于此比例时携带
+        # 初始值0.5，之后可突变演化
+        self.energy_eat_threshold: float = 0.5
+        
         # ============================================================
         # v6.0 GAIA 寿命与年龄系统 (Thermodynamics)
         # ============================================================
@@ -276,6 +281,53 @@ class Agent:
             self.genome.add_node(compass_0)
             self.genome.add_node(compass_1)
             self.genome.add_node(compass_2)
+        
+        # 初始化随机边 - "初始突触风暴"
+        # 让神经网络能够产生动作，而非永远输出0
+        self._init_random_edges(min_edges=3, max_edges=8)
+    
+    def _init_random_edges(self, min_edges: int = 3, max_edges: int = 8):
+        """
+        初始化随机边 - 为神经网络注入初始连接
+        
+        这是"演化算法的标准做法"：
+        - 随机选择输入节点（传感器/预测器）
+        - 随机选择输出节点（执行器）
+        - 随机权重 (-1.0 到 1.0)
+        
+        绝对不硬编码特定的神经回路，保持"盲盒"原则。
+        """
+        import random as _random
+        
+        # 获取所有合法的输入/输出节点
+        input_nodes = []
+        output_nodes = []
+        
+        for node_id, node in self.genome.nodes.items():
+            if node.node_type in [NodeType.SENSOR, NodeType.PREDICTOR]:
+                input_nodes.append(node_id)
+            elif node.node_type == NodeType.ACTUATOR:
+                output_nodes.append(node_id)
+        
+        if not input_nodes or not output_nodes:
+            return  # 无法创建边
+        
+        # 随机生成 3-8 条边
+        n_edges = _random.randint(min_edges, max_edges)
+        
+        for _ in range(n_edges):
+            try:
+                source = _random.choice(input_nodes)
+                target = _random.choice(output_nodes)
+                weight = _random.uniform(-1.0, 1.0)
+                
+                # 添加边（可能失败如果连接已存在）
+                self.genome.add_edge(source, target, weight)
+            except ValueError:
+                pass  # 连接已存在，跳过
+        
+        # 重置拓扑排序
+        self.genome._topo_order = None
     
     def get_sensor_ids(self) -> Tuple[int, int]:
         """获取左右传感器的节点 ID"""
