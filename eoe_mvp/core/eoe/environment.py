@@ -2699,7 +2699,66 @@ class Environment:
                 max_val = max(abs(v) for v in sensor_values) + 1e-8
                 sensor_values = [v / max_val for v in sensor_values]
 
-            return np.array(sensor_values[:2] if len(sensor_values) >= 2 else sensor_values + [0.0])
+            # 基础传感器值 (2维)
+            base_sensors = np.array(sensor_values[:2] if len(sensor_values) >= 2 else sensor_values + [0.0])
+            
+            # ============================================================
+            # v13.0: 统一场物理传感器 (追加到基础传感器)
+            # 格式: [EPF×3, KIF×3, ISF×3, ESF×1, ENERGY×1]
+            # ============================================================
+            gx = int(agent.x / self.energy_field.resolution) % self.energy_field.grid_width if self.energy_field else 0
+            gy = int(agent.y / self.energy_field.resolution) % self.energy_field.grid_height if self.energy_field else 0
+            
+            # EPF: 能量场感知 (3维)
+            if self.energy_field_enabled and self.energy_field:
+                epf_center = self.energy_field.sample(agent.x, agent.y)
+                epf_grad_x = self.epf_grad_x[gx, gy] if self.epf_grad_x is not None else 0.0
+                epf_grad_y = self.epf_grad_y[gx, gy] if self.epf_grad_y is not None else 0.0
+                epf_c = max(0.0, min(1.0, epf_center / 100.0))
+                epf_gx = max(-1.0, min(1.0, epf_grad_x / 10.0))
+                epf_gy = max(-1.0, min(1.0, epf_grad_y / 10.0))
+                v13_sensors = np.array([epf_c, epf_gx, epf_gy])
+            else:
+                v13_sensors = np.zeros(3)
+            
+            # KIF: 阻抗场感知 (3维)
+            if self.impedance_field_enabled and self.impedance_field:
+                kif_center = self.impedance_field.sample(agent.x, agent.y)
+                kif_grad_x = self.kif_grad_x[gx, gy] if self.kif_grad_x is not None else 0.0
+                kif_grad_y = self.kif_grad_y[gx, gy] if self.kif_grad_y is not None else 0.0
+                kif_c = max(0.0, min(1.0, kif_center / 100.0))
+                kif_gx = max(-1.0, min(1.0, kif_grad_x / 10.0))
+                kif_gy = max(-1.0, min(1.0, kif_grad_y / 10.0))
+                v13_sensors = np.append(v13_sensors, [kif_c, kif_gx, kif_gy])
+            else:
+                v13_sensors = np.append(v13_sensors, [0.0, 0.0, 0.0])
+            
+            # ISF: 压痕场感知 (3维)
+            if self.stigmergy_field_enabled and self.stigmergy_field:
+                isf_center = self.stigmergy_field.sample(agent.x, agent.y)
+                isf_grad_x = self.isf_grad_x[gx, gy] if self.isf_grad_x is not None else 0.0
+                isf_grad_y = self.isf_grad_y[gx, gy] if self.isf_grad_y is not None else 0.0
+                isf_c = max(0.0, min(1.0, isf_center / 10.0))
+                isf_gx = max(-1.0, min(1.0, isf_grad_x))
+                isf_gy = max(-1.0, min(1.0, isf_grad_y))
+                v13_sensors = np.append(v13_sensors, [isf_c, isf_gx, isf_gy])
+            else:
+                v13_sensors = np.append(v13_sensors, [0.0, 0.0, 0.0])
+            
+            # ESF: 应力场感知 (1维)
+            if self.stress_field_enabled and self.stress_field:
+                stress = getattr(agent, 'current_stress', 0.0)
+                stress_norm = max(-1.0, min(1.0, stress))
+                v13_sensors = np.append(v13_sensors, stress_norm)
+            else:
+                v13_sensors = np.append(v13_sensors, 0.0)
+            
+            # INTERNAL_ENERGY: 体内能量感知 (1维)
+            agent_energy = getattr(agent, 'internal_energy', 150.0)
+            energy_norm = max(0.0, min(1.0, agent_energy / 200.0))
+            v13_sensors = np.append(v13_sensors, energy_norm)
+            
+            return np.concatenate([base_sensors, v13_sensors])
 
         # ============================================================
         # 原有逻辑 (非可学习传感器)
