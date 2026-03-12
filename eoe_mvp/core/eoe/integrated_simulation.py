@@ -112,14 +112,14 @@ class ThermodynamicLaw:
         # === 5. 死亡判定 ===
         new_alive_mask = (new_energies > self.min_energy)
         
-        # === 6. ISF 信号注入 (向场写入) ===
+        # === 6. ISF 信号注入 (批量GPU操作) ===
         if env.stigmergy_field_enabled:
-            # 批量注入信号 (需要遍历每个存活Agent的位置)
-            alive_indices = torch.where(alive_mask)[0]
-            for idx in alive_indices:
-                if new_alive_mask[idx] and signal_deposit[idx] > 0:
-                    pos = agents.state.positions[idx]
-                    env.stigmergy_field.deposit(pos[0].item(), pos[1].item(), signal_deposit[idx].item())
+            # 只处理存活的Agent
+            valid_mask = alive_mask & new_alive_mask & (signal_deposit > 0)
+            if valid_mask.any():
+                valid_positions = agents.state.positions[valid_mask]
+                valid_amounts = signal_deposit[valid_mask]
+                env.stigmergy_field.deposit_batch(valid_positions, valid_amounts)
         
         # 更新 Agent 能量
         agents.state.energies = new_energies

@@ -22,7 +22,15 @@ from typing import Optional, Tuple
 
 
 class EnergyFieldGPU:
-    """GPU 加速能量场 (EPF)"""
+    """
+    GPU 加速能量场 (EPF) - 动态可枯竭版本
+    ======================================
+    特性:
+    - 脉冲式能量注入
+    - 能量源可枯竭
+    - 枯竭后随机迁移到新位置
+    - 迫使Agent演化空间迁徙能力
+    """
     
     def __init__(
         self,
@@ -30,9 +38,11 @@ class EnergyFieldGPU:
         height: float = 100.0,
         resolution: float = 1.0,
         device: str = 'cuda:0',
-        n_sources: int = 3,
-        source_strength: float = 50.0,
-        decay_rate: float = 0.99
+        n_sources: int = 5,           # 增加源数量
+        source_strength: float = 80.0, # 增加脉冲强度
+        source_capacity: float = 300.0, # 减少总容量(更快枯竭)
+        decay_rate: float = 0.98,     # 更快衰减
+        respawn_threshold: float = 0.15 # 更早枯竭(15%)
     ):
         self.width = width
         self.height = height
@@ -49,11 +59,14 @@ class EnergyFieldGPU:
             device=device, dtype=torch.float32
         )
         
-        # 能量源 (GPU)
-        self.sources = torch.zeros(n_sources, 4, device=device)  # [x, y, strength, active]
+        # 能量源 (GPU) - 扩展为6列: [x, y, strength, active, capacity, max_capacity]
+        self.sources = torch.zeros(n_sources, 6, device=device)
         self.n_sources = n_sources
         self.source_strength = source_strength
+        self.source_capacity = source_capacity
         self.decay_rate = decay_rate
+        self.respawn_threshold = respawn_threshold
+        self.step_count = 0
         
         # 初始化源
         self._init_sources()
@@ -61,40 +74,102 @@ class EnergyFieldGPU:
     def _init_sources(self):
         """初始化能量源"""
         for i in range(self.n_sources):
-            # 随机位置
-            self.sources[i, 0] = torch.rand(1, device=self.device) * self.width
-            self.sources[i, 1] = torch.rand(1, device=self.device) * self.height
-            self.sources[i, 2] = self.source_strength * (0.5 + torch.rand(1, device=self.device))
-            self.sources[i, 3] = 1.0  # active
+            self._spawn_source(i)
+    
+    def _spawn_source(self, idx: int):
+        """在随机位置生成新能量源"""
+        # 随机位置 (避开边缘)
+        self.sources[idx, 0] = torch.rand(1, device=self.device) * (self.width - 10) + 5
+        self.sources[idx, 1] = torch.rand(1, device=self.device) * (self.height - 10) + 5
+        # 脉冲强度 (随机化)
+        self.sources[idx, 2] = self.source_strength * (0.5 + torch.rand(1, device=self.device))
+        # 激活状态
+        self.sources[idx, 3] = 1.0
+        # 当前容量和最大容量
+        self.sources[idx, 4] = self.source_capacity * (0.8 + torch.rand(1, device=self.device) * 0.4)
+        self.sources[idx, 5] = self.sources[idx, 4].clone()
     
     def step(self):
         """单步更新"""
-        # 1. 能量衰减
+        self.step_count += 1
+        
+        # 1. 能量自然衰减
         self.field *= self.decay_rate
         
-        # 2. 能量源注入
-        self._inject_energy()
+        # 2. 脉冲式能量注入 (每10步一个脉冲)
+        if self.step_count % 10 == 0:
+            self._inject_energy_pulse()
+        
+        # 3. 检查并处理枯竭的源
+        self._check_and_respawn()
     
-    def _inject_energy(self):
-        """GPU 批量注入能量源"""
-        # 将源位置转换为网格坐标
-        source_x = (self.sources[:, 0] / self.resolution).long()
-        source_y = (self.sources[:, 1] / self.resolution).long()
-        
-        # 边界检查
-        source_x = torch.clamp(source_x, 0, self.grid_width - 1)
-        source_y = torch.clamp(source_y, 0, self.grid_height - 1)
-        
-        # 批量注入 (使用高级索引)
+    def _inject_energy_pulse(self):
+        """脉冲式注入能量"""
         for i in range(self.n_sources):
-            if self.sources[i, 3] > 0:  # active
-                self.field[0, 0, source_y[i], source_x[i]] += self.sources[i, 2]
+            if self.sources[i, 3] > 0 and self.sources[i, 4] > 0:  # active and has capacity
+                # 将源位置转换为网格坐标
+                gx = int(self.sources[i, 0].item() / self.resolution) % self.grid_width
+                gy = int(self.sources[i, 1].item() / self.resolution) % self.grid_height
+                
+                # 注入能量
+                inject_amount = self.sources[i, 2].item()
+                self.field[0, 0, gy, gx] += inject_amount
+                
+                # 消耗容量
+                self.sources[i, 4] -= inject_amount
+    
+    def _check_and_respawn(self):
+        """检查能量源是否枯竭，必要时迁移"""
+        for i in range(self.n_sources):
+            # 检查是否枯竭 (剩余容量 < 阈值的最大值)
+            min_capacity = self.sources[i, 5] * self.respawn_threshold
+            if self.sources[i, 4] < min_capacity and self.sources[i, 4] > 0:
+                # 源已枯竭，重生到新位置
+                self._spawn_source(i)
+    
+    def get_source_info(self):
+        """获取当前能量源状态 (用于调试)"""
+        info = []
+        for i in range(self.n_sources):
+            info.append({
+                'x': self.sources[i, 0].item(),
+                'y': self.sources[i, 1].item(),
+                'strength': self.sources[i, 2].item(),
+                'active': self.sources[i, 3].item(),
+                'capacity': self.sources[i, 4].item(),
+                'max_capacity': self.sources[i, 5].item()
+            })
+        return info
+    
+    def extract_energy(self, positions: torch.Tensor, amounts: torch.Tensor):
+        """
+        从场中提取能量 (Agent吸取)
+        
+        Args:
+            positions: [N, 2] 位置
+            amounts: [N] 吸取量
+        """
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        
+        # 批量提取
+        for i in range(positions.shape[0]):
+            if amounts[i] > 0:
+                current = self.field[0, 0, gy[i], gx[i]]
+                extracted = min(current.item(), amounts[i].item())
+                self.field[0, 0, gy[i], gx[i]] -= extracted
     
     def sample(self, x: float, y: float) -> float:
         """采样位置的能量值 (CPU 调用时)"""
         gx = int(x / self.resolution) % self.grid_width
         gy = int(y / self.resolution) % self.grid_height
         return self.field[0, 0, gy, gx].item()
+    
+    def sample_batch(self, positions: torch.Tensor) -> torch.Tensor:
+        """批量采样位置的能量值"""
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        return self.field[0, 0, gy, gx]
     
     def compute_gradient(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """计算梯度 - GPU 加速"""
@@ -245,10 +320,25 @@ class StigmergyFieldGPU:
         self.field = torch.clamp(self.field, 0, 100.0)
     
     def deposit(self, x: float, y: float, amount: float):
-        """注入信号"""
+        """注入信号 (单点)"""
         gx = int(x / self.resolution) % self.grid_width
         gy = int(y / self.resolution) % self.grid_height
         self.field[0, 0, gy, gx] += amount
+    
+    def deposit_batch(self, positions: torch.Tensor, amounts: torch.Tensor):
+        """
+        批量注入信号 (GPU加速)
+        
+        Args:
+            positions: [N, 2] x, y 坐标 (GPU张量)
+            amounts: [N] 注入量 (GPU张量)
+        """
+        # 计算网格坐标
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        
+        # 使用索引批量更新 (GPU上)
+        self.field[0, 0, gy, gx] += amounts
     
     def sample(self, x: float, y: float) -> float:
         """采样"""
