@@ -2,6 +2,10 @@ from typing import List, Dict, Optional, Tuple, Set
 import numpy as np
 
 from .node import NodeType
+from .thermodynamic_law import ThermodynamicLaw
+from .kinetic_impedance import KineticImpedanceField, KineticImpedanceLaw
+from .stigmergy_field import StigmergyField, StigmergyLaw
+from .stress_field import StressField, StressLaw
 
 # ============================================================
 # Numba JIT 加速 (v10.0)
@@ -403,6 +407,243 @@ class ChunkManager:
 
 
 # ============================================================
+# v13.0: 能量场物理系统 (Energy Field Physics)
+# ============================================================
+
+class EnergySource:
+    """
+    能量泉眼 - 持续向环境注入能量的固定源
+    
+    属性:
+        position: (x, y) 坐标
+        injection_rate: 能量注入速率 (单位/帧)
+        radius: 影响半径
+    """
+    
+    def __init__(self, x: float, y: float, injection_rate: float = 0.5, radius: float = 15.0):
+        self.position = (x, y)
+        self.injection_rate = injection_rate
+        self.radius = radius
+        
+    def __repr__(self):
+        return f"EnergySource{self.position} rate={self.injection_rate:.2f} r={self.radius}"
+
+
+class EnergyField:
+    """
+    连续能量场 E(x, y) - 替代离散食物系统
+    
+    物理模型:
+    - 扩散方程: ∂E/∂t = D∇²E - kE
+    - 能量源: 固定位置持续注入
+    - 环形世界: Toroidal边界条件
+    
+    v13.0 设计要点:
+    - NumPy向量化实现扩散 (避免Python循环)
+    - 支持与Agent的能量交换
+    - 热力图可视化支持
+    """
+    
+    def __init__(
+        self,
+        width: float = 100.0,
+        height: float = 100.0,
+        resolution: float = 1.0,
+        diffusion_rate: float = 0.05,
+        decay_rate: float = 0.001,
+        sources: Optional[List[EnergySource]] = None
+    ):
+        self.width = width
+        self.height = height
+        self.resolution = resolution  # 网格分辨率
+        
+        # 网格尺寸
+        self.grid_width = int(width / resolution)
+        self.grid_height = int(height / resolution)
+        
+        # 能量场矩阵 (初始化为低能量背景)
+        self.field = np.zeros((self.grid_width, self.grid_height), dtype=np.float64)
+        
+        # 物理参数
+        self.diffusion_rate = diffusion_rate  # 扩散系数 D
+        self.decay_rate = decay_rate           # 衰减系数 k
+        
+        # 能量源
+        self.sources = sources or []
+        
+        # 预计算扩散核 (Laplacian 5-point stencil)
+        # 使用向量化操作，无需显式循环
+        self._laplacian_kernel = np.array([
+            [0, 1, 0],
+            [1, -4, 1],
+            [0, 1, 0]
+        ], dtype=np.float64)
+        
+    def add_source(self, source: EnergySource):
+        """添加能量源"""
+        self.sources.append(source)
+        
+    def add_default_sources(self):
+        """添加默认能量源 (3个泉眼)"""
+        self.sources = [
+            EnergySource(25, 25, injection_rate=0.5, radius=15),
+            EnergySource(75, 75, injection_rate=0.5, radius=15),
+            EnergySource(75, 25, injection_rate=0.3, radius=10),
+        ]
+        
+    def _inject_energy(self):
+        """向能量场注入能量 (向量化)"""
+        for source in self.sources:
+            sx, sy = source.position
+            sx_idx = int(sx / self.resolution)
+            sy_idx = int(sy / self.resolution)
+            radius_idx = int(source.radius / self.resolution)
+            
+            # 创建局部坐标网格 (向量化计算距离)
+            x = np.arange(max(0, sx_idx - radius_idx), min(self.grid_width, sx_idx + radius_idx + 1))
+            y = np.arange(max(0, sy_idx - radius_idx), min(self.grid_height, sy_idx + radius_idx + 1))
+            
+            if len(x) == 0 or len(y) == 0:
+                continue
+                
+            xx, yy = np.meshgrid(x, y, indexing='ij')
+            dist = np.sqrt((xx - sx_idx)**2 + (yy - sy_idx)**2)
+            
+            # 距离衰减注入
+            mask = dist <= radius_idx
+            injection = source.injection_rate * np.exp(-dist / (radius_idx + 1e-6))
+            injection = injection * mask
+            
+            # 应用注入 (边界检查)
+            for ix in x:
+                for iy in y:
+                    if 0 <= ix < self.grid_width and 0 <= iy < self.grid_height:
+                        self.field[ix, iy] += injection[ix - x[0], iy - y[0]]
+                        
+    def _diffuse(self):
+        """
+        能量扩散 (向量化实现)
+        
+        使用SciPy或NumPy的卷积实现Laplacian
+        ∂E/∂t = D∇²E
+        """
+        try:
+            from scipy.ndimage import convolve
+            # 使用卷积计算Laplacian
+            laplacian = convolve(self.field, self._laplacian_kernel, mode='constant', cval=0.0)
+        except ImportError:
+            # 回退方案: 手动向量化计算 (略慢但兼容)
+            laplacian = np.zeros_like(self.field)
+            
+            # 向量化5点Laplacian
+            laplacian[1:-1, 1:-1] = (
+                self.field[0:-2, 1:-1] +
+                self.field[2:, 1:-1] +
+                self.field[1:-1, 0:-2] +
+                self.field[1:-1, 2:] -
+                4 * self.field[1:-1, 1:-1]
+            )
+            
+            # 边界处理 (环形世界)
+            laplacian[0, :] = (
+                self.field[-1, :] + self.field[1, :] +
+                self.field[0, :-1] + self.field[0, 1:] - 4 * self.field[0, :]
+            )
+            laplacian[-1, :] = (
+                self.field[-2, :] + self.field[0, :] +
+                self.field[-1, :-1] + self.field[-1, 1:] - 4 * self.field[-1, :]
+            )
+            laplacian[:, 0] = (
+                self.field[:, -1] + self.field[:, 1] +
+                self.field[:-1, 0] + self.field[1:, 0] - 4 * self.field[:, 0]
+            )
+            laplacian[:, -1] = (
+                self.field[:, -2] + self.field[:, 0] +
+                self.field[:-1, -1] + self.field[1:, -1] - 4 * self.field[:, -1]
+            )
+        
+        # 扩散更新
+        self.field += self.diffusion_rate * laplacian
+        
+    def _decay(self):
+        """能量衰减 (熵增) ∂E/∂t = -kE"""
+        self.field *= (1.0 - self.decay_rate)
+        
+    def step(self):
+        """单步更新: 注入 -> 扩散 -> 衰减"""
+        self._inject_energy()
+        self._diffuse()
+        self._decay()
+        
+        # 边界裁剪 (防止数值爆炸)
+        np.clip(self.field, 0, 1000, out=self.field)
+        
+    def sample(self, x: float, y: float) -> float:
+        """
+        采样指定位置的场能量 (双线性插值)
+        
+        参数:
+            x, y: 世界坐标
+        返回:
+            能量值
+        """
+        gx = x / self.resolution
+        gy = y / self.resolution
+        
+        # 环形世界坐标
+        gx = gx % self.grid_width
+        gy = gy % self.grid_height
+        
+        ix = int(gx)
+        iy = int(gy)
+        
+        # 边界情况
+        if ix >= self.grid_width - 1 or iy >= self.grid_height - 1:
+            ix = min(ix, self.grid_width - 1)
+            iy = min(iy, self.grid_height - 1)
+            return self.field[ix, iy]
+        
+        # 双线性插值
+        fx = gx - ix
+        fy = gy - iy
+        
+        return (1-fx)*(1-fy)*self.field[ix, iy] + \
+               fx*(1-fy)*self.field[ix+1, iy] + \
+               (1-fx)*fy*self.field[ix, iy+1] + \
+               fx*fy*self.field[ix+1, iy+1]
+    
+    def sample_gradient(self, x: float, y: float) -> Tuple[float, float, float, float, float]:
+        """
+        采样周围4个方向的能量梯度
+        
+        返回: (front, right, back, left, center)
+        用于Agent的传感器输入
+        """
+        # 4个方向偏移 (基于环形世界)
+        offsets = [
+            (0, -5),   # 前
+            (5, 0),    # 右
+            (0, 5),    # 后  
+            (-5, 0),   # 左
+        ]
+        
+        results = []
+        for dx, dy in offsets:
+            # 环形世界坐标
+            nx = (x + dx) % self.width
+            ny = (y + dy) % self.height
+            results.append(self.sample(nx, ny))
+            
+        results.append(self.sample(x, y))  # 中心
+        
+        return tuple(results)
+        
+    def get_heatmap_data(self) -> np.ndarray:
+        """获取热力图数据 (转置以便正确显示)"""
+        return self.field.T
+
+
+# ============================================================
 # 4. 2D 趋化性环境 (Environment)
 # ============================================================
 
@@ -467,7 +708,42 @@ class Environment:
         # 3. 季节波动率: 每代环境参数 ±X% 扰动
         season_jitter: float = 0.10,  # 10% 扰动幅度
         # 入库税: 贮粮入库时一次性扣除
-        nest_tax: float = 0.10  # 10% 入库税
+        nest_tax: float = 0.10,  # 10% 入库税
+        # ============================================================
+        # v13.0: 能量场物理系统 (Energy Field Physics)
+        # ============================================================
+        energy_field_enabled: bool = False,  # 是否启用能量场 (替代离散食物)
+        field_resolution: float = 1.0,       # 能量场网格分辨率
+        field_diffusion_rate: float = 0.05,  # 扩散系数 D
+        field_decay_rate: float = 0.001,     # 衰减系数 k
+        field_initial_energy: float = 0.1,   # 初始场能量 (背景值)
+        # 渗透膜参数
+        permeability_cost: float = 0.01,     # 维持渗透膜的代价
+        waste_heat_ratio: float = 0.3,       # 代谢转化为废热的比例
+        move_cost_coeff: float = 0.1,        # 移动做功能量系数
+        # ============================================================
+        # v13.0: 运动阻抗场 (KIF)
+        # ============================================================
+        impedance_field_enabled: bool = False,  # 是否启用运动阻抗场
+        impedance_resolution: float = 1.0,      # 阻抗场分辨率
+        impedance_noise_scale: float = 1.0,     # 噪声缩放 (越大越崎岖)
+        impedance_obstacle_density: float = 0.15,  # 障碍物密度
+        impedance_repulsion_coeff: float = 0.5,  # 梯度反作用力系数
+        # ============================================================
+        # v13.0: 信息/压痕场 (ISF)
+        # ============================================================
+        stigmergy_field_enabled: bool = False,  # 是否启用压痕场
+        stigmergy_resolution: float = 1.0,      # 压痕场分辨率
+        stigmergy_diffusion_rate: float = 0.1,  # 信号扩散率
+        stigmergy_decay_rate: float = 0.98,     # 信号衰减率
+        stigmergy_signal_cost: float = 0.01,     # 信号能量代价系数
+        # ============================================================
+        # v13.0: 环境应力场 (ESF)
+        # ============================================================
+        stress_field_enabled: bool = False,       # 是否启用应力场
+        stress_resolution: float = 2.0,           # 应力场分辨率
+        stress_temp_period: int = 200,            # 温度周期
+        stress_season_length: int = 200           # 应力周期
     ):
         self.width = width
         self.height = height
@@ -482,6 +758,116 @@ class Environment:
 
         # v5.2: 步数计数器
         self.step_count = 0  # 用于预测偏差计算
+
+        # ============================================================
+        # v13.0: 能量场物理系统
+        # ============================================================
+        self.energy_field_enabled = energy_field_enabled
+        self.permeability_cost = permeability_cost
+        self.waste_heat_ratio = waste_heat_ratio
+        self.move_cost_coeff = move_cost_coeff
+        
+        if energy_field_enabled:
+            # 初始化能量场
+            self.energy_field = EnergyField(
+                width=width,
+                height=height,
+                resolution=field_resolution,
+                diffusion_rate=field_diffusion_rate,
+                decay_rate=field_decay_rate
+            )
+            # 添加默认能量源
+            self.energy_field.add_default_sources()
+            # 设置初始背景能量
+            self.energy_field.field.fill(field_initial_energy)
+            print(f"  [EnergyField] Enabled: {self.energy_field.grid_width}x{self.energy_field.grid_height} grid")
+            print(f"    Sources: {len(self.energy_field.sources)}")
+        else:
+            self.energy_field = None
+            
+        # v13.0: 热力学物理法则
+        self.thermodynamic_law = ThermodynamicLaw(
+            permeability_cost=permeability_cost,
+            waste_heat_ratio=waste_heat_ratio,
+            move_cost_coeff=move_cost_coeff
+        )
+
+        # ============================================================
+        # v13.0: 运动阻抗场 (Kinetic Impedance Field)
+        # ============================================================
+        self.impedance_field_enabled = impedance_field_enabled
+        
+        if impedance_field_enabled:
+            # 初始化阻抗场
+            self.impedance_field = KineticImpedanceField(
+                width=width,
+                height=height,
+                resolution=impedance_resolution,
+                noise_scale=impedance_noise_scale,
+                obstacle_density=impedance_obstacle_density
+            )
+            # 初始化阻抗法则
+            self.kinetic_impedance_law = KineticImpedanceLaw(
+                move_cost_coeff=move_cost_coeff,
+                repulsion_coeff=impedance_repulsion_coeff
+            )
+            print(f"  [KineticImpedanceField] Enabled: {self.impedance_field.grid_width}x{self.impedance_field.grid_height} grid")
+            print(f"    Noise scale: {impedance_noise_scale}, Obstacle density: {impedance_obstacle_density}")
+        else:
+            self.impedance_field = None
+            self.kinetic_impedance_law = None
+
+        # ============================================================
+        # v13.0: 信息/压痕场 (Stigmergy Field)
+        # ============================================================
+        self.stigmergy_field_enabled = stigmergy_field_enabled
+        
+        if stigmergy_field_enabled:
+            # 初始化压痕场
+            self.stigmergy_field = StigmergyField(
+                width=width,
+                height=height,
+                resolution=stigmergy_resolution,
+                diffusion_rate=stigmergy_diffusion_rate,
+                decay_rate=stigmergy_decay_rate,
+                signal_energy_cost=stigmergy_signal_cost
+            )
+            # 初始化压痕法则
+            self.stigmergy_law = StigmergyLaw(
+                base_deposit=0.1,
+                signal_energy_cost=stigmergy_signal_cost
+            )
+            print(f"  [StigmergyField] Enabled: {self.stigmergy_field.grid_width}x{self.stigmergy_field.grid_height} grid")
+            print(f"    Diffusion: {stigmergy_diffusion_rate}, Decay: {stigmergy_decay_rate}, Cost: {stigmergy_signal_cost}")
+        else:
+            self.stigmergy_field = None
+            self.stigmergy_law = None
+
+        # ============================================================
+        # v13.0: 环境应力场 (Stress Field)
+        # ============================================================
+        self.stress_field_enabled = stress_field_enabled
+        self.base_diffusion_rate = field_diffusion_rate  # 保存基准值
+        self.base_decay_rate = field_decay_rate          # 保存基准值
+        
+        if stress_field_enabled:
+            # 初始化应力场
+            self.stress_field = StressField(
+                width=width,
+                height=height,
+                resolution=stress_resolution,
+                temp_period=stress_temp_period,
+                metabolic_period=int(stress_temp_period * 0.75),
+                diffusion_period=int(stress_temp_period * 0.5),
+                impedance_period=int(stress_temp_period * 0.9)
+            )
+            # 初始化应力法则
+            self.stress_law = StressLaw()
+            print(f"  [StressField] Enabled: {self.stress_field.grid_width}x{self.stress_field.grid_height} grid")
+            print(f"    Temperature period: {stress_temp_period}")
+        else:
+            self.stress_field = None
+            self.stress_law = None
 
         # ============================================================
         # 多食物系统 (马尔萨斯竞速)
@@ -2351,6 +2737,59 @@ class Environment:
             fatigue_sensor = max(0.0, min(1.0, fatigue_sensor))
             sensor_values = np.append(sensor_values, fatigue_sensor)
 
+        # ============================================================
+        # v13.0: 能量场传感器 (Energy Field Gradient)
+        # 采样周围4个方向的能量梯度 + 中心能量
+        # 格式扩展: [前, 右, 后, 左, 中心]
+        # ============================================================
+        if self.energy_field_enabled and self.energy_field:
+            gradient = self.energy_field.sample_gradient(agent.x, agent.y)
+            # 归一化到 [0, 1] 范围 (假设最大能量 100)
+            gradient_normalized = [max(0.0, min(1.0, g / 100.0)) for g in gradient]
+            sensor_values = np.append(sensor_values, gradient_normalized)
+
+        # ============================================================
+        # v13.0: 阻抗场传感器 (Impedance Field)
+        # 采样当前阻抗 + 梯度方向
+        # 格式扩展: [当前阻抗, 梯度dx, 梯度dy]
+        # ============================================================
+        if self.impedance_field_enabled and self.impedance_field:
+            Z = self.impedance_field.sample(agent.x, agent.y)
+            grad_x, grad_y = self.impedance_field.sample_gradient(agent.x, agent.y)
+            # 归一化: 假设最大阻抗 100
+            impedance_sensor = max(0.0, min(1.0, Z / 100.0))
+            grad_x_norm = max(-1.0, min(1.0, grad_x / 10.0))
+            grad_y_norm = max(-1.0, min(1.0, grad_y / 10.0))
+            sensor_values = np.append(sensor_values, [impedance_sensor, grad_x_norm, grad_y_norm])
+
+        # ============================================================
+        # v13.0: 压痕场传感器 (Stigmergy Field)
+        # 采样信号强度 + 梯度方向
+        # 格式扩展: [信号强度, 梯度dx, 梯度dy, 梯度幅值]
+        # ============================================================
+        if self.stigmergy_field_enabled and self.stigmergy_field:
+            S = self.stigmergy_field.sample(agent.x, agent.y)
+            grad_x, grad_y, grad_mag = self.stigmergy_field.sample_gradient(agent.x, agent.y)
+            # 归一化: 假设最大信号 10
+            signal_norm = max(0.0, min(1.0, S / 10.0))
+            grad_x_norm = max(-1.0, min(1.0, grad_x))
+            grad_y_norm = max(-1.0, min(1.0, grad_y))
+            grad_mag_norm = max(0.0, min(1.0, grad_mag))
+            sensor_values = np.append(sensor_values, [signal_norm, grad_x_norm, grad_y_norm, grad_mag_norm])
+
+        # ============================================================
+        # v13.0: 应力场传感器 (Stress Field)
+        # 采样当前应力 + 应力变化率
+        # 格式扩展: [当前应力, 变化率]
+        # ============================================================
+        if self.stress_field_enabled and self.stress_field:
+            stress = getattr(agent, 'current_stress', 0.0)
+            derivative = getattr(agent, 'stress_derivative', 0.0)
+            # 归一化: 假设应力范围 [-1, 1]
+            stress_norm = max(-1.0, min(1.0, stress))
+            derivative_norm = max(-1.0, min(1.0, derivative * 10))  # 放大变化率
+            sensor_values = np.append(sensor_values, [stress_norm, derivative_norm])
+
         return sensor_values
 
     def _compute_light_sensor(self, agent: Agent) -> np.ndarray:
@@ -2806,6 +3245,24 @@ class Environment:
         self.step_count += 1
 
         # ============================================================
+        # v13.0: 能量场更新
+        # ============================================================
+        if self.energy_field_enabled and self.energy_field:
+            self.energy_field.step()
+
+        # ============================================================
+        # v13.0: 压痕场更新 (扩散 + 衰减)
+        # ============================================================
+        if self.stigmergy_field_enabled and self.stigmergy_field:
+            self.stigmergy_field.step()
+
+        # ============================================================
+        # v13.0: 应力场 - 场间耦合 (调制物理常数)
+        # ============================================================
+        if self.stress_field_enabled and self.stress_field:
+            self.stress_field.apply_coupling(self, self.step_count)
+
+        # ============================================================
         # v8.0: 无尽边疆 - 区块加载
         # ============================================================
         if self.infinite_mode and self.chunk_manager:
@@ -3256,6 +3713,90 @@ class Environment:
             actual_cost = min(metabolic_cost, max(0, agent.internal_energy))
             agent.internal_energy -= actual_cost
             agent.energy_spent += actual_cost  # 追踪实际消耗
+
+            # ============================================================
+            # v13.0: 热力学能量交换 (Thermodynamic Energy Exchange)
+            # 计算渗透膜能量交换 + 移动做功 + 废热排放
+            # ============================================================
+            if self.energy_field_enabled and self.energy_field:
+                # 获取 actuator 输出的移动力
+                left_force = getattr(agent, 'left_output', 0.0)
+                right_force = getattr(agent, 'right_output', 0.0)
+                
+                # 应用热力学法则
+                energy_stats = self.thermodynamic_law.apply_to_agent(
+                    agent=agent,
+                    field=self.energy_field,
+                    left_force=left_force,
+                    right_force=right_force,
+                    metabolic_cost=actual_cost
+                )
+                
+                # v13.0: 更新渗透率 (从大脑输出获取)
+                # 默认: 端口signal可作为渗透率控制信号
+                agent.permeability = max(0.0, min(1.0, agent.port_signal))
+
+            # ============================================================
+            # v13.0: 运动阻抗场 (Kinetic Impedance Field)
+            # 计算位移抑制 + 梯度反作用力
+            # ============================================================
+            if self.impedance_field_enabled and self.impedance_field:
+                # 获取 actuator 输出的移动力
+                left_force = getattr(agent, 'left_output', 0.0)
+                right_force = getattr(agent, 'right_output', 0.0)
+                
+                # 应用阻抗法则
+                impedance_info = self.kinetic_impedance_law.apply_to_agent(
+                    agent=agent,
+                    impedance_field=self.impedance_field,
+                    left_force=left_force,
+                    right_force=right_force
+                )
+                
+                # 额外的阻抗能耗 (叠加到 ThermodynamicLaw 的 move_cost)
+                # 注意: ThermodynamicLaw 已经计算了基础 move_cost
+                # 这里我们把阻抗导致的额外能耗也加入
+                extra_impedance_cost = impedance_info['move_cost']
+                agent.internal_energy -= extra_impedance_cost
+                agent.energy_spent += extra_impedance_cost
+                
+                # 记录阻抗数据供传感器使用
+                agent.impedance_value = impedance_info['impedance']
+                agent.velocity_actual = impedance_info['velocity']
+
+            # ============================================================
+            # v13.0: 压痕场 (Stigmergy Field)
+            # Agent 移动时注入信号 + 消耗能量
+            # ============================================================
+            if self.stigmergy_field_enabled and self.stigmergy_field:
+                # 获取上一步位置 (需要在循环开始时记录)
+                old_x = getattr(agent, '_stigmergy_last_x', agent.x)
+                old_y = getattr(agent, '_stigmergy_last_y', agent.y)
+                
+                # 应用压痕法则
+                stigmergy_info = self.stigmergy_law.apply_to_agent(
+                    agent=agent,
+                    stigmergy_field=self.stigmergy_field,
+                    old_x=old_x,
+                    old_y=old_y
+                )
+                
+                # 记录当前位置供下一步使用
+                agent._stigmergy_last_x = agent.x
+                agent._stigmergy_last_y = agent.y
+                
+                # 记录信号数据供传感器使用
+                agent.stigmergy_value = stigmergy_info['deposited']
+
+            # ============================================================
+            # v13.0: 应力场感知 (Stress Field)
+            # 采样当前应力 + 时间导数
+            # ============================================================
+            if self.stress_field_enabled and self.stress_field:
+                stress_info = self.stress_law.apply_to_agent(agent, self)
+                # 传感器扩展: [当前应力, 应力变化率]
+                agent.current_stress = stress_info['stress']
+                agent.stress_derivative = stress_info['derivative']
 
             # ============================================================
             # v11.0: 代谢熵增 (Energy Decay)

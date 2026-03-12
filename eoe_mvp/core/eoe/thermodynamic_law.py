@@ -1,0 +1,270 @@
+"""
+v13.0 热力学物理法则 (ThermodynamicLaw)
+
+能量交换物理法则 - 将能量从"奖励数值"还原为"物理流体"
+
+核心公式:
+- 能量交换: E_exchange = κ × (E_field - E_agent)
+- 渗透膜代价: E_cost = κ × permeability_cost
+- 移动做功: E_move = c × |F|²
+- 废热排放: E_waste = E_metabolic × waste_heat_ratio
+
+物理意义:
+- κ = 0 (封闭): 不与环境交换能量
+- κ = 1 (开放): 完全与环境能量场平衡
+- 在高能区开启 κ > 0 → 能量流入
+- 在低能区开启 κ > 0 → 能量倒灌流失
+
+依赖:
+- EnergyField: 能量场
+- Agent: 智能体
+"""
+
+from typing import Tuple
+import numpy as np
+
+
+class ThermodynamicLaw:
+    """
+    v13.0 能量交换物理法则
+    
+    物理本质:
+    - 能量守恒: 能量不会凭空消失，而是转化
+    - 渗透压平衡: 能量从高浓度流向低浓度
+    - 做功能耗: 移动输出功，消耗能量
+    - 废热循环: 代谢产物以低价值能量排入环境
+    """
+    
+    def __init__(
+        self,
+        permeability_cost: float = 0.01,
+        waste_heat_ratio: float = 0.3,
+        move_cost_coeff: float = 0.1,
+        interaction_range: float = 5.0,
+        theft_efficiency: float = 0.5
+    ):
+        """
+        初始化热力学法则
+        
+        参数:
+            permeability_cost: 维持渗透膜的代价 (每帧)
+            waste_heat_ratio: 代谢转化为废热的比例 [0,1]
+            move_cost_coeff: 移动做功能量系数 c
+            interaction_range: Agent间交互距离
+            theft_efficiency: 能量窃取效率
+        """
+        self.permeability_cost = permeability_cost
+        self.waste_heat_ratio = waste_heat_ratio
+        self.move_cost_coeff = move_cost_coeff
+        self.interaction_range = interaction_range
+        self.theft_efficiency = theft_efficiency
+        
+    def compute_energy_exchange(
+        self,
+        agent,
+        field
+    ) -> float:
+        """
+        计算 Agent 与能量场的能量交换
+        
+        公式: E_exchange = κ × (E_field - E_agent) - membrane_cost
+        
+        参数:
+            agent: Agent实例，需有 permeability, internal_energy 属性
+            field: EnergyField实例
+        
+        返回:
+            能量变化量 (正值=流入, 负值=流出)
+        """
+        if field is None:
+            return 0.0
+            
+        # 采样所在位置的环境能量
+        field_energy = field.sample(agent.x, agent.y)
+        agent.field_energy = field_energy  # 记录供传感器使用
+        
+        # 能量交换公式: E = κ × (E_field - E_agent)
+        kappa = getattr(agent, 'permeability', 0.0)
+        exchange = kappa * (field_energy - agent.internal_energy)
+        
+        # 渗透膜维持代价
+        membrane_cost = kappa * self.permeability_cost
+        
+        return exchange - membrane_cost
+        
+    def compute_move_cost(
+        self,
+        left_force: float,
+        right_force: float
+    ) -> float:
+        """
+        计算移动做功的能量消耗
+        
+        公式: E = c × |F|²
+        
+        物理意义:
+        - 速度越快，阻力越大
+        - 消耗呈非线性增长
+        
+        参数:
+            left_force, right_force: 左右推进器输出力
+        
+        返回:
+            能量消耗量
+        """
+        # 合力
+        force = (abs(left_force) + abs(right_force)) / 2.0
+        # 非线性消耗 (平方关系)
+        return self.move_cost_coeff * (force ** 2)
+        
+    def compute_waste_heat(
+        self,
+        metabolic_cost: float,
+        move_cost: float
+    ) -> float:
+        """
+        计算废热排放量
+        
+        代谢消耗的一部分以低价值能量形式排入环境
+        
+        参数:
+            metabolic_cost: 大脑运行代谢消耗
+            move_cost: 移动做功消耗
+        
+        返回:
+            废热排放量
+        """
+        total_cost = metabolic_cost + move_cost
+        return total_cost * self.waste_heat_ratio
+        
+    def compute_agent_interaction(
+        self,
+        agent_a,
+        agent_b,
+        width: float,
+        height: float
+    ) -> Tuple[float, float]:
+        """
+        计算两个 Agent 之间的能量流动 (掠夺机制)
+        
+        物理本质:
+        - 渗透压竞争: 高能量方的能量自发流向低能量方
+        - 取决于双方的渗透率差异
+        
+        参数:
+            agent_a, agent_b: 两个Agent实例
+            width, height: 环境尺寸 (用于环形世界距离)
+        
+        返回:
+            (energy_to_a, energy_to_b) 能量变化量
+        """
+        # 环形世界距离计算
+        dx = agent_b.x - agent_a.x
+        dy = agent_b.y - agent_a.y
+        dx = dx - width * np.floor(dx / width + 0.5)
+        dy = dy - height * np.floor(dy / height + 0.5)
+        distance = np.sqrt(dx*dx + dy*dy)
+        
+        if distance > self.interaction_range:
+            return (0.0, 0.0)
+            
+        # 能量差
+        energy_diff = agent_a.internal_energy - agent_b.internal_energy
+        
+        # 渗透率差决定流动方向
+        kappa_b = getattr(agent_b, 'permeability', 0.0)
+        
+        # 如果 B 的渗透率高于 A，且 B 的能量低于 A，则发生窃取
+        if kappa_b > 0 and energy_diff > 0:
+            # 窃取量 = 渗透率 × 能量差 × 效率
+            steal_amount = kappa_b * energy_diff * self.theft_efficiency
+            
+            # A 失去能量，B 获得能量
+            return (-steal_amount, steal_amount)
+            
+        return (0.0, 0.0)
+        
+    def apply_to_agent(
+        self,
+        agent,
+        field,
+        left_force: float,
+        right_force: float,
+        metabolic_cost: float
+    ) -> dict:
+        """
+        将热力学法则应用到单个 Agent
+        
+        参数:
+            agent: Agent实例
+            field: EnergyField实例 (可为None)
+            left_force, right_force: 左右推进器输出
+            metabolic_cost: 大脑运行代谢消耗
+        
+        返回:
+            详细的能量变化分解字典
+        """
+        # 1. 能量场交换
+        exchange = self.compute_energy_exchange(agent, field)
+        
+        # 2. 移动做功
+        move_cost = self.compute_move_cost(left_force, right_force)
+        
+        # 3. 废热排放 (到环境)
+        waste_heat = self.compute_waste_heat(metabolic_cost, move_cost)
+        
+        # 总能量变化
+        total_delta = exchange - move_cost - metabolic_cost
+        
+        # 应用到 Agent
+        agent.internal_energy += total_delta
+        
+        # 记录废热到环境场
+        if field is not None and waste_heat > 0:
+            gx = int(agent.x / field.resolution) % field.grid_width
+            gy = int(agent.y / field.resolution) % field.grid_height
+            field.field[gx, gy] += waste_heat
+            
+        # 更新统计
+        if hasattr(agent, 'energy_spent'):
+            agent.energy_spent += (move_cost + metabolic_cost)
+        if hasattr(agent, 'energy_wasted'):
+            agent.energy_wasted += waste_heat
+        
+        return {
+            'exchange': exchange,
+            'move_cost': move_cost,
+            'metabolic_cost': metabolic_cost,
+            'waste_heat': waste_heat,
+            'total_delta': total_delta
+        }
+
+
+# ============================================================
+# 便捷函数
+# ============================================================
+
+def create_thermodynamic_law(
+    cold_start_mode: bool = False
+) -> ThermodynamicLaw:
+    """
+    创建热力学法则实例
+    
+    参数:
+        cold_start_mode: 是否启用冷启动模式 (更宽容的参数)
+    
+    冷启动模式:
+        - 更高的初始能量注入
+        - 更低的渗透膜代价
+        - 给第一代"乱动"的智能体留出容错空间
+    """
+    if cold_start_mode:
+        return ThermodynamicLaw(
+            permeability_cost=0.005,   # 降低50%
+            waste_heat_ratio=0.5,      # 提高废热回收
+            move_cost_coeff=0.05,      # 降低移动代价
+            interaction_range=3.0,     # 缩小交互范围
+            theft_efficiency=0.3       # 降低窃取效率
+        )
+    else:
+        return ThermodynamicLaw()

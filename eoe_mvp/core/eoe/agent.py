@@ -182,6 +182,16 @@ class Agent:
         self.age_steps: int = 0                # 出生后的步数
         self.phase_transition_done: bool = False  # 是否已完成相变
         
+        # ============================================================
+        # v13.0: 能量场物理系统 - 渗透率 (Permeability)
+        # 渗透率 κ ∈ [0, 1]
+        # - κ = 0: 封闭，不与环境交换能量
+        # - κ = 1: 完全开放，与环境能量场平衡
+        # 开启渗透膜有能量代价，详见 ThermodynamicLaw
+        # ============================================================
+        self.permeability: float = 0.0         # 渗透率 (由大脑输出控制)
+        self.field_energy: float = 0.0         # 所在位置的环境能量 (采样值)
+        
         # 创建大脑
         self.genome = OperatorGenome()
         
