@@ -1,6 +1,14 @@
 # MEMORY - 长期记忆
 
-> EOE项目快速索引 | 最后更新: 2026-03-12
+> EOE项目快速索引 | 最后更新: 2026-03-13
+
+---
+
+## 2026-03-13 更新
+
+- **Bug修复**: 神经网络前向传播 (bmm vs matmul, brain_masks 应用)
+- **配置统一**: mechanisms.yaml → PhysicsManifest.from_yaml() → IntegratedSimulation
+- **清理清单**: docs/LEGACY_CLEANUP.md 列出待清理的旧代码
 
 ---
 
