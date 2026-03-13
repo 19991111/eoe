@@ -87,6 +87,51 @@ class PhysicsManifest:
     crucible_enabled: bool = True
     complexity_premium: float = 1.5
     
+    # ==================== v13.0 机制开关 (与 config/mechanisms.yaml 同步) ====================
+    # 感知系统
+    sensor_epf: bool = True
+    sensor_kif: bool = True
+    sensor_isf: bool = True
+    sensor_energy: bool = True
+    
+    # 运动系统
+    actuator_thrust: bool = True
+    actuator_permeability: bool = True
+    actuator_defense: bool = True
+    
+    # 信号系统
+    signal_deposit: bool = True
+    signal_receive: bool = True
+    
+    # 能量系统
+    energy_extraction: bool = True
+    energy_depletable: bool = True
+    energy_infinite: bool = False
+    energy_metabolic: bool = True
+    energy_death: bool = True
+    
+    # 进化系统
+    evolution_selection: bool = True
+    evolution_mutation: bool = True
+    evolution_crossover: bool = True
+    evolution_isf_decay: bool = True
+    evolution_enabled: bool = True
+    
+    # 环境系统
+    env_epf: bool = True
+    env_kif: bool = True
+    env_isf: bool = True
+    env_world_bounds: bool = True
+    env_source_respawn: bool = True
+    env_diffusion: bool = True
+    env_gradient: bool = True
+    
+    # 物理系统
+    physics_collision: bool = True
+    physics_boundary_wrap: bool = False
+    physics_velocity_decay: bool = True
+    physics_friction: bool = True
+    
     @classmethod
     def from_dict(cls, config: Dict[str, Any]) -> PhysicsManifest:
         """从字典创建Manifest,带类型检查"""
@@ -96,6 +141,96 @@ class PhysicsManifest:
         filtered = {k: v for k, v in config.items() if k in valid_fields}
         
         return cls(**filtered)
+    
+    @classmethod
+    def from_yaml(cls, preset: str = "full") -> "PhysicsManifest":
+        """从 YAML 配置文件加载 (config/mechanisms.yaml)
+        
+        Args:
+            preset: 预设名称 (full/simple/no_signal/infinite_energy/no_evolution/wrap_world)
+        """
+        import os
+        import yaml
+        
+        # 查找 YAML 文件 (eoe_mvp/config/mechanisms.yaml)
+        # manifest.py 在 eoe_mvp/core/eoe/ 下
+        manifest_dir = os.path.dirname(os.path.dirname(__file__))  # eoe_mvp/core/
+        config_dir = os.path.dirname(manifest_dir)  # eoe_mvp/
+        config_dir = os.path.join(config_dir, "config")  # eoe_mvp/config/
+        yaml_path = os.path.join(config_dir, "mechanisms.yaml")
+        
+        if not os.path.exists(yaml_path):
+            print(f"[PhysicsManifest] YAML not found: {yaml_path}, using defaults")
+            return cls()
+        
+        with open(yaml_path, 'r') as f:
+            data = yaml.safe_load(f)
+        
+        # 获取预设或默认配置
+        if preset and preset in data.get('presets', {}):
+            config = data['presets'][preset]
+        else:
+            config = {k: v for k, v in data.items() if k != 'presets'}
+        
+        # 展平嵌套字典为 manifest 字段
+        result = {}
+        
+        # 映射表: YAML路径 -> manifest字段
+        mapping = {
+            # 感知
+            'sensor.epf': 'sensor_epf',
+            'sensor.kif': 'sensor_kif',
+            'sensor.isf': 'sensor_isf',
+            'sensor.energy': 'sensor_energy',
+            # 运动
+            'actuator.thrust': 'actuator_thrust',
+            'actuator.permeability': 'actuator_permeability',
+            'actuator.defense': 'actuator_defense',
+            # 信号
+            'signal.deposit': 'signal_deposit',
+            'signal.receive': 'signal_receive',
+            # 能量
+            'energy.extraction': 'energy_extraction',
+            'energy.depletable': 'energy_depletable',
+            'energy.infinite': 'energy_infinite',
+            'energy.metabolic': 'energy_metabolic',
+            'energy.death': 'energy_death',
+            # 进化
+            'evolution.selection': 'evolution_selection',
+            'evolution.mutation': 'evolution_mutation',
+            'evolution.crossover': 'evolution_crossover',
+            'evolution.isf_decay': 'evolution_isf_decay',
+            'evolution.enabled': 'evolution_enabled',
+            # 环境
+            'environment.epf': 'env_epf',
+            'environment.kif': 'env_kif',
+            'environment.isf': 'env_isf',
+            'environment.world_bounds': 'env_world_bounds',
+            'environment.source_respawn': 'env_source_respawn',
+            'environment.diffusion': 'env_diffusion',
+            'environment.gradient': 'env_gradient',
+            # 物理
+            'physics.collision': 'physics_collision',
+            'physics.boundary_wrap': 'physics_boundary_wrap',
+            'physics.velocity_decay': 'physics_velocity_decay',
+            'physics.friction': 'physics_friction',
+        }
+        
+        # 从嵌套配置中提取值
+        for yaml_path, manifest_field in mapping.items():
+            parts = yaml_path.split('.')
+            value = config
+            for part in parts:
+                if isinstance(value, dict) and part in value:
+                    value = value[part]
+                else:
+                    value = None
+                    break
+            if value is not None:
+                result[manifest_field] = bool(value)
+        
+        print(f"[PhysicsManifest] Loaded preset: {preset}")
+        return cls(**result)
     
     @classmethod
     def from_json(cls, filepath: str) -> PhysicsManifest:

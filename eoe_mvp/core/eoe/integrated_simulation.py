@@ -16,23 +16,27 @@ import numpy as np
 from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass
 
-# 机制配置
+# 机制配置 - 从 Manifest 统一管理
 try:
-    from config.agent_mechanisms import Mechanisms, EnvMechanisms, load_config
-    _CONFIG_LOADED = True
+    from core.eoe.manifest import PhysicsManifest
+    _MANIFEST_AVAILABLE = True
 except ImportError:
-    _CONFIG_LOADED = False
-    # 默认全部启用
-    class Mechanisms:
-        SENSOR_EPF = SENSOR_KIF = SENSOR_ISF = SENSOR_ENERGY = True
-        ACTUATOR_THRUST = ACTUATOR_PERMEABILITY = ACTUATOR_DEFENSE = True
-        SIGNAL_DEPOSIT = SIGNAL_RECEIVE = True
-        ENERGY_EXTRACTION = ENERGY_DEPLETABLE = ENERGY_METABOLIC = ENERGY_DEATH = True
-        EVOLUTION_SELECTION = EVOLUTION_MUTATION = EVOLUTION_CROSSOVER = EVOLUTION_ISF_DECAY = EVOLUTION_ENABLED = True
-    class EnvMechanisms:
-        EPF = KIF = ISF = WORLD_BOUNDS = SOURCE_RESPAWN = DIFFUSION = GRADIENT = True
-        COLLISION = VELOCITY_DECAY = FRICTION = True
-        BOUNDARY_WRAP = False
+    _MANIFEST_AVAILABLE = False
+
+# 全局 Manifest 实例
+_global_manifest = None
+
+def get_manifest(preset: str = "full") -> PhysicsManifest:
+    """获取全局 Manifest 实例"""
+    global _global_manifest
+    if _global_manifest is None or preset != getattr(_global_manifest, '_preset', None):
+        if _MANIFEST_AVAILABLE:
+            _global_manifest = PhysicsManifest.from_yaml(preset)
+            _global_manifest._preset = preset
+        else:
+            # 回退到默认值
+            _global_manifest = PhysicsManifest()
+    return _global_manifest
 
 
 @dataclass
@@ -218,23 +222,22 @@ class IntegratedSimulation:
         self.lifespan = lifespan
         self.device = device
         
-        # 加载机制配置
-        if _CONFIG_LOADED:
-            load_config(config_preset)
+        # 加载 Manifest 配置 (统一管理)
+        self.manifest = get_manifest(config_preset)
         
         print("="*60)
         print("🚀 初始化集成仿真引擎 (GPU)")
         print("="*60)
         
-        # 1. 环境 (根据配置启用)
+        # 1. 环境 (根据 Manifest 配置启用)
         from core.eoe.environment_gpu import EnvironmentGPU
         self.env = EnvironmentGPU(
             width=env_width,
             height=env_height,
             device=device,
-            energy_field_enabled=EnvMechanisms.EPF,
-            impedance_field_enabled=EnvMechanisms.KIF,
-            stigmergy_field_enabled=EnvMechanisms.ISF
+            energy_field_enabled=self.manifest.env_epf,
+            impedance_field_enabled=self.manifest.env_kif,
+            stigmergy_field_enabled=self.manifest.env_isf
         )
         
         # 2. 批量 Agent
@@ -244,12 +247,12 @@ class IntegratedSimulation:
             env_width=env_width,
             env_height=env_height,
             device=device,
-            init_energy=150.0
+            init_energy=self.manifest.initial_energy
         )
         
         # 3. 热力学定律
         self.thermo = ThermodynamicLaw(device=device)
-        if Mechanisms.ENERGY_EXTRACTION:
+        if self.manifest.energy_extraction:
             self.thermo.initialize_universe(self.env, self.agents)
         
         # 状态跟踪
@@ -268,42 +271,43 @@ class IntegratedSimulation:
         print(f"   Agent数量: {n_agents}")
         print(f"   生命周期: {lifespan}")
         print(f"   设备: {device}")
-        if _CONFIG_LOADED:
-            print(f"   配置: {config_preset} (Agent: {Mechanisms.enabled_count()}, 环境: {EnvMechanisms.enabled_count()})")
+        print(f"   配置: {config_preset}")
     
     def step(self, verbose: bool = False) -> SimState:
-        """执行单步 (根据配置条件执行)"""
+        """执行单步 (根据 Manifest 配置条件执行)"""
         total_energy = 0.0
         thermo_stats = {'alive_count': 0, 'mean_energy': 0, 'max_energy': 0, 'min_energy': 0}
         
+        m = self.manifest  # 简写
+        
         # === Step 1: 获取传感器 (根据配置) ===
-        if Mechanisms.SENSOR_EPF or Mechanisms.SENSOR_KIF or Mechanisms.SENSOR_ISF or Mechanisms.SENSOR_ENERGY:
+        if m.sensor_epf or m.sensor_kif or m.sensor_isf or m.sensor_energy:
             sensors = self.agents.get_sensors(self.env)  # [N, 10]
         else:
             sensors = None
         
         # === Step 2: 神经网络前向 (根据配置) ===
-        if Mechanisms.ACTUATOR_THRUST and sensors is not None:
+        if m.actuator_thrust and sensors is not None:
             brain_outputs = self.agents.forward_brains(sensors)  # [N, 5]
         else:
             brain_outputs = None
         
         # === Step 3: Agent 物理更新 (根据配置) ===
-        if Mechanisms.ACTUATOR_THRUST and brain_outputs is not None:
+        if m.actuator_thrust and brain_outputs is not None:
             self.agents.step(brain_outputs)
         
         # === Step 4: 热力学交互 (根据配置) ===
-        if Mechanisms.ENERGY_EXTRACTION:
+        if m.energy_extraction:
             thermo_stats, self.alive_mask = self.thermo.apply(
                 self.env, self.agents, self.alive_mask
             )
         
         # === Step 5: 场物理更新 (根据配置) ===
-        if EnvMechanisms.DIFFUSION:
+        if m.env_diffusion:
             self.env.step()
         
         # === Step 6: 能量守恒检查 (优化: 每100步检查一次) ===
-        if Mechanisms.ENERGY_EXTRACTION and self.step_count - self._last_energy_check >= self._energy_check_interval:
+        if m.energy_extraction and self.step_count - self._last_energy_check >= self._energy_check_interval:
             is_conserved, total_energy = self.thermo.check_energy_conservation(
                 self.env, self.agents, self.step_count
             )
@@ -313,7 +317,7 @@ class IntegratedSimulation:
                 print(f"\n⚠️ 能量守恒警告 @ step {self.step_count}")
                 print(f"   初始能量: {self.thermo.initial_universe_energy:.4f}")
                 print(f"   当前能量: {total_energy:.4f}")
-        elif Mechanisms.ENERGY_EXTRACTION:
+        elif m.energy_extraction:
             total_energy = torch.sum(self.agents.state.energies).item() + torch.sum(self.env.energy_field.field).item()
         else:
             total_energy = torch.sum(self.agents.state.energies).item()
