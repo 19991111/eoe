@@ -1,5 +1,5 @@
 """
-v13.0 四场协同压力测试 (Co-field Stress Test)
+v0.0 四场协同压力测试 (Co-field Stress Test)
 
 三个验证场景:
 A. 路径最优化 (EPF + KIF + ISF)
@@ -333,7 +333,7 @@ def visualize_results(scenario: dict, results: dict):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='v13.0 四场协同压力测试')
+    parser = argparse.ArgumentParser(description='v0.0 四场协同压力测试')
     parser.add_argument('--scenario', type=str, default='A', 
                        choices=['A', 'B', 'C', 'ALL'],
                        help='测试场景: A/B/C/ALL')

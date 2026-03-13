@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 First Light - 物理基准测试与可视化验证
+v0.0 First Light - 物理基准测试与可视化验证
 ==============================================
 在启动神经网络演化之前，验证宇宙物理法则的坚不可摧
 
@@ -403,7 +403,7 @@ def run_first_light_test(
         stop_on_violation: 是否在违规时停机
     """
     print("\n" + "="*70)
-    print("FIRST LIGHT - Physics Benchmark Test v13.0")
+    print("FIRST LIGHT - Physics Benchmark Test v0.0")
     print("="*70)
     print(f"Agents: {n_agents}")
     print(f"Steps: {n_steps}")

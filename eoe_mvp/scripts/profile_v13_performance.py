@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 性能探针脚本
+v0.0 性能探针脚本
 ===============
 对 Population.evolve_one_generation() 进行深度性能分析
 
@@ -79,7 +79,7 @@ class PerformanceProbe:
     def report(self):
         """生成报告"""
         print("\n" + "="*70)
-        print("📊 v13.0 性能探针报告")
+        print("📊 v0.0 性能探针报告")
         print("="*70)
         
         total_time = sum(sum(times) for times in self.timings.values())
@@ -212,7 +212,7 @@ def run_performance_test(lifespan: int = 1500, population_size: int = 50):
     from core.eoe.population import Population
     
     print(f"\n{'='*70}")
-    print(f"🚀 启动v13.0性能探针测试")
+    print(f"🚀 启动v0.0性能探针测试")
     print(f"{'='*70}")
     print(f"参数: lifespan={lifespan}, population_size={population_size}")
     print(f"预计Agent总数: {population_size * lifespan:,} 次前向传播")
@@ -228,7 +228,7 @@ def run_performance_test(lifespan: int = 1500, population_size: int = 50):
         n_food=0,  # 简化测试
     )
     
-    # 手动启用v13.0场
+    # 手动启用v0.0场
     pop.environment.energy_field_enabled = True
     pop.environment.impedance_field_enabled = True
     pop.environment.stigmergy_field_enabled = True
@@ -391,7 +391,7 @@ def check_gpu_availability():
 # ============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description='v13.0 性能探针')
+    parser = argparse.ArgumentParser(description='v0.0 性能探针')
     parser.add_argument('--lifespan', type=int, default=500, help='生命周期步数')
     parser.add_argument('--population', type=int, default=20, help='种群大小')
     parser.add_argument('--cprofile', action='store_true', help='使用cProfile深度分析')

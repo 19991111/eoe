@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 性能探针脚本 (简化版)
+v0.0 性能探针脚本 (简化版)
 ===============
 直接测试核心模块性能，避免完整仿真的维度问题
 """
@@ -26,7 +26,7 @@ class Timer:
     
     def report(self):
         print("\n" + "="*70)
-        print("📊 v13.0 性能探针报告")
+        print("📊 v0.0 性能探针报告")
         print("="*70)
         
         total = sum(sum(v) for v in self.times.values())
@@ -401,7 +401,7 @@ def check_gpu():
 
 def main():
     print("="*70)
-    print("🚀 v13.0 性能探针测试")
+    print("🚀 v0.0 性能探针测试")
     print("="*70)
     
     # GPU检查

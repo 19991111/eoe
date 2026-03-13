@@ -87,7 +87,7 @@ class PhysicsManifest:
     crucible_enabled: bool = True
     complexity_premium: float = 1.5
     
-    # ==================== v13.0 机制开关 (与 config/mechanisms.yaml 同步) ====================
+    # ==================== v0.0 机制开关 (与 config/mechanisms.yaml 同步) ====================
     # 感知系统
     sensor_epf: bool = True
     sensor_kif: bool = True

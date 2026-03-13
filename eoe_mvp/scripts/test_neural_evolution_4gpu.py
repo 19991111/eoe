@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 Neural Evolution - 4-GPU Parallel Run
+v0.0 Neural Evolution - 4-GPU Parallel Run
 ============================================
 在4张GPU上并行运行100代进化
 
@@ -208,7 +208,7 @@ def run_evolution_on_gpu(
 
 if __name__ == '__main__':
     print("="*70)
-    print("NEURAL EVOLUTION v13.0 - 4-GPU Parallel Run (100 Generations)")
+    print("NEURAL EVOLUTION v0.0 - 4-GPU Parallel Run (100 Generations)")
     print("="*70)
     
     n_agents = 500      # 每GPU agent数量

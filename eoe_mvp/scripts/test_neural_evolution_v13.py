@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 Neural Evolution - First Generation Selection
+v0.0 Neural Evolution - First Generation Selection
 =====================================================
 从"随机游走"到"神经接管"的完整进化闭环
 
@@ -193,7 +193,7 @@ def run_neural_evolution(
         visualize_every: 可视化间隔
     """
     print("\n" + "="*70)
-    print("NEURAL EVOLUTION v13.0 - First Generation Selection")
+    print("NEURAL EVOLUTION v0.0 - First Generation Selection")
     print("="*70)
     print(f"Agents: {n_agents}")
     print(f"Steps per generation: {n_steps}")
@@ -441,7 +441,7 @@ def plot_evolution_history(history: dict):
 # ============================================================================
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Neural Evolution v13.0')
+    parser = argparse.ArgumentParser(description='Neural Evolution v0.0')
     parser.add_argument('--agents', type=int, default=1000, help='Number of agents')
     parser.add_argument('--steps', type=int, default=1500, help='Steps per generation')
     parser.add_argument('--generations', type=int, default=10, help='Number of generations')

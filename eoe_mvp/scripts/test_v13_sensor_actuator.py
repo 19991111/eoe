@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 传感器/执行器系统测试脚本
+v0.0 传感器/执行器系统测试脚本
 
 测试内容:
 1. 节点类型定义验证
@@ -31,11 +31,11 @@ def test_node_types():
     v13_sensors = [t for t in NodeType if 'SENSE_' in t.name]
     v13_actuators = [t for t in NodeType if 'ACTUATOR_' in t.name]
     
-    print(f"v13.0 传感器类型 ({len(v13_sensors)}个):")
+    print(f"v0.0 传感器类型 ({len(v13_sensors)}个):")
     for t in v13_sensors:
         print(f"  ✓ {t.name}")
     
-    print(f"\nv13.0 执行器类型 ({len(v13_actuators)}个):")
+    print(f"\nv0.0 执行器类型 ({len(v13_actuators)}个):")
     for t in v13_actuators:
         print(f"  ✓ {t.name}")
     
@@ -74,7 +74,7 @@ def test_sensor_format():
     print(f"传感器值维度: {len(sensor_values)}")
     print(f"传感器值: {sensor_values}")
     
-    # 验证格式 (至少包含v13.0的11维)
+    # 验证格式 (至少包含v0.0的11维)
     expected_dims = 11  # EPF×3 + KIF×3 + ISF×3 + ESF×1 + ENERGY×1
     assert len(sensor_values) >= expected_dims, f"期望至少{expected_dims}维，实际{len(sensor_values)}维"
     
@@ -264,7 +264,7 @@ def test_full_simulation():
 def main():
     """运行所有测试"""
     print("\n" + "="*60)
-    print("🎉 v13.0 传感器/执行器系统测试")
+    print("🎉 v0.0 传感器/执行器系统测试")
     print("="*60)
     
     tests = [
@@ -304,7 +304,7 @@ def main():
     print(f"\n总计: {passed}/{total} 通过")
     
     if passed == total:
-        print("\n🎉 所有测试通过! v13.0系统运行正常!")
+        print("\n🎉 所有测试通过! v0.0系统运行正常!")
         return 0
     else:
         print("\n⚠️ 部分测试失败，请检查!")

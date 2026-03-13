@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 可视化渲染器 (The Demiurge Render)
+v0.0 可视化渲染器 (The Demiurge Render)
 =========================================
 上帝之眼 - 实时观测GPU仿真宇宙
 
@@ -61,7 +61,7 @@ class DemiurgeRender:
         # 图形设置
         plt.style.use('dark_background')
         self.fig, self.axes = plt.subplots(2, 2, figsize=figsize)
-        self.fig.suptitle('EOE v13.0 GPU 仿真宇宙', fontsize=14, fontweight='bold')
+        self.fig.suptitle('EOE v0.0 GPU 仿真宇宙', fontsize=14, fontweight='bold')
         
         # 子图
         self.ax_epf = self.axes[0, 0]
@@ -160,7 +160,7 @@ class DemiurgeRender:
         
         # 更新标题
         self.fig.suptitle(
-            f'EOE v13.0 GPU 仿真 - Gen {state.generation} Step {state.step} '
+            f'EOE v0.0 GPU 仿真 - Gen {state.generation} Step {state.step} '
             f'| 存活: {state.alive_count} | 能量: {state.total_energy:.1f}',
             fontsize=12
         )
@@ -230,7 +230,7 @@ class DemiurgeRender:
         axes[2].grid(True, alpha=0.3)
         plt.colorbar(scatter, ax=axes[2], label='Energy')
         
-        plt.suptitle(f'EOE v13.0 Snapshot @ Step {step}')
+        plt.suptitle(f'EOE v0.0 Snapshot @ Step {step}')
         plt.tight_layout()
         
         if save_path:
@@ -242,7 +242,7 @@ class DemiurgeRender:
 
 def run_cli():
     """命令行接口"""
-    parser = argparse.ArgumentParser(description='EOE v13.0 Demiurge Render')
+    parser = argparse.ArgumentParser(description='EOE v0.0 Demiurge Render')
     parser.add_argument('--steps', type=int, default=500, help='仿真步数')
     parser.add_argument('--agents', type=int, default=100, help='Agent数量')
     parser.add_argument('--width', type=float, default=100.0, help='环境宽度')

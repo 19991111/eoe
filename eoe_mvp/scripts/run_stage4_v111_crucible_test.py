@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v11.1 压力梯度熔炉测试
+v0.0 压力梯度熔炉测试
 使用文明溢价、蟑螂惩罚、逆境加成机制选择真冠军
 """
 import sys
@@ -16,7 +16,7 @@ with open('champions/stage4_v110_r10.json') as f:
     brain = json.load(f)
 
 print("="*60)
-print("v11.1 压力梯度熔炉测试")
+print("v0.0 压力梯度熔炉测试")
 print("="*60)
 
 # 降低参数压力以加快测试
@@ -121,7 +121,7 @@ for round_num in range(1, 6):
 
 # 最终结果
 print("\n" + "="*60)
-print("v11.1 熔炉测试完成")
+print("v0.0 熔炉测试完成")
 print("="*60)
 print(f"最高适应度: {best_overall_fitness:.1f}")
 print(f"英雄冢大小: {len(pop.hall_of_fame)}")

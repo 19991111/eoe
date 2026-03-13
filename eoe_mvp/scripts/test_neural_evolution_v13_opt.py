@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 Neural Evolution - OPTIMIZED VERSION
+v0.0 Neural Evolution - OPTIMIZED VERSION
 ===========================================
 优化点:
 1. 梯度每10步计算一次 (而不是每步)
@@ -107,7 +107,7 @@ def run_neural_evolution(
     gradient_every: int = 10
 ):
     print("="*70)
-    print("NEURAL EVOLUTION v13.0 - OPTIMIZED")
+    print("NEURAL EVOLUTION v0.0 - OPTIMIZED")
     print("="*70)
     print(f"Agents: {n_agents}")
     print(f"Steps per generation: {n_steps}")

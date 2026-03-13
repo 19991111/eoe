@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-v13.0 GPU 仿真主入口
+v0.0 GPU 仿真主入口
 ====================
 统一、简洁的仿真启动脚本
 
@@ -82,7 +82,7 @@ def run_simulation(
 
 
 def main():
-    parser = argparse.ArgumentParser(description='v13.0 GPU 仿真')
+    parser = argparse.ArgumentParser(description='v0.0 GPU 仿真')
     
     parser.add_argument('--agents', type=int, default=100, help='Agent数量')
     parser.add_argument('--steps', type=int, default=1500, help='生命周期步数')

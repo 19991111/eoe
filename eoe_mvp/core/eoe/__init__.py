@@ -1,5 +1,5 @@
 """
-EOE (Evolution of Emergence) v13.0
+EOE (Evolution of Emergence) v0.0
 ===================================
 统一场物理的开放式演化引擎
 
@@ -15,7 +15,7 @@ EOE (Evolution of Emergence) v13.0
 """
 
 # 版本
-__version__ = '13.0.0'
+__version__ = '0.0'
 
 # 批量系统 (推荐使用)
 from .batch import Simulation, AgentState, BatchedAgents, EnvironmentGPU
