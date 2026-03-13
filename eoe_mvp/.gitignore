@@ -47,3 +47,10 @@ Thumbs.db
 # Temp
 *.tmp
 temp/
+
+# 本地实验文档 (不推送到 GitHub)
+docs/EXPERIMENTS_LOCAL.md
+
+# 日志和数据文件
+*.log
+evolution_*.png
