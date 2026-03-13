@@ -1,0 +1,121 @@
+# ============================================================
+# eoe_mvp/config/mechanisms.yaml
+# ============================================================
+# 机制配置文件
+# 设置为 true 启用, false 禁用
+# ============================================================
+
+# ---------------- 感知系统 (Sensors) ----------------
+sensor:
+  epf: true          # 能量场感知
+  kif: true          # 阻抗场感知
+  isf: true          # 信号场感知
+  energy: true       # 自身能量感知
+
+# ---------------- 运动系统 (Actuators) ----------------
+actuator:
+  thrust: true       # 推进移动
+  permeability: true # 渗透率
+  defense: true      # 防御模式
+
+# ---------------- 信号系统 (Communication) ----------------
+signal:
+  deposit: true      # ISF信号沉积
+  receive: true      # ISF信号接收
+
+# ---------------- 能量系统 (Thermodynamics) ----------------
+energy:
+  extraction: true   # 能量提取
+  depletable: true   # 可枯竭能量源
+  infinite: false    # 无限能量源 (与depletable互斥)
+  metabolic: true    # 代谢消耗
+  death: true        # 死亡判定
+
+# ---------------- 进化系统 (Evolution) ----------------
+evolution:
+  selection: true    # 自然选择
+  mutation: true     # 权重变异
+  crossover: true   # 精英交叉
+  isf_decay: true    # ISF记忆衰减
+  enabled: true      # 整体进化开关
+
+# ---------------- 环境系统 (Environment) ----------------
+environment:
+  epf: true          # 能量场 (EPF)
+  kif: true          # 阻抗场 (KIF)
+  isf: true          # 信号场 (ISF)
+  world_bounds: true # 世界边界
+  source_respawn: true # 能量源重生
+  diffusion: true    # 场扩散 (热传导)
+  gradient: true     # 场梯度计算
+
+# ---------------- 物理系统 (Physics) ----------------
+physics:
+  collision: true     # 碰撞检测
+  boundary_wrap: false # 边界循环 (穿越边缘)
+  velocity_decay: true # 速度衰减
+  friction: true      # 摩擦力
+
+# ============================================================
+# 预设配置
+# ============================================================
+presets:
+  # 完整版 - 包含所有机制
+  full:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+
+  # 简化版 - 仅核心
+  simple:
+    sensor: {epf: true, kif: false, isf: false, energy: true}
+    actuator: {thrust: true, permeability: true, defense: false}
+    signal: {deposit: false, receive: false}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: false, isf_decay: false, enabled: true}
+    environment: {epf: true, kif: false, isf: false, world_bounds: true, source_respawn: true, diffusion: false, gradient: true}
+    physics: {collision: false, boundary_wrap: false, velocity_decay: true, friction: false}
+
+  # 无信号版
+  no_signal:
+    sensor: {epf: true, kif: true, isf: false, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: false, receive: false}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: false, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+
+  # 无限能量版
+  infinite_energy:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: false, infinite: true, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: false, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+
+  # 观察模式 - 不进化
+  no_evolution:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: false, mutation: false, crossover: false, isf_decay: false, enabled: false}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+
+  # 穿越边界模式
+  wrap_world:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: true, velocity_decay: true, friction: true}

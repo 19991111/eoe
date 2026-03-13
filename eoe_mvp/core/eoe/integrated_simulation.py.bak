@@ -8,31 +8,12 @@ v13.0 Phase 3: 热力学闭环与集成引擎
 - 生死张量掩码 (Life/Death Masking)
 - 完整的GPU仿真循环
 - 观测可视化接口
-- 机制配置系统 (可动态开关功能)
 """
 
 import torch
 import numpy as np
 from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass
-
-# 机制配置
-try:
-    from config.agent_mechanisms import Mechanisms, EnvMechanisms, load_config
-    _CONFIG_LOADED = True
-except ImportError:
-    _CONFIG_LOADED = False
-    # 默认全部启用
-    class Mechanisms:
-        SENSOR_EPF = SENSOR_KIF = SENSOR_ISF = SENSOR_ENERGY = True
-        ACTUATOR_THRUST = ACTUATOR_PERMEABILITY = ACTUATOR_DEFENSE = True
-        SIGNAL_DEPOSIT = SIGNAL_RECEIVE = True
-        ENERGY_EXTRACTION = ENERGY_DEPLETABLE = ENERGY_METABOLIC = ENERGY_DEATH = True
-        EVOLUTION_SELECTION = EVOLUTION_MUTATION = EVOLUTION_CROSSOVER = EVOLUTION_ISF_DECAY = EVOLUTION_ENABLED = True
-    class EnvMechanisms:
-        EPF = KIF = ISF = WORLD_BOUNDS = SOURCE_RESPAWN = DIFFUSION = GRADIENT = True
-        COLLISION = VELOCITY_DECAY = FRICTION = True
-        BOUNDARY_WRAP = False
 
 
 @dataclass
@@ -211,30 +192,25 @@ class IntegratedSimulation:
         env_width: float = 100.0,
         env_height: float = 100.0,
         lifespan: int = 1500,
-        device: str = 'cuda:0',
-        config_preset: str = "full"
+        device: str = 'cuda:0'
     ):
         self.n_agents = n_agents
         self.lifespan = lifespan
         self.device = device
         
-        # 加载机制配置
-        if _CONFIG_LOADED:
-            load_config(config_preset)
-        
         print("="*60)
         print("🚀 初始化集成仿真引擎 (GPU)")
         print("="*60)
         
-        # 1. 环境 (根据配置启用)
+        # 1. 环境
         from core.eoe.environment_gpu import EnvironmentGPU
         self.env = EnvironmentGPU(
             width=env_width,
             height=env_height,
             device=device,
-            energy_field_enabled=EnvMechanisms.EPF,
-            impedance_field_enabled=EnvMechanisms.KIF,
-            stigmergy_field_enabled=EnvMechanisms.ISF
+            energy_field_enabled=True,
+            impedance_field_enabled=True,
+            stigmergy_field_enabled=True
         )
         
         # 2. 批量 Agent
@@ -249,8 +225,7 @@ class IntegratedSimulation:
         
         # 3. 热力学定律
         self.thermo = ThermodynamicLaw(device=device)
-        if Mechanisms.ENERGY_EXTRACTION:
-            self.thermo.initialize_universe(self.env, self.agents)
+        self.thermo.initialize_universe(self.env, self.agents)
         
         # 状态跟踪
         self.alive_mask = torch.ones(n_agents, device=device, dtype=torch.bool)
@@ -260,63 +235,40 @@ class IntegratedSimulation:
         # 历史记录
         self.history: List[SimState] = []
         
-        # 能量守恒检查频率 (优化: 不每步检查)
-        self._energy_check_interval = 100
-        self._last_energy_check = 0
-        
         print(f"\n✅ 集成引擎就绪")
         print(f"   Agent数量: {n_agents}")
         print(f"   生命周期: {lifespan}")
         print(f"   设备: {device}")
-        if _CONFIG_LOADED:
-            print(f"   配置: {config_preset} (Agent: {Mechanisms.enabled_count()}, 环境: {EnvMechanisms.enabled_count()})")
     
     def step(self, verbose: bool = False) -> SimState:
-        """执行单步 (根据配置条件执行)"""
-        total_energy = 0.0
-        thermo_stats = {'alive_count': 0, 'mean_energy': 0, 'max_energy': 0, 'min_energy': 0}
+        """执行单步"""
+        # === Step 1: 获取传感器 ===
+        sensors = self.agents.get_sensors(self.env)  # [N, 10]
         
-        # === Step 1: 获取传感器 (根据配置) ===
-        if Mechanisms.SENSOR_EPF or Mechanisms.SENSOR_KIF or Mechanisms.SENSOR_ISF or Mechanisms.SENSOR_ENERGY:
-            sensors = self.agents.get_sensors(self.env)  # [N, 10]
-        else:
-            sensors = None
+        # === Step 2: 神经网络前向 ===
+        brain_outputs = self.agents.forward_brains(sensors)  # [N, 5]
         
-        # === Step 2: 神经网络前向 (根据配置) ===
-        if Mechanisms.ACTUATOR_THRUST and sensors is not None:
-            brain_outputs = self.agents.forward_brains(sensors)  # [N, 5]
-        else:
-            brain_outputs = None
+        # === Step 3: Agent 物理更新 (应用脑输出) ===
+        self.agents.step(brain_outputs)
         
-        # === Step 3: Agent 物理更新 (根据配置) ===
-        if Mechanisms.ACTUATOR_THRUST and brain_outputs is not None:
-            self.agents.step(brain_outputs)
+        # === Step 4: 热力学交互 (Agent ↔ 场) ===
+        thermo_stats, self.alive_mask = self.thermo.apply(
+            self.env, self.agents, self.alive_mask
+        )
         
-        # === Step 4: 热力学交互 (根据配置) ===
-        if Mechanisms.ENERGY_EXTRACTION:
-            thermo_stats, self.alive_mask = self.thermo.apply(
-                self.env, self.agents, self.alive_mask
-            )
+        # === Step 5: 场物理更新 ===
+        self.env.step()
         
-        # === Step 5: 场物理更新 (根据配置) ===
-        if EnvMechanisms.DIFFUSION:
-            self.env.step()
+        # === Step 6: 能量守恒检查 ===
+        is_conserved, total_energy = self.thermo.check_energy_conservation(
+            self.env, self.agents, self.step_count
+        )
         
-        # === Step 6: 能量守恒检查 (优化: 每100步检查一次) ===
-        if Mechanisms.ENERGY_EXTRACTION and self.step_count - self._last_energy_check >= self._energy_check_interval:
-            is_conserved, total_energy = self.thermo.check_energy_conservation(
-                self.env, self.agents, self.step_count
-            )
-            self._last_energy_check = self.step_count
-            
-            if not is_conserved and self.step_count > 10:
-                print(f"\n⚠️ 能量守恒警告 @ step {self.step_count}")
-                print(f"   初始能量: {self.thermo.initial_universe_energy:.4f}")
-                print(f"   当前能量: {total_energy:.4f}")
-        elif Mechanisms.ENERGY_EXTRACTION:
-            total_energy = torch.sum(self.agents.state.energies).item() + torch.sum(self.env.energy_field.field).item()
-        else:
-            total_energy = torch.sum(self.agents.state.energies).item()
+        if not is_conserved and self.step_count > 10:
+            print(f"\n⚠️ 能量守恒警告 @ step {self.step_count}")
+            print(f"   初始能量: {self.thermo.initial_universe_energy:.4f}")
+            print(f"   当前能量: {total_energy:.4f}")
+            print(f"   差异: {abs(total_energy - self.thermo.initial_universe_energy):.6f}")
         
         # === 记录状态 ===
         state = SimState(
@@ -355,16 +307,9 @@ class IntegratedSimulation:
             self.step(verbose=(verbose and step % 100 == 0))
             
             # 早停: 如果全部死亡
-            alive_count = torch.sum(self.alive_mask).item()
-            
-            # 优化: 存活率<1%且已运行>100步时提前结束
-            if alive_count == 0:
+            if torch.sum(self.alive_mask) == 0:
                 if verbose:
                     print(f"  ⚠️ 全部Agent死亡于 step {step}")
-                break
-            elif step > 100 and alive_count / self.n_agents < 0.01:
-                if verbose:
-                    print(f"  ⚠️ 存活率过低 ({alive_count}/{self.n_agents}), 提前结束于 step {step}")
                 break
         
         torch.cuda.synchronize() if self.device.startswith('cuda') else None

@@ -257,19 +257,21 @@ class BatchedAgents:
         # 展平输入
         inputs = sensors  # [N, input]
         
-        # 批量矩阵乘法 (应用大脑权重)
-        # [N, input] @ [input, hidden] -> [N, hidden]
-        hidden = torch.matmul(inputs, self.brain_matrix[:, :inputs.shape[1], :32].transpose(1, 2))
+        # 获取权重和掩码
+        W1 = self.brain_matrix[:, :inputs.shape[1], :32]
+        M1 = self.brain_masks[:, :inputs.shape[1], :32]
         
-        # 应用掩码
-        mask = self.brain_masks[:, :inputs.shape[1], :32]
-        hidden = hidden * mask.float()
+        # 修复: 权重乘掩码后再进行矩阵乘法
+        # [N, input] @ ([input, hidden] * mask) -> [N, hidden]
+        hidden = torch.matmul(inputs, (W1 * M1).transpose(1, 2))
         
         # ReLU 激活
         hidden = torch.relu(hidden)
         
-        # 输出层 (简化)
-        output = torch.matmul(hidden, self.brain_matrix[:, :32, :5].transpose(1, 2))
+        # 输出层 (同样应用掩码)
+        W2 = self.brain_matrix[:, :32, :5]
+        M2 = self.brain_masks[:, :32, :5]
+        output = torch.matmul(hidden, (W2 * M2).transpose(1, 2))
         
         # 取对角线元素作为输出
         output = output[:, torch.arange(min(N, output.shape[1])), torch.arange(5)[:min(N, output.shape[1])]]
