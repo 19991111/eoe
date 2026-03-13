@@ -77,19 +77,23 @@ class HeterogeneousBrain:
         hidden_dim = 16
         output_dim = 5
         
-        # 从 brain_weights 中提取权重
+        # 从 brain_weights 中提取权重并应用掩码
         # W1: [N, input_dim, hidden_dim] - 使用 brain_weights 的前 input_dim 行和前 hidden_dim 列
         W1 = brain_weights[:, :input_dim, :hidden_dim]
+        M1 = brain_masks[:, :input_dim, :hidden_dim]
+        W1_masked = W1 * M1  # 应用连接掩码
         
         # 隐藏层
-        hidden = torch.bmm(sensors.unsqueeze(1), W1).squeeze(1)  # [N, hidden_dim]
+        hidden = torch.bmm(sensors.unsqueeze(1), W1_masked).squeeze(1)  # [N, hidden_dim]
         hidden = F.relu(hidden)
         
         # W2: [N, hidden_dim, output_dim]
         W2 = brain_weights[:, :hidden_dim, :output_dim]
+        M2 = brain_masks[:, :hidden_dim, :output_dim]
+        W2_masked = W2 * M2  # 应用输出层掩码
         
         # 输出层
-        output = torch.bmm(hidden.unsqueeze(1), W2).squeeze(1)  # [N, output_dim]
+        output = torch.bmm(hidden.unsqueeze(1), W2_masked).squeeze(1)  # [N, output_dim]
         
         return output
 

@@ -256,30 +256,25 @@ class BatchedAgents:
         
         # 展平输入
         inputs = sensors  # [N, input]
+        input_dim = inputs.shape[1]
         
         # 获取权重和掩码
-        W1 = self.brain_matrix[:, :inputs.shape[1], :32]
-        M1 = self.brain_masks[:, :inputs.shape[1], :32]
+        W1 = self.brain_matrix[:, :input_dim, :32]  # [N, input, 32]
+        M1 = self.brain_masks[:, :input_dim, :32]   # [N, input, 32]
         
-        # 修复: 权重乘掩码后再进行矩阵乘法
-        # [N, input] @ ([input, hidden] * mask) -> [N, hidden]
-        hidden = torch.matmul(inputs, (W1 * M1).transpose(1, 2))
+        # 修复: 使用 bmm 进行批量矩阵乘法
+        # [N, 1, input] @ [N, input, 32] -> [N, 1, 32] -> squeeze -> [N, 32]
+        W1_masked = W1 * M1  # 应用掩码
+        hidden = torch.bmm(inputs.unsqueeze(1), W1_masked).squeeze(1)
         
         # ReLU 激活
         hidden = torch.relu(hidden)
         
         # 输出层 (同样应用掩码)
-        W2 = self.brain_matrix[:, :32, :5]
-        M2 = self.brain_masks[:, :32, :5]
-        output = torch.matmul(hidden, (W2 * M2).transpose(1, 2))
-        
-        # 取对角线元素作为输出
-        output = output[:, torch.arange(min(N, output.shape[1])), torch.arange(5)[:min(N, output.shape[1])]]
-        
-        if output.shape[1] < 5:
-            # 填充
-            padding = torch.zeros(N, 5 - output.shape[1], device=self.device)
-            output = torch.cat([output, padding], dim=1)
+        W2 = self.brain_matrix[:, :32, :5]  # [N, 32, 5]
+        M2 = self.brain_masks[:, :32, :5]   # [N, 32, 5]
+        W2_masked = W2 * M2
+        output = torch.bmm(hidden.unsqueeze(1), W2_masked).squeeze(1)  # [N, 5]
         
         return output  # [N, 5]
 
