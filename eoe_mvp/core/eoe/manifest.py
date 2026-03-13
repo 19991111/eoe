@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EOE v12.5: 物理法则注册系统 (Physics Manifest)
+EOE  物理法则注册系统 (Physics Manifest)
 
 核心概念:
 - PhysicsManifest: 带类型检查的配置Schema
@@ -32,7 +32,7 @@ class PhysicsManifest:
     food_escape_enabled: bool = False
     food_escape_speed: float = 0.6
     
-    # ==================== v11.0 三大机制 ====================
+    # ==================== 三大机制 ====================
     energy_decay_k: float = 0.00005      # 代谢熵增
     port_interference_gamma: float = 1.5 # 端口干涉
     season_jitter: float = 0.05          # 参数波动
@@ -387,7 +387,7 @@ class MetabolismLaw(PhysicalLaw):
             nodes = len(agent.genome.nodes)
             base_cost = self.manifest.metabolic_alpha * nodes + self.manifest.metabolic_beta
             
-            # v11.0: 代谢熵增 (能量越高,挥发越快)
+            
             if self.manifest.energy_decay_k > 0:
                 decay = self.manifest.energy_decay_k * (agent.internal_energy ** 2)
                 base_cost += decay
@@ -496,7 +496,7 @@ class FatigueSystemLaw(PhysicalLaw):
 
 class PortInterferenceLaw(PhysicalLaw):
     """
-    端口干涉法则 (v11.0)
+    端口干涉法则
     
     多端口同时激活时的额外代谢成本
     属于"可选法则"

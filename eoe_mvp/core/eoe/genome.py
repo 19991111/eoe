@@ -365,7 +365,7 @@ class OperatorGenome:
                 node.activation = getattr(node, 'macro_output', 0.0)
             
             elif node.node_type == NodeType.ACTUATOR:
-                # 执行器：对所有输入求和 (v0.74: 添加ReLU确保非负)
+                # 执行器：对所有输入求和 ( 添加ReLU确保非负)
                 node.activation = max(0.0, sum(input_values))
                                                                                                 
             # ============================================================
@@ -551,7 +551,7 @@ class OperatorGenome:
             node.name = f"{new_type.name}_{node.node_id}"
             # 重置延迟缓冲区
             if new_type == NodeType.DELAY:
-                # v0.70: 新DELAY节点随机delay_steps
+                
                 node.delay_steps = np.random.randint(8, 51)
                 node.delay_buffer = deque(maxlen=max(1, node.delay_steps))
                 for _ in range(node.delay_steps):
@@ -559,7 +559,7 @@ class OperatorGenome:
     
     def _mutate_delay_steps(self, node: Node):
         """
-        v0.70: 突变DELAY节点的delay_steps
+         突变DELAY节点的delay_steps
         允许Agent演化出更长的记忆和计划能力
         """
         if node.node_type != NodeType.DELAY:
@@ -688,7 +688,7 @@ class OperatorGenome:
             node_type = NodeType.PREDICTOR  # 预测节点
         
         # ============================================================
-        # v0.98: 静默突变 - 插入"透明"节点
+        
         # 新节点初始时在数学上等同于"直通"，避免破坏性突变
         # ============================================================
         if node_type == NodeType.DELAY:
@@ -706,7 +706,7 @@ class OperatorGenome:
         edge['enabled'] = False
         
         # ============================================================
-        # v0.98: 静默突变 - 边权重设置为"透明"
+        
         # - source → new_node: weight=1.0 (恒等映射)
         # - new_node → target: weight=edge['weight'] (保持原信号强度)
         # 这样新节点初始时不改变信号传递，后续通过 mutate_weight 调节
@@ -845,7 +845,7 @@ class OperatorGenome:
         
         # 复制节点
         for node in self.nodes.values():
-            # v0.70: 复制delay_steps
+            
             delay_steps = getattr(node, 'delay_steps', 1)
             new_node = Node(
                 node_id=node.node_id,
@@ -854,7 +854,7 @@ class OperatorGenome:
                 name=node.name,
                 delay_steps=delay_steps
             )
-            # v0.81: 复制传感器感知权重
+            
             if node.angle_weights is not None:
                 new_node.angle_weights = node.angle_weights.copy()
                 new_node.distance_weights = node.distance_weights.copy()

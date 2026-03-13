@@ -549,7 +549,7 @@ class Population:
         env_width: float = 100.0,
         env_height: float = 100.0,
         target_pos: Optional[Tuple[float, float]] = None,
-        metabolic_alpha: float = 0.003,  # v10.4: 低代谢允许大脑复杂度
+        metabolic_alpha: float = 0.003,
         metabolic_beta: float = 0.05,
         lifespan: int = 500,
         n_food: int = 5,              # 食物数量
@@ -558,22 +558,22 @@ class Population:
         n_walls: int = 0,             # 障碍物数量 (v3.0)
         day_night_cycle: bool = True, # 昼夜循环 (v3.0)
         use_champion: bool = False,   # v4.1: 使用冠军结构初始化
-        champion_brain: dict = None,  # v0.98: 从JSON加载冠军大脑
-        pure_survival_mode: bool = False,  # v0.74: 纯生存适应度
-        # v0.78: 季节系统
+        champion_brain: dict = None,
+        pure_survival_mode: bool = False,
+        # 季节系统
         seasonal_cycle: bool = False,       # 启用季节循环
         season_length: int = 50,            # 每季多少帧
         winter_food_multiplier: float = 0.0,  # 冬天食物生成倍率(0=无食物)
         winter_metabolic_multiplier: float = 2.0,  # 冬天代谢倍率
-        # v0.80: 红皇后假说
+        # 红皇后假说
         red_queen: bool = False,            # 启用红皇后(敌对竞争)
         n_rivals: int = 3,                  # 敌对Agent数量
         rival_refresh_interval: int = 40,   # 敌对刷新间隔(代)
-        # v0.99: 即时进食模式（降维打击）
+        # 即时进食模式（降维打击）
         immediate_eating: bool = False,      # 拾取食物立即恢复能量
-        # v0.99: 性能优化 - 禁用食物逃逸系统
+        # 性能优化 - 禁用食物逃逸系统
         disable_food_escape: bool = True,     # 禁用食物逃逸(55%性能提升)
-        # v11.0: 三大突破机制 (2026-03-12)
+        # 三大突破机制 (2026-03-12)
         energy_decay_k: float = 0.0,          # 能量衰减系数 (k×E²)
         port_interference_gamma: float = 0.0, # 端口干涉gamma值
         season_jitter: float = 0.0,           # 季节波动率 (±X%)
@@ -584,9 +584,9 @@ class Population:
         self.lifespan = lifespan
         self.generation = 0
         self.use_champion = use_champion
-        self.champion_brain = champion_brain  # v0.98: JSON格式的大脑数据
-        self.pure_survival_mode = pure_survival_mode  # v0.74
-        self.immediate_eating = immediate_eating  # v0.99
+        self.champion_brain = champion_brain
+        self.pure_survival_mode = pure_survival_mode
+        self.immediate_eating = immediate_eating
         
         # 突变概率配置
         self.mutation_rates = {
@@ -595,8 +595,8 @@ class Population:
             'mutate_weight': 0.3  # 权重扰动概率
         }
         
-        # 创建环境 (EOE v3.0)
-        # v0.78: 季节系统参数
+        # 创建环境
+        # 季节系统参数
         self.seasonal_cycle = seasonal_cycle
         self.season_length = season_length
         self.winter_food_multiplier = winter_food_multiplier
@@ -604,14 +604,14 @@ class Population:
         self.current_season = "summer"  # 开始于夏天
         self.season_frame = 0
         
-        # v0.80: 红皇后假说
+        # 红皇后假说
         self.red_queen = red_queen
         self.n_rivals = n_rivals
         self.rival_refresh_interval = rival_refresh_interval
         self.rivals: List['Agent'] = []  # 敌对Agent列表
         self.rival_timer = 0
         
-        # v11.0: 直接使用函数参数
+        # 直接使用函数参数
         self.environment = Environment(
             width=env_width,
             height=env_height,
@@ -623,15 +623,15 @@ class Population:
             respawn_food=respawn_food,
             n_walls=n_walls,
             day_night_cycle=day_night_cycle,
-            pure_survival_mode=pure_survival_mode,  # v0.74
-            # v0.78: 季节参数
+            pure_survival_mode=pure_survival_mode,
+            # 季节参数
             seasonal_cycle=seasonal_cycle,
             season_length=season_length,
             winter_food_multiplier=winter_food_multiplier,
             winter_metabolic_multiplier=winter_metabolic_multiplier,
-            # v0.99: 即时进食模式
+            # 即时进食模式
             immediate_eating=immediate_eating,
-            # v11.0: 三大突破机制
+            # 三大突破机制
             energy_decay_k=energy_decay_k,
             port_interference_gamma=port_interference_gamma,
             season_jitter=season_jitter,
@@ -639,7 +639,7 @@ class Population:
         )
         
         # ============================================================
-        # v4.1: 新系统集成
+        # 新系统集成
         # ============================================================
         
         # 子图冻结系统
@@ -651,19 +651,19 @@ class Population:
         )
         
         # ============================================================
-        # v11.1: 压力梯度熔炉 (Stress-Gradient Crucible)
+        # 压力梯度熔炉 (Stress-Gradient Crucible)
         # 防止"电子蟑螂" - 只保存真正有智力的个体
         # ============================================================
         self.hall_of_fame = []  # 英雄冢: 历史上最强的个体
         self.hof_max_size = 5   # 最多保存5个历史冠军
-        # v12.6: 移除"智力补贴" - 大脑代谢压力
+        # 移除"智力补贴" - 大脑代谢压力
         # 不再奖励复杂度,而是惩罚无效的神经回路
         self.complexity_premium = 0.0  # 删除复杂度奖励!
         self.brain_metabolic_alpha = 0.2  # 每个节点能耗 (超极强!)
         self.brain_metabolic_beta = 0.1   # 每条边能耗 (超极强!)
         self.stress_test_enabled = True  # 启用灭绝压测
         
-        # v0.99: 性能优化 - 默认禁用食物逃逸系统
+        # 性能优化 - 默认禁用食物逃逸系统
         if disable_food_escape:
             self.environment.food_escape_enabled = False
         
@@ -738,7 +738,7 @@ class Population:
         # 内部循环噪声
     
     # ============================================================
-    # v11.1: 压力梯度熔炉 (Stress-Gradient Crucible)
+    # 压力梯度熔炉 (Stress-Gradient Crucible)
     # 核心逻辑：不再只看能量，而是看"智力性价比"
     # ============================================================
     
@@ -824,7 +824,7 @@ class Population:
     
     def _calculate_complexity_score(self, agent: 'Agent') -> float:
         """
-        v12.6: 复杂度评分改为"大脑代谢惩罚"
+        复杂度评分改为"大脑代谢惩罚"
         
         核心思想: 大脑很贵!
         - 每增加一个节点,增加成本 α
@@ -1024,11 +1024,11 @@ class Population:
         """
         初始化冠军大脑
         
-        v0.98: 支持两种模式:
+         支持两种模式:
         1. 从champion_brain JSON加载 (优先)
         2. 使用v4.1预设冠军结构
         """
-        # v0.98: 如果有JSON数据，从文件加载
+        
         if self.champion_brain is not None:
             try:
                 # 清除默认节点
@@ -1085,7 +1085,7 @@ class Population:
                 agent.genome.add_node(thresh_node)
         
         # 差分驱动 (使用现有节点: 0,1=传感器, 2=ADD, 3,4=执行器)
-        # v0.74修复: 使用正确的趋化性连接（正相关）
+        
         # 原理：食物在右 → 右传感器高 → 右执行器强 → 右轮快 → 左转朝向食物
         agent.genome.add_edge(source_id=0, target_id=2, weight=1.5)   # S_L -> A_L (正)
         agent.genome.add_edge(source_id=1, target_id=3, weight=1.5)   # S_R -> A_R (正)
@@ -1258,7 +1258,7 @@ class Population:
         返回:
             统计信息字典
         """
-        # v0.99: 修复时间轴 - 在每一代开始时重置季节
+        
         # 确保每一代都从夏天第1帧开始，让Agent有"夏天积累"的机会
         if self.environment.seasonal_cycle:
             self.environment.current_season = "summer"
@@ -1267,12 +1267,12 @@ class Population:
             self.environment.is_day = True
             self.environment.current_time = 0
         
-        # v0.80: 红皇后 - 第一代生成敌对
+        
         if self.red_queen and self.generation == 0:
             self.spawn_rivals()
         
         for step in range(self.lifespan):
-            # v0.80: 红皇后 - 敌对与正常Agent一起竞争
+            
             if self.red_queen:
                 self.environment.agents = self.agents + self.rivals
             else:
@@ -1376,7 +1376,7 @@ class Population:
         fitnesses = [a.fitness for a in self.agents]
         best_idx = np.argmax(fitnesses)
         
-                # v12.6: 计算大脑效率
+                
         def calc_brain_efficiency(agent):
             genome = agent.genome
             nodes = len(genome.nodes)
@@ -1397,7 +1397,7 @@ class Population:
             'avg_edges': np.mean([a.genome.get_info()['enabled_edges'] for a in self.agents]),
             'avg_novelty': np.mean([a.novelty_score for a in self.agents]),
             'avg_exploration': np.mean([a.get_exploration_score() for a in self.agents]),
-            # v12.6: 大脑效率追踪
+            
             'avg_brain_efficiency': np.mean([calc_brain_efficiency(a) for a in self.agents]),
             'brain_cost_per_agent': np.mean([
                 a.genome.get_info()['total_nodes'] * self.brain_metabolic_alpha + 
@@ -1407,7 +1407,7 @@ class Population:
         }
     
     # ============================================================
-    # v0.80: 红皇后假说 - 敌对Agent竞争
+    
     # ============================================================
     
     def spawn_rivals(self) -> None:
@@ -1528,7 +1528,7 @@ class Population:
         elif survivors_with_energy:
             elite_pool = survivors_with_energy[:min(n_elites * 2, len(survivors_with_energy))]
         else:
-            # v0.99 修复: 只选择活着的 agent 作为精英
+            
             alive_agents = [a for a in sorted_agents if a.is_alive and a.internal_energy > 0]
             if alive_agents:
                 elite_pool = alive_agents[:n_elites]
@@ -1604,7 +1604,7 @@ class Population:
                 if np.random.random() < 0.1:
                     child_genome.mutate_enable_plasticity(probability=0.3)
             
-            # v0.74: 元节点压缩 - 如果父节点共同激活>=10，压缩为META_NODE
+            
             # 尝试获取parent (在Tier 3中定义)
             try:
                 parent_coact = getattr(parent, 'node_coactivation', {})
@@ -1632,7 +1632,7 @@ class Population:
             child = Agent(agent_id=i, x=x, y=y, theta=theta)
             child.genome = child_genome
             
-            # v0.99: 辅助轮拆除 - 能量阈值可演化
+            
             # 从父母继承阈值，并有一定概率突变
             # 如果没有parent（edge case），使用默认值0.5
             if 'parent' in dir() and parent is not None:
@@ -1672,7 +1672,7 @@ class Population:
                 self.environment.stigmergy_field.field *= 0.5
                 print(f"  [ISF] Trans-generational遗产保留: 衰减50%")
         
-        # v0.80: 红皇后 - 定时刷新敌对
+        
         if self.red_queen:
             self.refresh_rivals_if_needed()
         
@@ -1680,11 +1680,11 @@ class Population:
         self.environment.apply_dynamic_pressure(self.generation)
     
     # ============================================================
-    # v0.76: 红皇后假说 - 动态敌对刷新
+    
     # ============================================================
     def add_rivals(self, n_rivals: int = 3, use_buff: bool = True) -> None:
         """添加敌对Agent (使用精英脑结构 + 可选增强)"""
-        # v0.76: 初始化红皇后参数
+        
         if not hasattr(self, 'rivals'):
             self.rivals = []
         if not hasattr(self, 'rival_refresh_interval'):
@@ -1708,7 +1708,7 @@ class Population:
                 rival.is_rival = True
                 rival.fitness = 0
                 
-                # v0.76: 红皇后buff - 随等级增强
+                
                 if use_buff:
                     rival.rival_buff = self.rival_buff_level
                 else:
@@ -1724,7 +1724,7 @@ class Population:
         """刷新敌对Agent (从优秀敌对中选择)"""
         self.remove_rivals()
         
-        # v0.77: 红皇后协同进化 - 敌对也在进化!
+        
         # 找到最优秀的敌对，保留其脑结构
         if hasattr(self, 'rivals') and self.rivals:
             # 按适应度排序，保留最强的
@@ -1773,7 +1773,7 @@ class Population:
     def _apply_mutations(self, agent_or_genome) -> None:
         """对智能体应用随机突变 (支持Agent或Genome)
         
-        v0.98: 重大升级
+         重大升级
         1. 废除节点惩罚 - 交给代谢税（自然选择）
         2. 基于停滞期的动态突变 - 陷入局部最优时提升突变率
         3. 权重高频微调 - 确保连续性探索
@@ -1782,7 +1782,7 @@ class Population:
         genome = getattr(agent_or_genome, 'genome', agent_or_genome)
         
         # ============================================================
-        # v0.98: 基于停滞期的动态突变
+        
         # ============================================================
         if not hasattr(self, '_stagnation_counter'):
             self._stagnation_counter = 0
@@ -1807,7 +1807,7 @@ class Population:
         base_add_edge = self.mutation_rates['add_edge'] * mutation_boost
         
         # ============================================================
-        # v0.98: 废除节点惩罚
+        
         # 统一使用基础突变率，让自然选择（代谢税）去修剪
         # ============================================================
         if np.random.random() < base_add_node:
@@ -1818,7 +1818,7 @@ class Population:
             genome.mutate_add_edge()
         
         # ============================================================
-        # v0.98: 权重高频微调 (两层概率)
+        
         # - 个体层: 80% 概率进入权重突变
         # - 边层: 15% 概率受高斯扰动
         # 确保几乎每个新生儿都有轻微差异
@@ -1828,7 +1828,7 @@ class Population:
             sigma = 0.1
             genome.mutate_weight(sigma=sigma, probability=0.15)  # 15% 边层
         
-        # v0.81: 传感器感知权重突变
+        
         from .node import NodeType
         for node in genome.nodes.values():
             if node.node_type == NodeType.SENSOR and np.random.random() < 0.2:
@@ -1912,7 +1912,7 @@ class Population:
             history.append(stats)
             
             # ============================================================
-            # v0.98: 设置停滞期跟踪器的当前最佳适应度
+            
             # ============================================================
             self.best_fitness_this_gen = stats['best_fitness']
             

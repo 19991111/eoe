@@ -680,7 +680,7 @@ class Environment:
         width: float = 100.0,
         height: float = 100.0,
         target_pos: Optional[Tuple[float, float]] = None,
-        metabolic_alpha: float = 0.003,  # v10.4: 默认0.003 (低代谢，允许大脑复杂度)
+        metabolic_alpha: float = 0.003,  
         metabolic_beta: float = 0.05,
         surprise_penalty: float = 0.5,
         n_food: int = 5,
@@ -688,18 +688,18 @@ class Environment:
         respawn_food: bool = True,
         n_walls: int = 0,
         day_night_cycle: bool = True,
-        pure_survival_mode: bool = False,  # v0.74: 纯生存适应度
-        # v0.78: 季节系统
+        pure_survival_mode: bool = False,  
+        
         seasonal_cycle: bool = False,
         season_length: int = 50,
         winter_food_multiplier: float = 0.0,
         winter_metabolic_multiplier: float = 2.0,
-        # v0.99: 即时进食模式（降维打击）
+        
         # 当开启时，拾取食物 = 直接进食 + 能量恢复
         # 这样可以让 Agent 建立"寻找食物=活下去"的基础反射
         immediate_eating: bool = False,
         # ============================================================
-        # v11.0: 三大突破机制 (2026-03-12)
+        
         # ============================================================
         # 1. 代谢熵增: 体内能量随时间挥发，流失率 ∝ E²
         energy_decay_k: float = 0.0001,  # 能量衰减系数
@@ -747,10 +747,10 @@ class Environment:
     ):
         self.width = width
         self.height = height
-        self.pure_survival_mode = pure_survival_mode  # v0.74
+        self.pure_survival_mode = pure_survival_mode  
         self.agents: List[Agent] = []
         
-        # v0.99: 即时进食模式
+        
         self.immediate_eating = immediate_eating
         
         # v1.3: 可配置的物理常量 (解耦硬编码)
@@ -895,7 +895,7 @@ class Environment:
         # ============================================================
         self.food_velocities: List[Tuple[float, float]] = []  # 食物速度
         self.food_escape_enabled = True
-        self.food_escape_speed = 0.6  # v0.99: 降低50% (1.2→0.6)，让Agent更容易抓到食物
+        self.food_escape_speed = 0.6  
         self.food_escape_range = 25.0  # 触发逃逸的距离
         self.food_escape_cooldown = 0  # 逃逸冷却期
 
@@ -921,19 +921,19 @@ class Environment:
         self.is_day = True     # 当前是否为白天
 
         # ============================================================
-        # v0.78: 季节系统
+        
         # ============================================================
         self.seasonal_cycle = seasonal_cycle
         self.season_length = season_length
-        self.base_season_length = season_length  # v11.0: 基准季节长度
+        self.base_season_length = season_length  
         self.winter_food_multiplier = winter_food_multiplier
         self.winter_metabolic_multiplier = winter_metabolic_multiplier
-        self.base_winter_metabolic_multiplier = winter_metabolic_multiplier  # v11.0: 基准冬天代谢
+        self.base_winter_metabolic_multiplier = winter_metabolic_multiplier  
         self.current_season = "summer"  # 开始于夏天
         self.season_frame = 0
         self.summer_food_multiplier = 1.0  # 夏天的食物倍率
 
-        # v0.78: 巢穴系统 (贮粮)
+        
         self.nest_enabled = seasonal_cycle  # 有季节才需要巢穴
         self.nest_position = (width * 0.15, height * 0.15)  # 左上角
         self.nest_radius = 10.0
@@ -964,7 +964,7 @@ class Environment:
         self.generation = 0
 
         # ============================================================
-        # v11.0: 三大突破机制参数 (2026-03-12)
+        
         # ============================================================
         # 1. 代谢熵增: 体内能量随时间挥发
         self.energy_decay_k = energy_decay_k
@@ -1042,14 +1042,14 @@ class Environment:
         # ============================================================
         self.infinite_mode = False  # 是否启用无限模式
         self.chunk_manager: Optional[ChunkManager] = None
-        self.sensor_range = 40.0  # v0.99: 增加33% (30→40)，更容易发现远处的食物
+        self.sensor_range = 40.0  
 
         # GPS坐标追踪
         self.origin_x = 0.0  # 世界原点
         self.origin_y = 0.0
 
         # ============================================================
-        # v0.97: 三大突破机制 (专家建议)
+        
         # ============================================================
 
         # 方案1: 代谢疲劳 + 安全掩体 (降维破解6步长链路)
@@ -1084,7 +1084,7 @@ class Environment:
         self.food_freshness: List[float] = []
 
         # ============================================================
-        # v0.98: 热力学庇护所 (Thermodynamic Sanctuary)
+        
         # 机制: 温度场 + 食物产热 + 巢穴保温
         # 目的: 将"为冬天贮粮"降维为对"热力学梯度"的趋性
         # ============================================================
@@ -1105,7 +1105,7 @@ class Environment:
         self._temp_grid_built = False
 
         # ============================================================
-        # v0.98: 形态计算 - 被动物理吸附
+        
         # 机制: Agent表皮吸附特性，撞击食物自动附着
         # 目的: 剥离"抓取"和"携带"的复杂神经控制
         # ============================================================
@@ -1117,7 +1117,7 @@ class Environment:
         self.discharge_threshold = 0.75     # 激活卸货的信号强度
         
         # ============================================================
-        # v0.98: 压痕系统 - 环境记忆 (Stigmergic Friction)
+        
         # ============================================================
         self.stigmergic_friction_enabled = False
         self.friction_grid_resolution = 2.0      # 压痕网格分辨率
@@ -1128,7 +1128,7 @@ class Environment:
         self.friction_bonus_max = 0.7            # 最大速度加成
         
         # ============================================================
-        # v0.98: 发育相变 - 幼体保护期 (Ontogenetic Phase Transition)
+        
         # ============================================================
         self.ontogenetic_phase_enabled = False
         self.juvenile_duration = 30              # 幼体期帧数
@@ -1962,7 +1962,7 @@ class Environment:
                 self.signal_jam_active = False
 
     # ============================================================
-    # v0.97: 三大突破机制
+    
     # ============================================================
 
     def _update_fatigue_system(self, agent: Agent) -> None:
@@ -2030,7 +2030,7 @@ class Environment:
                     self.food_velocities.append((0.0, 0.0))
                     self.food_freshness.append(1.0)
 
-                    # v11.0: 入库税 - 贮粮时一次性扣除
+                    
                     stored = agent.food_carried
                     tax = int(stored * self.nest_tax) if self.nest_tax > 0 else 0
                     stored_after_tax = stored - tax
@@ -2190,7 +2190,7 @@ class Environment:
                 agent.ate_poisoned = True
 
     # ============================================================
-    # v0.98: 热力学庇护所 - 温度场更新
+    
     # ============================================================
 
     def _update_thermal_system(self) -> None:
@@ -2271,7 +2271,7 @@ class Environment:
         # 这里的奖励是隐式的: 温暖区域 = 食物/巢穴附近 = 更可能存活
 
     # ============================================================
-    # v0.98: 形态计算 - 物理吸附检测
+    
     # ============================================================
 
     def _check_adhesion_collision(self, agent: Agent) -> bool:
@@ -2426,12 +2426,12 @@ class Environment:
         if not self.respawn_food:
             return
 
-        # v0.78: 冬天不生成食物
+        
         if self.seasonal_cycle and self.current_season == "winter":
             # 冬天没有新食物
             return
 
-        # v10.1: 空间风险梯度 - 巢穴附近减少食物，野外增加
+        
         if self.nest_enabled and hasattr(self, 'nest_position'):
             nx, ny = self.nest_position
             nest_radius = self.nest_radius
@@ -2489,13 +2489,13 @@ class Environment:
 
             if dist < eat_distance:
                 # 吃到食物!
-                # v10.4: 去中心化携带决策
+                
                 # 废除硬编码阈值，让神经网络通过演化决定
                 # 默认行为：采集到食物就携带回巢
                 if self.immediate_eating:
                     energy_ratio = agent.internal_energy / agent.max_energy if agent.max_energy > 0 else 0
                     
-                    # v10.4: 极简逻辑 - 只有能量极低时才吃
+                    
                     # 否则一律携带回巢贮粮
                     if energy_ratio < 0.20:  # 能量低于20%才直接吃
                         # 能量紧急：直接吃掉
@@ -2552,7 +2552,7 @@ class Environment:
         my_force = np.sum(np.abs(actuator_outputs))
         collision_dist = 5.0  # 碰撞距离
         
-        # v10.0: 检查自己是否在巢穴安全区
+        
         in_my_nest = False
         if self.nest_enabled:
             dist_to_nest = self._toroidal_distance(
@@ -2564,7 +2564,7 @@ class Environment:
             if other is agent or not other.is_alive:
                 continue
             
-            # v10.0: 检查对方是否在巢穴安全区
+            
             in_other_nest = False
             if self.nest_enabled:
                 dist_to_nest = self._toroidal_distance(
@@ -2581,7 +2581,7 @@ class Environment:
             if dist < collision_dist:
                 other_force = 0.0  # 简化: 假设其他 Agent 推力为0
 
-                # v10.0: 暴力代价 - 抢劫成本提高
+                
                 # 如果自己的推力更大，夺取能量
                 if my_force > other_force and other.internal_energy > 10:
                     steal_amount = other.internal_energy * 0.20  # 夺取20%
@@ -2591,11 +2591,11 @@ class Environment:
                     )
                     other.internal_energy -= steal_amount
                     
-                    # v10.0: 攻击者也要付出代价 (反作用力)
+                    
                     recoil_loss = steal_amount * 0.10  # 10%反作用力
                     agent.internal_energy -= recoil_loss
                     
-                    # v10.0: 攻击增加疲劳度
+                    
                     if hasattr(agent, 'fatigue'):
                         agent.fatigue = min(agent.max_fatigue, agent.fatigue + 0.2)
                     
@@ -2607,7 +2607,7 @@ class Environment:
         """
         计算智能体的传感器值 (v7.2 优化版, v0.81 可学习感知单元)
         """
-        # v0.76: 红皇后buff - 敌对Agent获得传感器增强
+        
         sensor_range = self.sensor_range
         if getattr(agent, 'is_rival', False):
             buff = getattr(agent, 'rival_buff', 1.0)
@@ -2618,7 +2618,7 @@ class Environment:
             return np.array([0.0, 0.0])
 
         # ============================================================
-        # v0.81: 使用可学习感知单元
+        
         # ============================================================
         from .node import NodeType
 
@@ -2800,7 +2800,7 @@ class Environment:
             if left_blocked:
                 sensor_values *= 0.1
 
-        # v0.97: 添加疲劳传感器 (内部状态感知)
+        
         # 格式扩展: [左食物, 右食物, 疲劳度]
         if self.fatigue_system_enabled:
             fatigue_sensor = getattr(agent, 'fatigue', 0.0) / getattr(agent, 'max_fatigue', 50.0)
@@ -3083,25 +3083,25 @@ class Environment:
         # 记录旧位置 (用于压痕更新)
         old_x, old_y = agent.x, agent.y
 
-        # v0.76: 红皇后buff - 敌对Agent获得速度增强
+        
         max_speed = self.max_speed
         if getattr(agent, 'is_rival', False):
             buff = getattr(agent, 'rival_buff', 1.0)
             max_speed *= buff  # 增强速度
 
-        # v0.97: 渐进式虚弱 - 疲劳度越高，速度越慢
+        
         if self.fatigue_system_enabled and hasattr(agent, 'fatigue'):
             fatigue_ratio = agent.fatigue / agent.max_fatigue if agent.max_fatigue > 0 else 0
             # 速度从100%衰减到20%
             max_speed *= (1.0 - fatigue_ratio * 0.8)
 
-        # v0.98: 形态计算 - 携带食物时的物理阻力
+        
         if self.morphological_computation_enabled and agent.food_carried > 0:
             # 携带食物时移动速度降低 (物理负载)
             load_penalty = 1.0 - (agent.food_carried * (1.0 - self.carry_speed_penalty))
             max_speed *= max(0.3, load_penalty)  # 最低30%速度
 
-        # v0.98: 压痕系统 - 低阻力高速公路加成
+        
         if self.stigmergic_friction_enabled:
             friction_bonus = self.get_friction_bonus(agent.x, agent.y)
             max_speed *= friction_bonus
@@ -3132,7 +3132,7 @@ class Environment:
         agent.x = agent.x % self.width
         agent.y = agent.y % self.height
 
-        # v0.98: 压痕系统 - 更新路径压痕
+        
         if self.stigmergic_friction_enabled:
             self._update_friction_grid(agent, old_x, old_y)
 
@@ -3277,8 +3277,8 @@ class Environment:
         if attack_b > 0.7:
             attack_b *= 1.5
 
-        # v10.1: 防御修正 - 80%减伤 (更硬的外壳)
-        # v10.2: 携带buff - 携带食物时防御+30%
+        
+        
         if agent_a.food_carried > 0:
             defense_a *= 1.3  # 携带时防御增强30%
         if agent_b.food_carried > 0:
@@ -3325,7 +3325,7 @@ class Environment:
         winner.battle_wins += 1
         loser.battle_losses += 1
         
-        # v10.1: 防御成功惩罚 - 攻击者被防御挡住时额外疲劳
+        
         # 检查A攻击B是否被防御挡住
         defender = agent_b if a_attacks_b else agent_a
         defender_defense = defender.port_defense
@@ -3343,7 +3343,7 @@ class Environment:
             loser.is_alive = False
             loser.internal_energy = 0
             
-            # v10.1: 死亡掉落高能尸体 (5倍普通食物能量)
+            
             corpse_energy = self.food_energy * 5.0  # 尸体能量密度 = 5倍食物
             self.food_positions.append((loser.x, loser.y))
             self.food_velocities.append((0.0, 0.0))
@@ -3430,7 +3430,7 @@ class Environment:
             self.is_day = not self.is_day
 
         # ============================================================
-        # v0.78: 季节循环 (夏天→冬天→夏天...)
+        
         # ============================================================
         if self.seasonal_cycle:
             self.season_frame += 1
@@ -3462,7 +3462,7 @@ class Environment:
 
         # 代谢税率: 黑夜更高 + 冬天更高
         metabolic_multiplier = 0.6 if self.is_day else 1.5
-        # v0.78: 冬天代谢加成
+        
         if self.seasonal_cycle and self.current_season == "winter":
             metabolic_multiplier *= self.winter_metabolic_multiplier
         # v13.0: ESF 应力场调制
@@ -3476,12 +3476,12 @@ class Environment:
             self._update_bait()
 
         # ============================================================
-        # v0.98: 热力学庇护所 - 温度场更新
+        
         # ============================================================
         self._update_thermal_system()
 
         # ============================================================
-        # v0.98: 压痕系统 - 全局衰减 (每步衰减)
+        
         # ============================================================
         if self.stigmergic_friction_enabled and self.friction_grid is not None:
             self.friction_grid *= self.trail_decay
@@ -3548,7 +3548,7 @@ class Environment:
             self._update_chaos_effects()
 
             # ============================================================
-            # v0.97: 三大突破机制
+            
             # ============================================================
 
             # 方案1: 代谢疲劳 + 安全掩体
@@ -3574,13 +3574,13 @@ class Environment:
                 self._update_food_thermodynamics()
 
             # ============================================================
-            # v0.98: 热力学庇护所 - 温度效果应用
+            
             # ============================================================
             if self.thermal_sanctuary_enabled:
                 self._apply_temperature_effects(agent)
 
             # ============================================================
-            # v0.98: 形态计算 - 物理吸附检测
+            
             # 在传感器计算之前检测吸附 (食物被移走)
             # ============================================================
             if self.morphological_computation_enabled:
@@ -3623,7 +3623,7 @@ class Environment:
             gps_sensor_values = self._compute_gps_sensor(agent)  # [4]
             compass_sensor_values = self._compute_compass_sensor(agent)  # [3]
 
-            # v0.98: 温度传感器
+            
             if self.thermal_sanctuary_enabled:
                 temp_sensor_values = np.array(agent.temperature_sensors)  # [左, 右, 舒适]
             else:
@@ -3678,7 +3678,7 @@ class Environment:
             self._check_food_collision(agent)
 
             # ============================================================
-            # v0.78: 巢穴贮粮
+            
             # 如果Agent带着食物回到巢穴，存储起来
             # ============================================================
             if self.nest_enabled and agent.food_carried > 0:
@@ -3690,7 +3690,7 @@ class Environment:
                 if dist < self.nest_radius:
                     # 存储食物到巢穴
                     stored = agent.food_carried
-                    # v11.0: 入库税 - 贮粮时一次性扣除
+                    
                     tax = int(stored * self.nest_tax) if self.nest_tax > 0 else 0
                     stored_after_tax = stored - tax
                     
@@ -3733,9 +3733,9 @@ class Environment:
                 elif node.node_type == NodeType.PORT_MOTION:
                     base_cost *= 1.3  # 运动端口
                 elif node.node_type == NodeType.PORT_OFFENSE:
-                    base_cost *= 3.0  # v10.1: 攻击端口能耗提升3倍 (暴力代价，高风险高回报)
+                    base_cost *= 3.0  
                 elif node.node_type == NodeType.PORT_DEFENSE:
-                    base_cost *= 0.65  # v10.1: 防御端口能耗降低50% (从1.3降到0.65)
+                    base_cost *= 0.65  
                 elif node.node_type == NodeType.PORT_REPAIR:
                     base_cost *= 1.5  # 修复端口
                 elif node.node_type == NodeType.PORT_SIGNAL:
@@ -3745,7 +3745,7 @@ class Environment:
 
             # 基础代谢消耗 + 节点特异性 + 动作消耗 + 预测偏差
             # v5.7 物理规律: 代谢 cost = 结构成本 + 计算成本
-            # v10.4: 非线性代谢缩放 - sqrt(节点数) * alpha (异速生长定律)
+            
             # 大脑功耗增长率远低于神经元的增加速度
             node_cost = np.sqrt(n_nodes) * self.metabolic_alpha if n_nodes > 0 else 0
             edge_cost = np.sqrt(n_edges) * self.metabolic_beta if n_edges > 0 else 0
@@ -3753,7 +3753,7 @@ class Environment:
             metabolic_cost += node_specific_cost  # 表型特化能耗
             metabolic_cost += prediction_penalty  # 加入预测偏差
             
-            # v10.0: 巢穴安全区 - 代谢降至30%
+            
             if self.nest_enabled:
                 dist_to_nest = self._toroidal_distance(
                     agent.x, agent.y, self.nest_position[0], self.nest_position[1]
@@ -3761,7 +3761,7 @@ class Environment:
                 if dist_to_nest < self.nest_radius:
                     metabolic_cost *= 0.3  # 巢穴内低耗
 
-            # v10.3: 生态避难所 (Refugia) - 地图边缘的稳定区域
+            
             # 在地图左下角(5%区域)和右上角(5%区域)创建稳定区
             refugia_margin = self.width * 0.05  # 5%边缘
             in_refugia = False
@@ -3772,12 +3772,12 @@ class Environment:
                 in_refugia = True
                 metabolic_cost *= 0.5  # 避难所代谢减半
 
-            # 动作越强烈，能量消耗越多 (v0.74: 降低系数以允许更长寿命)
+            # 动作越强烈，能量消耗越多 ( 降低系数以允许更长寿命)
             action_intensity = np.mean(np.abs(actuator_outputs))
             metabolic_cost += action_intensity * 0.05  # 降低50倍
 
             # ============================================================
-            # v0.98: 发育相变 - 幼体保护期代谢调整
+            
             # ============================================================
             if self.ontogenetic_phase_enabled:
                 # 更新发育阶段
@@ -3797,7 +3797,7 @@ class Environment:
                     metabolic_cost *= self.phase_transition_bonus
 
             # ============================================================
-            # v0.97 Stage 1 修复: 疲劳指数级耗能 (Exhaustion Tax)
+            
             # 移动所消耗的能量与疲劳度成非线性正比
             # 公式: 移动耗能 = 基础耗能 * (1 + 疲劳度^2 * 5)
             # 当疲劳度=0.8时，耗能是平时的4倍 (更温和)
@@ -3807,7 +3807,7 @@ class Environment:
                 fatigue_ratio = agent.fatigue / agent.max_fatigue if agent.max_fatigue > 0 else 0
                 exhaustion_multiplier = 1.0 + (fatigue_ratio ** 2) * 5.0
                 
-                # v0.99: 阶段三 - 疲劳惩罚
+                
                 # 当疲劳 > 80% 时，基础代谢额外增加30%
                 if fatigue_ratio > 0.8:
                     exhaustion_multiplier *= 1.3  # +30% 代谢惩罚
@@ -3815,7 +3815,7 @@ class Environment:
                 metabolic_cost *= exhaustion_multiplier
 
             # ============================================================
-            # v0.97 Stage 1 修复: 低功耗休眠模式 (Deep Sleep Metabolism)
+            
             # 当Agent静止且正在恢复疲劳(睡觉)时，代谢降到10%
             # ============================================================
             if self.fatigue_system_enabled:
@@ -3836,7 +3836,7 @@ class Environment:
             metabolic_cost *= metabolic_multiplier
 
             # ============================================================
-            # v11.0: 端口干涉代价 (Port Interference Cost)
+            
             # 多端口同时激活时，代谢成本呈指数级上升
             # 公式: Extra_Cost = (Offense × Defense × Carry)^gamma
             # ============================================================
@@ -3942,7 +3942,7 @@ class Environment:
                 agent.stress_derivative = stress_info['derivative']
 
             # ============================================================
-            # v11.0: 代谢熵增 (Energy Decay)
+            
             # 体内能量随时间自然挥发，流失率 ∝ E²
             # 公式: Loss = k × Energy_current²
             # ============================================================
@@ -3993,7 +3993,7 @@ class Environment:
                                 for node_id, node in agent.genome.nodes.items()}
             agent.genome.hebbian_update(agent_activations, lr=0.01)
 
-            # v0.74: 追踪节点共同激活 (元节点压缩)
+            
             agent_activations = {node_id: node.activation for node_id, node in agent.genome.nodes.items()}
             if not hasattr(agent, 'node_coactivation'):
                 agent.node_coactivation = {}
@@ -4080,7 +4080,7 @@ class Environment:
         self.metabolic_beta = self.base_metabolic_beta * (1 + 0.2 * difficulty)
 
         # ============================================================
-        # v11.0: 季节波动率 (Season Jitter)
+        
         # 每代环境参数 ±X% 随机扰动，模拟"气候变化"
         # 这会让Agent无法"过拟合"固定环境，必须学会预测
         # ============================================================
