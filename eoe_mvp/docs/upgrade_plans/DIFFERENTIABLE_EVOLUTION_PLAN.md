@@ -1,6 +1,7 @@
 # 可微演化 (Differentiable Evolution) 架构升级方案
 
-> 基于 EOE Project Lead 指令 | 版本: 1.0 | 日期: 2026-03-14
+> 基于 EOE Project Lead 指令 | 版本: 1.1 | 日期: 2026-03-14
+> 更新: 根据Architect AI批阅意见修正 v1.0 漏洞
 
 ---
 
@@ -14,237 +15,348 @@
 | 遗传同化 | 无 | 子代继承随机突变，无经验传递 |
 | 拓扑变异 | NEAT标准实现 | 纯随机，无梯度引导 |
 
-### 差距分析
-- ❌ 无自动微分能力
-- ❌ 无生命周期内梯度优化
-- ❌ 无深度鲍德温效应
-- ❌ 收敛效率低 (需大量代际)
+---
+
+## 二、架构修正 (v1.1)
+
+### 🚨 修正一：打破"环境不可微"幻觉
+
+**问题**: `energy_delta` 来自物理引擎，是标量无梯度，无法执行 `.backward()`
+
+**修正方案**: 使用 **预测编码 (Self-Supervised)** + **能量调节学习率**
+
+```python
+class DifferentiableBrain(torch.nn.Module):
+    def __init__(self, genome: OperatorGenome):
+        super().__init__()
+        # 主网络 - 动作输出
+        self.action_head = ...
+        # 预测头 - 预测下一帧感知
+        self.prediction_head = ...
+    
+    def forward(self, sensor_input):
+        # 主输出: 动作
+        action = self.action_head(sensor_input)
+        # 预测输出: 下一帧感知
+        prediction = self.prediction_head(sensor_input)
+        return action, prediction
+    
+    def compute_loss(self, sensor_t, sensor_tplus1, energy_delta):
+        """
+        L_local = MSE(prediction, actual_next_sensor) 
+        
+        能量奖励用于调节学习率:
+        - 吃到能量 -> 学习率放大 (加深记忆)
+        - 损失能量 -> 学习率缩小
+        """
+        prediction_loss = F.mse_loss(self.prediction, sensor_tplus1)
+        
+        # 能量调制学习率
+        lr_modulator = 1.0 + torch.sigmoid(energy_delta) * 0.5
+        
+        return prediction_loss * lr_modulator
+```
+
+**为什么这种方法可行**:
+- 整个过程在张量空间内，全程可微
+- 能量不参与梯度计算，只调节学习率
+- 预测编码让网络学会环境建模（隐式学习）
 
 ---
 
-## 二、修改方案
+### 💡 修正二：使用 torch_geometric (PyG)
 
-### Phase 1: 基础张量化 (PyTorch Autograd)
+**问题**: Padding方案会导致海量冗余计算
 
-#### 任务 1.1: 创建 `DifferentiableBrain` 类
+**修正方案**: 全面拥抱 `torch_geometric`
+
+```python
+import torch_geometric as pyg
+from torch_geometric.nn import MessagePassing
+
+class DifferentiableBrain(MessagePassing):
+    """
+    继承 PyG MessagePassing
+    支持变长图结构的批量前向+反向传播
+    """
+    
+    def __init__(self, genome: OperatorGenome):
+        # 将NEAT图转为PyG Data格式
+        self.edge_index, self.edge_weight = self._compile_to_pyg(genome)
+    
+    def forward(self, x):
+        """
+        使用PyG的message passing进行前向传播
+        保留完整计算图
+        """
+        return self.propagate(self.edge_index, x=x, edge_weight=self.edge_weight)
+    
+    def message(self, x_j, edge_weight):
+        return x_j * edge_weight
+    
+    def update(self, aggr_out):
+        return torch.relu(aggr_out)
+```
+
+**批量处理**:
+```python
+def batched_forward(brains: List[DifferentiableBrain], sensor_inputs: torch.Tensor):
+    """
+    使用 PyG Batch.from_data_list 批量处理
+    一次性对整个种群进行前向和反向传播
+    """
+    graphs = [brain.to_data() for brain in brains]
+    batch = pyg.Batch.from_data_list(graphs)
+    
+    # 一次性前向传播 (稀疏块对角矩阵)
+    out = model(batch.x, batch.edge_index, batch.edge_attr)
+    return out
+```
+
+---
+
+### 🛡️ 修正三：鲍德温同化的拓扑保护
+
+**问题**: 新增边的权重可能不在父代表型字典中，导致KeyError
+
+**修正方案**: 严格掩码验证 + 极小值初始化
+
+```python
+def apply_baldwin_assimilation(self, parent_genome, kappa: float, sigma: float):
+    """
+    深度鲍德温遗传同化 with 拓扑保护
+    
+    W_child = W_parent + kappa * (W_phenotype - W_genotype) + N(0, sigma)
+    
+    规则:
+    1. 边存在于父代表型中 -> 应用鲍德温公式
+    2. 边是全新变异 -> 初始化为 0 (或 1e-4)
+    """
+    child = self.copy()
+    
+    # 获取父代的innovation编号集合
+    parent_innovations = set(parent_genome.phenotype_weights.keys())
+    
+    for edge in child.edges:
+        edge_id = self.get_edge_id(edge.source_id, edge.target_id)
+        
+        if edge_id in parent_innovations:
+            # 旧边: 应用鲍德温同化
+            w_genotype = edge.weight
+            w_phenotype = parent_genome.phenotype_weights[edge_id]
+            
+            # 遗传同化
+            delta = kappa * (w_phenotype - w_genotype)
+            noise = torch.randn(1).item() * sigma
+            
+            edge.weight = w_genotype + delta + noise
+        else:
+            # 新边: 极小值初始化，绕过同化
+            edge.weight = 1e-4  # 极小值，保护计算图
+    
+    return child
+```
+
+---
+
+## 三、实施方案 (修正后)
+
+### Phase 1: PyG可微计算图
+
+#### 任务 1.1: 创建 DifferentiableBrain (基于PyG)
 
 ```python
 # core/eoe/differentiable_brain.py (新文件)
 
-class DifferentiableBrain(torch.nn.Module):
+import torch
+import torch_geometric as pyg
+from torch_geometric.nn import MessagePassing
+
+class DifferentiableBrain(MessagePassing):
     """
-    可微计算图大脑
-    - 将NEAT图拓扑编译为 torch.nn.Module
-    - 保留计算图，支持 .backward()
+    可微大脑 - 基于 PyG MessagePassing
+    - 全程保留计算图
+    - 支持批量处理
     """
     
-    def __init__(self, genome: OperatorGenome):
-        super().__init__()
-        self._build_from_genome(genome)
+    def __init__(self, genome: 'OperatorGenome'):
+        super().__init__(aggr='add')  # 聚合方式
+        self.genome = genome
+        self._build_parameters()
     
-    def _build_from_genome(self, genome: OperatorGenome):
-        """
-        将图拓扑转为稀疏权重张量
-        """
-        # 为每个节点创建可学习参数
-        # 使用 sparse tensor 优化
-        pass
+    def _build_parameters(self):
+        """将边权重转为可学习参数"""
+        # 为每条边创建权重参数
+        for i, edge in enumerate(self.genome.edges):
+            self.register_parameter(
+                f'weight_{i}',
+                torch.nn.Parameter(torch.tensor(edge.weight))
+            )
     
-    def forward(self, sensor_input: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播，保留计算图
-        """
-        pass
+    def forward(self, x):
+        """前向传播，保留计算图"""
+        edge_attr = self._get_weights()
+        return self.propagate(self.edge_index, x=x, edge_attr=edge_attr)
     
-    def compute_loss(self, energy_delta: torch.Tensor, 
-                     predicted_next_state: torch.Tensor = None) -> torch.Tensor:
+    def compute_local_loss(self, next_sensor_pred, next_sensor_actual, energy_delta):
         """
-        计算局部损失:
-        L = -energy_gain + lambda * prediction_error
+        预测编码损失 + 能量调制
         """
-        pass
+        pred_loss = F.mse_loss(next_sensor_pred, next_sensor_actual)
+        lr_mod = 1.0 + torch.sigmoid(energy_delta) * 0.5
+        return pred_loss * lr_mod
 ```
 
-#### 任务 1.2: 修改 PoolConfig
+#### 任务 1.2: PoolConfig配置
 
 ```python
-# 在 batched_agents.py 的 PoolConfig 中添加:
+# batched_agents.py PoolConfig 新增:
 
-# 可微演化配置
 DIFFERENTIABLE_BRAIN = False        # 启用可微大脑
-DIFFERENTIABLE_LR = 0.001           # 生命周期学习率
-DIFFERENTIABLE_UPDATE_INTERVAL = 10 # 每N步更新一次权重
+DIFFERENTIABLE_USE_PYG = True       # 使用torch_geometric
 PREDICTION_LOSS_WEIGHT = 0.1        # 预测损失权重
+ENERGY_LR_MODULATOR = True          # 能量调节学习率
 
-# 深度鲍德温配置
-BALDWIN_ASSIMILATION_KAPPA = 0.5    # 同化率 (0-1)
-BALDWIN_EXPLORATION_SIGMA = 0.01    # 变异噪声
+DIFFERENTIABLE_LR = 0.001
+DIFFERENTIABLE_UPDATE_INTERVAL = 10
+
+BALDWIN_ASSIMILATION_KAPPA = 0.5
+BALDWIN_EXPLORATION_SIGMA = 0.01
 ```
 
 ---
 
 ### Phase 2: 生命周期梯度注入
 
-#### 任务 2.1: 实现 LifecycleOptimizer
+#### 任务 2.1: LifecycleOptimizer (基于PyG vmap)
 
 ```python
-# 在 batched_agents.py 中添加
-
 class LifecycleOptimizer:
     """
     生命周期优化器
-    - 为每个Agent维护独立的optimizer状态
-    - 使用截断反向传播 (Truncated BPTT)
+    - 使用 torch.vmap 批量梯度计算
+    - 截断反向传播 (Truncated BPTT)
     """
     
-    def __init__(self, agents: 'BatchedAgents', config: PoolConfig):
+    def __init__(self, agents: 'BatchedAgents'):
         self.agents = agents
-        self.config = config
-        self.step_buffer = []  # 存储 (state, action, reward) 元组
+        self.buffer = []
+    
+    @torch.vmap
+    def batched_backward(self, losses: torch.Tensor):
+        """
+        使用 vmap 批量反向传播
+        避免 for 循环显存爆炸
+        """
+        # 批量梯度计算
+        pass
+    
+    def step(self, batch, sensor_t, sensor_tplus1, energy_deltas):
+        # 收集经验
+        self.buffer.append((sensor_t, sensor_tplus1, energy_deltas))
         
-        # 为每个可能存活的Agent创建optimizer
-        self.optimizers = {}  # {agent_id: torch.optim.Optimizer}
-    
-    def step(self, batch: ActiveBatch, energy_deltas: torch.Tensor):
-        """
-        在每个Agent的生命周期内执行梯度更新
-        """
-        # 1. 收集经验到buffer
-        # 2. 每DIFFERENTIABLE_UPDATE_INTERVAL步执行一次反向传播
-        # 3. 使用 vmap 批量计算梯度
-        pass
-    
-    def _compute_local_loss(self, agent_idx: int, energy_delta: float) -> torch.Tensor:
-        """
-        L_local = -energy_gain + lambda * prediction_error
-        """
-        pass
-```
-
-#### 任务 2.2: 修改 BatchedAgents.step() 集成可微学习
-
-```python
-# 在 batched_agents.py 的 step() 方法中添加:
-
-def step(self, env, dt, brain_fn):
-    # ... 现有逻辑 ...
-    
-    # [新增] 生命周期梯度更新
-    if self.config.DIFFERENTIABLE_BRAIN:
-        self.lifecycle_optimizer.step(batch, energy_deltas)
-    
-    # ... 现有逻辑 ...
+        # 每 N 步执行一次梯度更新
+        if len(self.buffer) >= self.config.DIFFERENTIABLE_UPDATE_INTERVAL:
+            losses = self._compute_batched_losses()
+            self.batched_backward(losses)
+            self.buffer.clear()
 ```
 
 ---
 
 ### Phase 3: 深度鲍德温遗传同化
 
-#### 任务 3.1: 扩展 Genome 类记录基因型/表型
+#### 任务 3.1: 基因型/表型记录
 
 ```python
-# 在 genome.py 中修改 OperatorGenome 类
+# genome.py 修改
 
 class OperatorGenome:
     def __init__(self, ...):
-        # ... 现有 ...
+        # 现有...
         
-        # [新增] 深度鲍德温支持
-        self.genotype_weights = {}  # 出生时的初始权重
-        self.phenotype_weights = {} # 死亡/繁殖时的最终权重
+        # 深度鲍德温支持
+        self.genotype_weights = {}  # 出生时权重
+        self.phenotype_weights = {} # 死亡/繁殖时权重
     
-    def finalize_phenotype(self):
-        """
-        在死亡/繁殖前保存表型权重
-        """
+    def save_phenotype(self):
+        """保存当前权重作为表型"""
         for edge in self.edges:
-            edge_id = self.get_edge_id(edge['source_id'], edge['target_id'])
-            self.phenotype_weights[edge_id] = edge['weight']
+            eid = self.get_edge_id(edge.source_id, edge.target_id)
+            self.phenotype_weights[eid] = edge.weight
     
-    def apply_baldwin_assimilation(self, parent_genome, kappa: float, sigma: float):
-        """
-        深度鲍德温遗传同化:
-        W_child = W_parent + kappa * (W_phenotype - W_genotype) + N(0, sigma)
-        """
-        pass
+    def init_from_genotype(self):
+        """从基因型初始化"""
+        for edge in self.edges:
+            eid = self.get_edge_id(edge.source_id, edge.target_id)
+            if eid in self.genotype_weights:
+                edge.weight = self.genotype_weights[eid]
+            else:
+                edge.weight = 1e-4  # 新边极小值
 ```
 
-#### 任务 3.2: 修改繁殖逻辑
+#### 任务 3.2: 拓扑保护同化
 
 ```python
-# 在 batched_agents.py 的 _reproduce() 中修改
-
-def _reproduce(self, parent_idx: int, child_idx: int):
-    parent_genome = self.genomes[parent_idx]
+def apply_baldwin_assimilation(self, parent, kappa, sigma):
+    """拓扑保护的鲍德温同化"""
+    child = self.copy()
     
-    if self.config.DIFFERENTIABLE_BRAIN and self.config.BALDWIN_ASSIMILATION_KAPPA > 0:
-        # 应用深度鲍德温遗传同化
-        child_genome = parent_genome.copy()
-        child_genome.apply_baldwin_assimilation(
-            parent_genome,
-            kappa=self.config.BALDWIN_ASSIMILATION_KAPPA,
-            sigma=self.config.BALDWIN_EXPLORATION_SIGMA
-        )
-    else:
-        # 传统NEAT变异
-        child_genome = self._neat_mutate(parent_genome)
+    parent_innovations = set(parent.phenotype_weights.keys())
+    
+    for edge in child.edges:
+        eid = self.get_edge_id(edge.source_id, edge.target_id)
+        
+        if eid in parent_innovations:
+            # 旧边: 同化
+            w_g = parent.genotype_weights.get(eid, edge.weight)
+            w_p = parent.phenotype_weights[eid]
+            edge.weight = w_g + kappa * (w_p - w_g) + random_normal() * sigma
+        else:
+            # 新边: 极小值保护
+            edge.weight = 1e-4
+    
+    return child
 ```
-
----
-
-## 三、实施顺序
-
-| 阶段 | 任务 | 预期时间 | 验证指标 |
-|------|------|----------|----------|
-| Phase 1.1 | DifferentiableBrain基础结构 | 2小时 | 可执行forward+backward |
-| Phase 1.2 | PoolConfig新增配置 | 30分钟 | 配置可读 |
-| Phase 2.1 | LifecycleOptimizer | 3小时 | 内存不爆 |
-| Phase 2.2 | 集成到step() | 1小时 | 权重在生命周期内变化 |
-| Phase 3.1 | 基因型/表型记录 | 1小时 | 可保存最终权重 |
-| Phase 3.2 | 遗传同化逻辑 | 2小时 | 子代继承父代表型 |
 
 ---
 
 ## 四、技术难点与解决方案
 
-### 难点1: 批量梯度计算显存爆炸
-**方案**: 使用 `torch.func.vmap` 或自定义 batched backward
+### 难点1: 批量梯度显存爆炸
+**方案**: `torch.vmap` + PyG Batch
 ```python
-# 错误示范 (显存爆炸)
-for agent in agents:
-    loss.backward()  # N次显存分配
-
 # 正确示范
-losses = torch.stack([a.loss for a in agents])
-torch.autograd.backward(losses, gradient=...)  # 一次反向传播
+out = model(batch.x, batch.edge_index, batch.edge_attr)
+loss = out.sum()
+loss.backward()  # 一次反向传播
 ```
 
-### 难点2: 变长图结构的张量编译
-**方案**: Padding + Mask 或 动态计算图
+### 难点2: 变长图结构
+**方案**: 彻底使用 torch_geometric
 ```python
-# 方案A: 固定最大节点数，填充0
-# 方案B: 使用 torch Geometric 的 MessagePassing
+batch = pyg.Batch.from_data_list(graphs)
+# 稀疏块对角矩阵，无Padding冗余
 ```
 
-### 难点3: 预测编码损失函数
-**方案**: 简化实现 - 仅使用能量损失
+### 难点3: 环境不可微
+**方案**: 预测编码 + 能量调制学习率
 ```python
-L_local = -energy_delta  # 最大化净能量获取
-# 预测损失作为可选扩展
+# 完全张量空间
+L = MSE(prediction, actual_next_sensor)
+L = L * (1 + sigmoid(energy_delta))
 ```
 
 ---
 
 ## 五、修改文件清单
 
-| 文件 | 修改类型 | 说明 |
-|------|----------|------|
-| `core/eoe/differentiable_brain.py` | 新增 | 可微大脑类 |
-| `core/eoe/genome.py` | 修改 | 添加genotype/phenotype |
-| `core/eoe/batched_agents.py` | 修改 | 添加LifecycleOptimizer |
-| `core/eoe/lifecycle_optimizer.py` | 新增 | 生命周期优化器 |
-| `scripts/test_differentiable.py` | 新增 | 单元测试 |
-| `scripts/benchmark_differentiable.py` | 新增 | 性能测试 |
+| 文件 | 修改 | 说明 |
+|------|------|------|
+| `core/eoe/differentiable_brain.py` | 新增 | PyG可微大脑 |
+| `core/eoe/lifecycle_optimizer.py` | 新增 | 批量梯度优化器 |
+| `core/eoe/genome.py` | 修改 | 基因型/表型+拓扑保护 |
+| `core/eoe/batched_agents.py` | 修改 | 集成可微学习 |
 
 ---
 
@@ -252,11 +364,11 @@ L_local = -energy_delta  # 最大化净能量获取
 
 | 指标 | 当前 | 预期 | 提升 |
 |------|------|------|------|
-| 达到相同性能的代数 | 1000代 | 50代 | **20x** |
-| 收敛速度 | 慢 | 快 | 待测 |
-| 复杂结构涌现时间 | 5000步 | 1000步 | **5x** |
+| 达到相同性能代数 | 1000代 | 50代 | **20x** |
+| 复杂结构涌现 | 5000步 | 1000步 | **5x** |
+| 显存效率 | O(N) | O(1) 批处理 | **显著改善** |
 
 ---
 
-*方案待审阅后实施*
+*方案 v1.1 - 根据 Architect AI 批阅意见修正*
 *EOE Project - Differentiable Evolution*
