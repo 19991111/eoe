@@ -171,6 +171,22 @@ class PoolConfig:
     DIAGNOSTICS_ENABLED = True       # 启用诊断监控
     
     # ================================================================
+    # v15.3 可微演化 (Differentiable Evolution)
+    # ================================================================
+    DIFFERENTIABLE_BRAIN = False      # 启用可微大脑
+    DIFFERENTIABLE_USE_PYG = True     # 使用torch_geometric
+    PREDICTION_LOSS_WEIGHT = 0.1      # 预测损失权重
+    ENERGY_LR_MODULATOR = True        # 能量调节学习率
+    DIFFERENTIABLE_LR = 0.001         # 生命周期学习率
+    DIFFERENTIABLE_UPDATE_INTERVAL = 10  # 每N步更新一次权重
+    DIFFERENTIABLE_MIN_STEPS = 5      # 最少累积经验步数
+    DIFFERENTIABLE_MAX_BUFFER = 50    # 经验buffer大小
+    
+    # 深度鲍德温配置
+    BALDWIN_ASSIMILATION_KAPPA = 0.5  # 同化率 (0-1)
+    BALDWIN_EXPLORATION_SIGMA = 0.01  # 变异噪声
+    
+    # ================================================================
     # v15 预加载脑结构机制 (Brain Bootstrap)
     # ================================================================
     PRETRAINED_INIT = False          # 启用预加载脑结构

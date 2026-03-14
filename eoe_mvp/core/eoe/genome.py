@@ -88,6 +88,16 @@ class OperatorGenome:
         
         # 创新ID管理器 (可共享)
         self._innovation_mgr = innovation_manager or InnovationManager()
+        
+        # ================================================================
+        # 深度鲍德温支持: 基因型与表型
+        # ================================================================
+        # 基因型权重: 出生时的初始权重
+        self.genotype_weights: Dict[int, float] = {}
+        # 表型权重: 死亡/繁殖时的最终权重 (经过梯度学习)
+        self.phenotype_weights: Dict[int, float] = {}
+        # 标记是否已初始化基因型
+        self._genotype_initialized = False
     
     def add_node(self, node: Node) -> None:
         """添加一个节点到基因组"""
@@ -795,6 +805,13 @@ class OperatorGenome:
             if edge.get('learning_rate', 0) > 0:
                 new_genome.edges[-1]['learning_rate'] = edge['learning_rate']
         
+        # ================================================================
+        # 复制基因型/表型权重 (深度鲍德温)
+        # ================================================================
+        new_genome.genotype_weights = self.genotype_weights.copy()
+        new_genome.phenotype_weights = self.phenotype_weights.copy()
+        new_genome._genotype_initialized = self._genotype_initialized
+        
         return new_genome
     
     def hebbian_update(self, node_activations: Dict[int, float], lr: float = 0.01):
@@ -1075,3 +1092,102 @@ class OperatorGenome:
         
         return child
 
+
+    # ============================================================================
+    # 深度鲍德温机制: 基因型与表型
+    # ============================================================================
+    
+    def init_genotype_from_current(self):
+        """
+        初始化基因型 - 保存当前权重作为出生时的基因型
+        在Agent出生时调用
+        """
+        if self._genotype_initialized:
+            return
+        
+        self.genotype_weights = {}
+        for edge in self.edges:
+            edge_id = self._get_edge_innovation_id(edge)
+            self.genotype_weights[edge_id] = edge['weight']
+        
+        self._genotype_initialized = True
+    
+    def save_phenotype(self):
+        """
+        保存表型 - 保存当前权重作为死亡/繁殖时的表型
+        在Agent死亡或繁殖前调用
+        """
+        self.phenotype_weights = {}
+        for edge in self.edges:
+            edge_id = self._get_edge_innovation_id(edge)
+            self.phenotype_weights[edge_id] = edge['weight']
+    
+    def _get_edge_innovation_id(self, edge: Dict) -> int:
+        """获取边的唯一创新ID"""
+        return edge.get('innovation_id', edge['source_id'] * 1000 + edge['target_id'])
+    
+    def init_from_genotype(self):
+        """
+        从基因型初始化 - 用基因型权重覆盖当前权重
+        在创建子代时调用
+        """
+        if not self._genotype_initialized:
+            self.init_genotype_from_current()
+        
+        for edge in self.edges:
+            edge_id = self._get_edge_innovation_id(edge)
+            if edge_id in self.genotype_weights:
+                edge['weight'] = self.genotype_weights[edge_id]
+            else:
+                # 新边: 极小值初始化 (拓扑保护)
+                edge['weight'] = 1e-4
+    
+    def apply_baldwin_assimilation(
+        self,
+        parent_genome: 'OperatorGenome',
+        kappa: float = 0.5,
+        sigma: float = 0.01
+    ) -> 'OperatorGenome':
+        """
+        深度鲍德温遗传同化
+        
+        W_child = W_parent + kappa * (W_phenotype - W_genotype) + N(0, sigma)
+        
+        Args:
+            parent_genome: 父代基因组
+            kappa: 同化率 (0-1)
+            sigma: 变异噪声
+        
+        Returns:
+            应用同化后的子代基因组副本
+        """
+        import copy
+        import random
+        
+        child = copy.deepcopy(self)
+        
+        # 父代的创新ID集合
+        parent_innovations = set(parent_genome.phenotype_weights.keys())
+        parent_genotypes = parent_genome.genotype_weights
+        
+        # 遍历子代的每条边
+        for edge in child.edges:
+            edge_id = child._get_edge_innovation_id(edge)
+            
+            if edge_id in parent_innovations:
+                # 旧边: 应用鲍德温同化
+                w_genotype = parent_genotypes.get(edge_id, edge['weight'])
+                w_phenotype = parent_genome.phenotype_weights[edge_id]
+                
+                delta = kappa * (w_phenotype - w_genotype)
+                noise = random.gauss(0, sigma)
+                
+                edge['weight'] = w_genotype + delta + noise
+            else:
+                # 新边: 极小值初始化，绕过同化 (拓扑保护)
+                edge['weight'] = 1e-4
+        
+        # 更新子代的基因型为当前权重
+        child.init_genotype_from_current()
+        
+        return child
