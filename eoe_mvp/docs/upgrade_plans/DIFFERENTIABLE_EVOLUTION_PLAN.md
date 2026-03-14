@@ -347,6 +347,61 @@ L = MSE(prediction, actual_next_sensor)
 L = L * (1 + sigmoid(energy_delta))
 ```
 
+### ⚠️ 补充防坑指令: 计算图截断与防止 OOM
+
+**问题**: 智能体生命周期可能跨越成百上千帧，PyTorch会在显存中不断堆叠整个前向传播历史，导致GPU几代内瞬间OOM。
+
+**解决方案**: 严格 `.detach()` + 截断反向传播
+
+```python
+class LifecycleOptimizer:
+    def __init__(self):
+        self.buffer = []
+        self.max_buffer_size = 50  # 最多保留50步
+    
+    def add_experience(self, sensor_t, sensor_tplus1, energy_delta):
+        """
+        收集经验时必须 detach!
+        防止计算图无限增长
+        """
+        self.buffer.append((
+            sensor_t.detach(),           # 截断 sensor_t 的计算图
+            sensor_tplus1.detach(),      # 截断
+            energy_delta.detach() if energy_delta.requires_grad else energy_delta
+        ))
+        
+        # 超过 buffer 大小立即释放旧数据
+        if len(self.buffer) > self.max_buffer_size:
+            self.buffer.pop(0)
+    
+    def step(self, model):
+        """
+        截断反向传播 (Truncated BPTT)
+        执行后必须释放计算图
+        """
+        if len(self.buffer) < self.min_steps:
+            return
+        
+        # 计算损失（使用 detach 后的数据）
+        loss = self._compute_loss()
+        
+        # 反向传播
+        loss.backward()
+        
+        # 释放 buffer 和计算图
+        self.buffer.clear()
+        
+        # 手动 gc (可选)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+```
+
+**关键原则**:
+1. **入 buffer 前 detach**: 所有跨步传递的张量必须 `.detach()`
+2. **定期截断**: 每 10-50 步执行一次 BPTT，不要累积太多
+3. **及时释放**: `step()` 后清空 buffer，手动 `empty_cache()`
+4. **监控显存**: 添加 OOM 预检，当显存使用 > 80% 时强制触发 GC
+
 ---
 
 ## 五、修改文件清单
