@@ -119,3 +119,67 @@ presets:
     evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
     environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
     physics: {collision: true, boundary_wrap: true, velocity_decay: true, friction: true}
+
+  # 红皇后假说 - 捕食者军备竞赛
+  red_queen:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+    red_queen: {enabled: true, predation_range: 4.0, predation_rate: 0.8, predation_cost: 0.05, mutation: 0.15}
+    metabolic_senescence: {enabled: true, age_alpha: 0.00001}
+
+  # 迷宫探索 - 空间阻抗+红皇后
+  maze:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+    red_queen: {enabled: true, predation_range: 4.0, predation_rate: 0.8, predation_cost: 0.05, mutation: 0.15}
+    metabolic_senescence: {enabled: true, age_alpha: 0.00001}
+    spatial_impedance: {enabled: true, wall_density: 0.15, wall_strength: 10.0}
+
+  # 凛冬将至 - 季节系统
+  winter:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+    red_queen: {enabled: true, predation_range: 4.0, predation_rate: 0.8, predation_cost: 0.05, mutation: 0.15}
+    metabolic_senescence: {enabled: true, age_alpha: 0.00001}
+    seasons: {enabled: true, season_length: 500, winter_multiplier: 0.2, summer_multiplier: 1.5, hibernation: true}
+
+  # 黑暗森林 - 终极捕食者军备竞赛
+  dark_forest:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+    red_queen: {enabled: true, predation_range: 3.0, predation_rate: 0.8, predation_cost: 0.1, mutation: 0.20}
+    metabolic_senescence: {enabled: true, age_alpha: 0.00001}
+    seasons: {enabled: false}
+
+  # 迷宫与绿洲 - 空间记忆突破7+节点
+  labyrinth:
+    sensor: {epf: true, kif: true, isf: true, energy: true}
+    actuator: {thrust: true, permeability: true, defense: true}
+    signal: {deposit: true, receive: true}
+    energy: {extraction: true, depletable: true, infinite: false, metabolic: true, death: true}
+    evolution: {selection: true, mutation: true, crossover: true, isf_decay: true, enabled: true}
+    environment: {epf: true, kif: true, isf: true, world_bounds: true, source_respawn: true, diffusion: true, gradient: true}
+    physics: {collision: true, boundary_wrap: false, velocity_decay: true, friction: true}
+    red_queen: {enabled: true, predation_range: 3.0, predation_rate: 0.8, predation_cost: 0.1, mutation: 0.20}
+    metabolic_senescence: {enabled: true, age_alpha: 0.00001}
+    labyrinth: {enabled: true, maze_density: 0.25, maze_impedance: 50.0, oases: true, oasis_count: 5, oasis_strength: 300.0}

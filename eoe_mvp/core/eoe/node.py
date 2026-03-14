@@ -2,79 +2,52 @@ from enum import Enum, auto
 from typing import List, Dict, Optional, Any
 from collections import deque
 import numpy as np
+import torch
+
+
+# 感知场映射常量 (与 manifest.py 保持同步)
+try:
+    from core.eoe.manifest import N_PERCEPTION_CHANNELS, SENSOR_BODY_RADIUS, CHANNEL_NORM_FACTORS
+except ImportError:
+    N_PERCEPTION_CHANNELS = 4
+    SENSOR_BODY_RADIUS = 2.0
+    CHANNEL_NORM_FACTORS = torch.tensor([200.0, 1.0, 1.0, 1.0])
 
 class NodeType(Enum):
     """
-    节点类型枚举 (EOE v4.0 - 功能器官版本)
+    EOE v14.0 精简算子库 - 6 个创世粒子
     
-    - SENSOR: 传感器节点，接收环境输入
-    - ACTUATOR: 执行器节点，输出到物理世界
-    - ADD: 加法算子
-    - MULTIPLY: 乘法算子
-    - CONSTANT: 常数节点
-    - DELAY: 延迟算子，带可配置步长 (v4.0: 多尺度)
-    - THRESHOLD: 阈值算子
-    - PREDICTOR: 预测节点
-    - ENTITY_RADAR: 社会传感器
-    - MACRO: 宏算子 (封装子图)
-    - SUPERNODE: 超级节点，冻结后的功能器官 (v4.0)
-    - BAIT_SENSOR: 诱饵传感器，检测诱饵 (v4.0)
+    核心哲学: "只设计环境压力，不设计大脑结构"
+    
+    物理接口 (连接数字大脑和物理世界):
+    - SENSOR: 通用传感器 (带 receptor_key + spatial_offset)
+    - ACTUATOR: 通用执行器 (带 emitter_key + spatial_offset)
+    
+    图灵完备核心 (神经网络计算):
+    - ADD: 加法算子 (线性组合)
+    - MULTIPLY: 乘法算子 (交互项)
+    - CONSTANT: 常数节点 (偏置)
+    - DELAY: 延迟算子 (时序记忆/RNN灵魂)
+    - THRESHOLD: 阈值算子 (非线性激活)
+    
+    演化涌现 (系统自动生成):
+    - ORGAN: 超级节点 (MACRO + SUPERNODE 合并)
     """
-    SENSOR = auto()
-    ACTUATOR = auto()
-    ADD = auto()
-    MULTIPLY = auto()
-    CONSTANT = auto()
-    DELAY = auto()          # 多尺度时间动力学 (v4.0)
-    THRESHOLD = auto()
-    PREDICTOR = auto()
-    ENTITY_RADAR = auto()
-    MACRO = auto()          # 宏算子
-    SUPERNODE = auto()      # 超级节点 - 冻结的功能器官 (v4.0)
-    BAIT_SENSOR = auto()    # 诱饵传感器 (v4.0)
     
-    # ============================================================
-    # v6.0 GAIA 物理输出端口 (纯基础算子驱动)
-    # 严禁添加逻辑节点！所有行为通过基础算子控制这些端口
-    # ============================================================
-    PORT_MOTION = auto()    # 基础移动 [速度, 转向]
-    PORT_OFFENSE = auto()   # 攻击强度 (捕食能力)
-    PORT_DEFENSE = auto()   # 防御硬度 (减少被掠夺)
-    PORT_REPAIR = auto()    # 修复 (能量→寿命转化)
-    PORT_SIGNAL = auto()    # 信号 (诱导/伪装)
+    # ===== 物理接口 =====
+    SENSOR = auto()         # 通用传感器 (升级版)
+    ACTUATOR = auto()       # 通用执行器 (待升级)
     
-    # ============================================================
-    # v7.0 空间记忆 + 社会智能
-    # ============================================================
-    LIGHT_SENSOR = auto()   # 移动光源传感器 (v7.0)
-    AGENT_RADAR_SENSOR = auto()  # 社会信号传感器 (v7.0)
-    WALL_RADAR_SENSOR = auto()   # 墙壁雷达传感器 (v7.0)
+    # ===== 图灵完备核心 =====
+    ADD = auto()            # 加法算子
+    MULTIPLY = auto()       # 乘法算子
+    CONSTANT = auto()       # 常数节点
+    DELAY = auto()          # 延迟算子 (多尺度时间动力学)
+    THRESHOLD = auto()      # 阈值算子
     
-    # ============================================================
-    # v8.0 无尽边疆 - GPS坐标传感器
-    # ============================================================
-    GPS_SENSOR = auto()     # GPS坐标传感器 (v8.0)
-    COMPASS_SENSOR = auto() # 指南针传感器 (v8.0)
-    
-    # ============================================================
-    
-    # ============================================================
-    PHEROMONE_SENSOR = auto()  # 自身气味传感器
-    
-    # ============================================================
-    
-    # ============================================================
-    META_NODE = auto()      # 元节点 (压缩的子网络)
-    REWARD_PREDICTOR = auto()  # 奖励预测器 (v0.26)
-    MODULATOR = auto()      # 神经调制器 (v0.26)
-    SENSOR_CONTEXT = auto() # 元感知节点 (v0.27)
-    BUFFER = auto()         # 循环记忆节点 (v0.24)
-    COMM_OUT = auto()       # 通信输出
-    COMM_IN = auto()        # 通信输入
-    UPDATE_WEIGHT = auto()  # 权重更新
-    POLY = auto()           # 多项式算子
-    SWITCH = auto()         # 开关算子
-    MACRO_EX = auto()       # 扩展宏算子
+    # ===== 演化涌现 =====
+    MACRO = auto()          # 宏算子 (保留兼容)
+    SUPERNODE = auto()      # 超级节点 (保留兼容)
     
     # ============================================================
     # v0.0 统一场物理系统 - 传感器节点
@@ -178,9 +151,11 @@ class Node:
         
         # 每个传感器可以学习"注意"什么,而不需要预设类型
         # ============================================================
+        
+        # v14.0 感知场映射 (Perception Field Mapping)
+        # ========== SENSOR 节点 ==========
         if node_type in [NodeType.SENSOR]:
             # 方向注意力: 8个方向的重要性权重
-            # 传感器会自动关注最重要的方向
             self.angle_weights = np.random.randn(8)
             self.angle_weights = self.angle_weights / (np.abs(self.angle_weights).sum() + 1e-8)
             
@@ -191,10 +166,32 @@ class Node:
             # 目标类型注意力: 食物/巢穴/敌对/墙壁
             self.target_type_weights = np.random.randn(4)
             self.target_type_weights = self.target_type_weights / (np.abs(self.target_type_weights).sum() + 1e-8)
+            
+            # 🚀 receptor_key: 决定"感知什么" (通道权重向量)
+            self.receptor_key = torch.randn(N_PERCEPTION_CHANNELS) * 0.1
+            
+            # 🚀 spatial_offset: 决定"长在身体哪个部位" (空间位置)
+            self.spatial_offset = (torch.rand(2) * 2 - 1) * SENSOR_BODY_RADIUS
+        
+        # ========== ACTUATOR 节点 (v14.0 升级) ==========
+        elif node_type in [NodeType.ACTUATOR]:
+            # 🚀 emitter_key: 决定"输出什么" (通道权重向量)
+            # Channel 0 → 移动力 (thrust)
+            # Channel 1 → 阻力调制 (permeability)
+            # Channel 2 → 信息素排放 (signal)
+            # Channel 3 → 防御/攻击 (defense)
+            self.emitter_key = torch.randn(N_PERCEPTION_CHANNELS) * 0.1
+            
+            # 🚀 spatial_offset: 决定"发力点" (空间位置)
+            # 不同位置发力可以产生旋转力矩!
+            self.spatial_offset = (torch.rand(2) * 2 - 1) * SENSOR_BODY_RADIUS
         else:
             self.angle_weights = None
             self.distance_weights = None
             self.target_type_weights = None
+            self.receptor_key = None
+            self.spatial_offset = None
+            self.emitter_key = None
         
         # 初始化延迟缓冲区
         for _ in range(self.delay_steps):
@@ -233,6 +230,61 @@ class Node:
             self.target_type_weights += noise
             self.target_type_weights = np.clip(self.target_type_weights, -3, 3)
             self.target_type_weights = self.target_type_weights / (np.abs(self.target_type_weights).sum() + 1e-8)
+    
+    def mutate_perception_genes(self, mutation_rate: float = 0.1, mutation_strength: float = 0.2):
+        """
+        🚀 变异感知基因 (Perception Field Mapping)
+        
+        变异:
+        - receptor_key: 受体密钥 (对什么敏感)
+        - spatial_offset: 空间偏移 (长在哪里)
+        
+        Args:
+            mutation_rate: 变异概率
+            mutation_strength: 变异强度
+        """
+        if self.receptor_key is None:
+            return
+        
+        # 变异 receptor_key
+        if self.receptor_key is not None:
+            mask = torch.rand(N_PERCEPTION_CHANNELS) < mutation_rate
+            noise = torch.randn(N_PERCEPTION_CHANNELS) * mutation_strength
+            self.receptor_key = torch.clamp(
+                self.receptor_key + mask.float() * noise, 
+                -2, 2
+            )
+        
+        # 变异 spatial_offset
+        if self.spatial_offset is not None:
+            offset_mask = torch.rand(2) < mutation_rate
+            offset_noise = torch.randn(2) * mutation_strength * SENSOR_BODY_RADIUS
+            new_offset = self.spatial_offset + offset_mask.float() * offset_noise
+            # 限制在身体范围内
+            self.spatial_offset = torch.clamp(new_offset, -SENSOR_BODY_RADIUS, SENSOR_BODY_RADIUS)
+    
+    def apply_body_rotation(self, agent_theta: float) -> torch.Tensor:
+        """
+        将相对偏移转换为世界坐标绝对偏移
+        
+        Args:
+            agent_theta: Agent 当前朝向角 (弧度)
+            
+        Returns:
+            Tensor [2] 世界坐标系中的绝对偏移 (dx, dy)
+        """
+        if self.spatial_offset is None:
+            return torch.zeros(2)
+        
+        # 旋转矩阵
+        cos_t = torch.cos(agent_theta)
+        sin_t = torch.sin(agent_theta)
+        
+        # 旋转偏移
+        dx = self.spatial_offset[0] * cos_t - self.spatial_offset[1] * sin_t
+        dy = self.spatial_offset[0] * sin_t + self.spatial_offset[1] * cos_t
+        
+        return torch.stack([dx, dy])
     
     def get_sensor_attention(self, targets: List[Dict]) -> float:
         """

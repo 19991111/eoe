@@ -42,12 +42,26 @@ class EnergyFieldGPU:
         source_strength: float = 80.0, # 增加脉冲强度
         source_capacity: float = 300.0, # 减少总容量(更快枯竭)
         decay_rate: float = 0.98,     # 更快衰减
-        respawn_threshold: float = 0.15 # 更早枯竭(15%)
+        respawn_threshold: float = 0.15, # 更早枯竭(15%)
+        seasonal_multiplier: float = 1.0,  # 季节能量倍率
+        seasons_enabled: bool = True,
+        season_length: int = 3000,
+        winter_multiplier: float = 0.15,
+        summer_multiplier: float = 1.8,
+        drought_intensity: float = 0.08
     ):
         self.width = width
         self.height = height
         self.resolution = resolution
         self.device = device
+        self.seasonal_multiplier = seasonal_multiplier
+        
+        # 季节参数
+        self.seasons_enabled = seasons_enabled
+        self.season_length = season_length
+        self.winter_multiplier = winter_multiplier
+        self.summer_multiplier = summer_multiplier
+        self.drought_intensity = drought_intensity
         
         # 计算网格大小
         self.grid_width = int(width / resolution)
@@ -71,6 +85,38 @@ class EnergyFieldGPU:
         # 初始化源
         self._init_sources()
     
+    def get_seasonal_multiplier(self) -> float:
+        """获取当前季节的能量倍率 (含干旱期)"""
+        if not self.seasons_enabled:
+            return 1.0
+        
+        # 四季循环 + 干旱期
+        season_cycle = self.season_length * 4
+        phase = (self.step_count % season_cycle) / season_cycle
+        
+        # 0.0-0.25: 春季 (恢复)
+        # 0.25-0.5: 夏季 (繁荣)
+        # 0.5-0.75: 秋季 (衰退)
+        # 0.75-1.0: 冬季/干旱 (最艰难)
+        
+        if phase < 0.25:
+            t = phase / 0.25
+            multiplier = self.winter_multiplier + t * (1.0 - self.winter_multiplier)
+        elif phase < 0.5:
+            t = (phase - 0.25) / 0.25
+            multiplier = 1.0 + t * (self.summer_multiplier - 1.0)
+        elif phase < 0.75:
+            t = (phase - 0.5) / 0.25
+            multiplier = self.summer_multiplier - t * (self.summer_multiplier - self.winter_multiplier)
+        else:
+            t = (phase - 0.75) / 0.25
+            if hasattr(self, 'drought_intensity'):
+                multiplier = self.winter_multiplier * (1 - t * (1 - self.drought_intensity))
+            else:
+                multiplier = self.winter_multiplier
+        
+        return multiplier
+    
     def _init_sources(self):
         """初始化能量源"""
         for i in range(self.n_sources):
@@ -93,6 +139,10 @@ class EnergyFieldGPU:
         """单步更新"""
         self.step_count += 1
         
+        # 0. 动态季节计算 (使用已有的get_seasonal_multiplier)
+        if self.seasons_enabled:
+            self.seasonal_multiplier = self.get_seasonal_multiplier()
+        
         # 1. 能量自然衰减
         self.field *= self.decay_rate
         
@@ -104,26 +154,39 @@ class EnergyFieldGPU:
         self._check_and_respawn()
     
     def _inject_energy_pulse(self):
-        """脉冲式注入能量"""
+        """脉冲式注入能量 (受季节倍率调节)"""
+        # 季节调整后的注入量
+        seasonal_strength = self.seasonal_multiplier
+        
         for i in range(self.n_sources):
             if self.sources[i, 3] > 0 and self.sources[i, 4] > 0:  # active and has capacity
                 # 将源位置转换为网格坐标
                 gx = int(self.sources[i, 0].item() / self.resolution) % self.grid_width
                 gy = int(self.sources[i, 1].item() / self.resolution) % self.grid_height
                 
-                # 注入能量
-                inject_amount = self.sources[i, 2].item()
-                self.field[0, 0, gy, gx] += inject_amount
+                # 注入能量 (受季节调整)
+                base_amount = self.sources[i, 2].item()
+                inject_amount = base_amount * seasonal_strength
                 
-                # 消耗容量
-                self.sources[i, 4] -= inject_amount
+                # Bug修复: 确保不超过剩余容量
+                remaining = self.sources[i, 4].item()
+                if remaining > 0:
+                    actual_inject = min(inject_amount, remaining)
+                    self.field[0, 0, gy, gx] += actual_inject
+                    self.sources[i, 4] -= actual_inject
+                else:
+                    # 容量已耗尽，不注入
+                    self.sources[i, 4] = 0  # 防止负数
     
     def _check_and_respawn(self):
         """检查能量源是否枯竭，必要时迁移"""
         for i in range(self.n_sources):
-            # 检查是否枯竭 (剩余容量 < 阈值的最大值)
-            min_capacity = self.sources[i, 5] * self.respawn_threshold
-            if self.sources[i, 4] < min_capacity and self.sources[i, 4] > 0:
+            # Bug修复: 剩余容量 <= 0 也需要重生
+            remaining = self.sources[i, 4].item()
+            max_capacity = self.sources[i, 5].item()
+            min_capacity = max_capacity * self.respawn_threshold
+            
+            if remaining <= min_capacity:
                 # 源已枯竭，重生到新位置
                 self._spawn_source(i)
     
@@ -171,6 +234,25 @@ class EnergyFieldGPU:
         gy = (positions[:, 1] / self.resolution).long() % self.grid_height
         return self.field[0, 0, gy, gx]
     
+    def consume_batch(self, positions: torch.Tensor, amounts: torch.Tensor):
+        """批量消耗能量 (从场中扣除)"""
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        
+        # 确保索引在范围内
+        valid = (gx >= 0) & (gx < self.grid_width) & (gy >= 0) & (gy < self.grid_height)
+        
+        if valid.any():
+            gx_valid = gx[valid]
+            gy_valid = gy[valid]
+            amounts_valid = amounts[valid]
+            
+            # 从场中扣除能量
+            self.field[0, 0, gy_valid, gx_valid] = torch.clamp(
+                self.field[0, 0, gy_valid, gx_valid] - amounts_valid,
+                min=0.0
+            )
+    
     def compute_gradient(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """计算梯度 - GPU 加速"""
         # torch.gradient 返回 (grad_y, grad_x) - 注意顺序
@@ -179,7 +261,7 @@ class EnergyFieldGPU:
 
 
 class KineticImpedanceFieldGPU:
-    """GPU 加速阻抗场 (KIF)"""
+    """GPU 加速阻抗场 (KIF) - 包含迷宫墙壁"""
     
     def __init__(
         self,
@@ -188,7 +270,9 @@ class KineticImpedanceFieldGPU:
         resolution: float = 1.0,
         device: str = 'cuda:0',
         noise_scale: float = 1.0,
-        obstacle_density: float = 0.15
+        obstacle_density: float = 0.15,
+        wall_density: float = 0.0,
+        wall_strength: float = 10.0
     ):
         self.width = width
         self.height = height
@@ -197,15 +281,43 @@ class KineticImpedanceFieldGPU:
         
         self.grid_width = int(width / resolution)
         self.grid_height = int(height / resolution)
+        self.wall_strength = wall_strength
         
         # GPU 张量 - 使用 Perlin-like 噪声初始化
         self.field = self._generate_impedance_field(
             self.grid_width, self.grid_height, noise_scale, obstacle_density, device
         ).unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
         
+        # 添加迷宫墙壁
+        if wall_density > 0:
+            self._generate_maze_walls(wall_density)
+        
         # 预计算梯度
         self._grad_x = None
         self._grad_y = None
+    
+    def _generate_maze_walls(self, density: float):
+        """生成迷宫墙壁 (高阻抗区域)"""
+        h, w = self.grid_height, self.grid_width
+        
+        # 随机起点和方向生成墙壁
+        n_walls = int(h * w * density / 20)  # 约密度/20的墙壁
+        
+        for _ in range(n_walls):
+            # 随机起点
+            start_x = torch.randint(5, w-5, (1,)).item()
+            start_y = torch.randint(5, h-5, (1,)).item()
+            
+            # 随机方向 (0=水平, 1=垂直)
+            direction = torch.randint(0, 2, (1,)).item()
+            length = torch.randint(5, 15, (1,)).item()
+            
+            if direction == 0:  # 水平墙
+                end_x = min(start_x + length, w - 3)
+                self.field[0, 0, start_y, start_x:end_x] = self.wall_strength
+            else:  # 垂直墙
+                end_y = min(start_y + length, h - 3)
+                self.field[0, 0, start_y:end_y, start_x] = self.wall_strength
     
     def _generate_impedance_field(
         self, w: int, h: int, noise_scale: float, 
@@ -352,6 +464,77 @@ class StigmergyFieldGPU:
         return grad_x.unsqueeze(0).unsqueeze(0), grad_y.unsqueeze(0).unsqueeze(0)
 
 
+class DangerFieldGPU:
+    """
+    GPU 加速危险场 (Danger Field)
+    ==============================
+    Agent 攻击时写入伤害值，其他 Agent 踩到时扣血
+    
+    特性：
+    - 写入：Channel 4 (ATTACK) 向场中写入瞬时伤害
+    - 读取：每步 Agent 读取所在网格的危险值并扣血
+    - 衰减：伤害值快速衰减 (模拟血迹消失)
+    """
+    
+    def __init__(
+        self,
+        width: float = 100.0,
+        height: float = 100.0,
+        resolution: float = 1.0,
+        device: str = 'cuda:0',
+        decay_rate: float = 0.8  # 快速衰减
+    ):
+        self.width = width
+        self.height = height
+        self.resolution = resolution
+        self.device = device
+        
+        self.grid_width = int(width / resolution)
+        self.grid_height = int(height / resolution)
+        
+        # GPU 张量 [1, 1, H, W]
+        self.field = torch.zeros(
+            1, 1, self.grid_height, self.grid_width,
+            device=device, dtype=torch.float32
+        )
+        
+        self.decay_rate = decay_rate
+    
+    def attack_batch(
+        self,
+        positions: torch.Tensor,      # [N, 2] Agent 位置
+        attack_strength: torch.Tensor,  # [N] 攻击强度
+        offsets: torch.Tensor = None    # [N, 2] 攻击偏移 (可选)
+    ):
+        """
+        批量攻击：向危险场写入伤害值
+        
+        O(N) 操作替代 O(N²) 的 Agent 间检测
+        """
+        if attack_strength is None or attack_strength.sum() == 0:
+            return
+        
+        # 计算网格坐标
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        
+        # 散点叠加 (GPU 加速)
+        # 使用索引计算避免 scatter_add 警告
+        valid = (gx >= 0) & (gx < self.grid_width) & (gy >= 0) & (gy < self.grid_height)
+        if valid.any():
+            self.field[0, 0, gy[valid], gx[valid]] += attack_strength[valid]
+    
+    def sample_batch(self, positions: torch.Tensor) -> torch.Tensor:
+        """批量读取危险值"""
+        gx = (positions[:, 0] / self.resolution).long() % self.grid_width
+        gy = (positions[:, 1] / self.resolution).long() % self.grid_height
+        return self.field[0, 0, gy, gx]
+    
+    def step(self):
+        """单步衰减"""
+        self.field *= self.decay_rate
+
+
 class EnvironmentGPU:
     """
     GPU 加速环境引擎
@@ -367,12 +550,25 @@ class EnvironmentGPU:
         device: str = 'cuda:0',
         energy_field_enabled: bool = True,
         impedance_field_enabled: bool = True,
-        stigmergy_field_enabled: bool = True
+        stigmergy_field_enabled: bool = True,
+        danger_field_enabled: bool = True,
+        seasons_enabled: bool = True,
+        season_length: int = 3000,
+        winter_multiplier: float = 0.15,
+        summer_multiplier: float = 1.8,
+        drought_intensity: float = 0.08
     ):
         self.width = width
         self.height = height
         self.resolution = resolution
         self.device = device
+        
+        # 季节参数
+        self.seasons_enabled = seasons_enabled
+        self.season_length = season_length
+        self.winter_multiplier = winter_multiplier
+        self.summer_multiplier = summer_multiplier
+        self.drought_intensity = drought_intensity
         
         print(f"[EnvironmentGPU] 初始化 GPU 环境 {width}x{height} on {device}")
         
@@ -380,10 +576,16 @@ class EnvironmentGPU:
         self.energy_field_enabled = energy_field_enabled
         self.impedance_field_enabled = impedance_field_enabled
         self.stigmergy_field_enabled = stigmergy_field_enabled
+        self.danger_field_enabled = danger_field_enabled
         
         if energy_field_enabled:
             self.energy_field = EnergyFieldGPU(
-                width, height, resolution, device
+                width, height, resolution, device,
+                seasons_enabled=seasons_enabled,
+                season_length=season_length,
+                winter_multiplier=winter_multiplier,
+                summer_multiplier=summer_multiplier,
+                drought_intensity=drought_intensity
             )
             print(f"  ✅ EPF: {self.energy_field.field.shape}")
         
@@ -399,6 +601,12 @@ class EnvironmentGPU:
             )
             print(f"  ✅ ISF: {self.stigmergy_field.field.shape}")
         
+        if danger_field_enabled:
+            self.danger_field = DangerFieldGPU(
+                width, height, resolution, device
+            )
+            print(f"  ✅ DANGER: {self.danger_field.field.shape}")
+        
         # 预计算梯度矩阵 (GPU)
         self.epf_grad_x = None
         self.epf_grad_y = None
@@ -410,11 +618,66 @@ class EnvironmentGPU:
         # 性能统计
         self.step_count = 0
         self.step_times = []
+        
+        # 季节系统
+        self.seasons_enabled = False
+        self.season_length = 500
+        self.winter_multiplier = 0.2
+        self.summer_multiplier = 1.5
+    
+    def set_seasons(self, enabled: bool, length: int = 500, winter: float = 0.2, summer: float = 1.5):
+        """配置季节系统"""
+        self.seasons_enabled = enabled
+        self.season_length = length
+        self.winter_multiplier = winter
+        self.summer_multiplier = summer
+    
+    def get_seasonal_multiplier(self) -> float:
+        """获取当前季节的能量倍率 (含干旱期)"""
+        if not self.seasons_enabled:
+            return 1.0
+        
+        # 四季循环 + 干旱期
+        season_cycle = self.season_length * 4
+        phase = (self.step_count % season_cycle) / season_cycle
+        
+        # 0.0-0.25: 春季 (恢复)
+        # 0.25-0.5: 夏季 (繁荣)
+        # 0.5-0.75: 秋季 (衰退)
+        # 0.75-1.0: 冬季/干旱 (最艰难)
+        
+        if phase < 0.25:
+            # 春季: 逐渐恢复
+            t = phase / 0.25
+            multiplier = self.winter_multiplier + t * (1.0 - self.winter_multiplier)
+        elif phase < 0.5:
+            # 夏季: 繁荣期
+            t = (phase - 0.25) / 0.25
+            multiplier = 1.0 + t * (self.summer_multiplier - 1.0)
+        elif phase < 0.75:
+            # 秋季: 逐渐衰退
+            t = (phase - 0.5) / 0.25
+            multiplier = self.summer_multiplier - t * (self.summer_multiplier - self.winter_multiplier)
+        else:
+            # 冬季/干旱: 最艰难时期
+            t = (phase - 0.75) / 0.25
+            if hasattr(self, 'drought_intensity'):
+                # 干旱期: 能量极少
+                multiplier = self.winter_multiplier * (1 - t * (1 - self.drought_intensity))
+            else:
+                multiplier = self.winter_multiplier
+        
+        return multiplier
     
     def step(self) -> float:
         """执行单步 - 返回耗时 (ms)"""
         import time
         start = time.perf_counter()
+        
+        # 0. 更新季节倍率
+        if self.seasons_enabled and self.energy_field_enabled:
+            seasonal_mult = self.get_seasonal_multiplier()
+            self.energy_field.seasonal_multiplier = seasonal_mult
         
         # 1. 更新所有场
         if self.energy_field_enabled:
@@ -511,6 +774,72 @@ class EnvironmentGPU:
             results.extend([torch.zeros(N, device=self.device)] * 3)
         
         return torch.stack(results, dim=1)  # [N, 9]
+    
+    def get_env_tensor(self, normalize: bool = True) -> torch.Tensor:
+        """
+        获取多通道环境张量 (Perception Field Mapping)
+        
+        Args:
+            normalize: 是否归一化到 [0, 1]，强烈建议开启！
+            
+        Returns:
+            Tensor [1, C, H, W] - 所有通道值域 [0, 1]
+            
+        通道顺序:
+            Channel 0: ENERGY (能量场) - 归一化后 0~1
+            Channel 1: IMPEDANCE (阻抗场) - 0~1
+            Channel 2: STRESS (压力场) - 0~1 (独立!)
+            Channel 3: STIGMERGY (信息素场) - 0~1
+        """
+        # 从子场获取网格大小
+        if self.energy_field_enabled:
+            H, W = self.energy_field.field.shape[2], self.energy_field.field.shape[3]
+        elif self.impedance_field_enabled:
+            H, W = self.impedance_field.field.shape[2], self.impedance_field.field.shape[3]
+        else:
+            H, W = int(self.height), int(self.width)
+        
+        channels = []
+        
+        # Channel 0: Energy Field (原始范围 0~200)
+        if self.energy_field_enabled:
+            energy = self.energy_field.field[0, 0]  # [H, W]
+            if normalize:
+                energy = energy / 200.0  # 归一化到 0~1
+            channels.append(energy)
+        else:
+            channels.append(torch.zeros(H, W, device=self.device))
+        
+        # Channel 1: Impedance Field (原始范围 0~1)
+        if self.impedance_field_enabled:
+            impedance = self.impedance_field.field[0, 0]
+            channels.append(impedance)  # 已是 0~1
+        else:
+            channels.append(torch.ones(H, W, device=self.device))
+        
+        # Channel 2: Stress Field (独立通道，不再与 IMPEDANCE 耦合)
+        # 如果有独立的 stress 场则使用，否则留空让神经网络自己学习
+        if hasattr(self, 'stress_field') and self.stress_field_enabled:
+            stress = self.stress_field.field[0, 0]
+            channels.append(stress)
+        else:
+            channels.append(torch.zeros(H, W, device=self.device))
+        
+        # Channel 3: Stigmergy Field (原始范围 0~1)
+        if self.stigmergy_field_enabled:
+            stigmergy = self.stigmergy_field.field[0, 0]
+            channels.append(stigmergy)
+        else:
+            channels.append(torch.zeros(H, W, device=self.device))
+        
+        # 堆叠为 [C, H, W]，然后扩展为 [1, C, H, W]
+        env_tensor = torch.stack(channels, dim=0).unsqueeze(0)
+        
+        # 安全检查：确保值域正确
+        if normalize:
+            env_tensor = torch.clamp(env_tensor, 0, 1)
+        
+        return env_tensor  # [1, C, H, W], 所有通道 [0, 1]
     
     def get_stats(self) -> dict:
         """获取性能统计"""

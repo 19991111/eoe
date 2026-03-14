@@ -952,6 +952,16 @@ class Environment:
         self.turn_rate = 0.1          # 转向速率
         self.sensor_range = 200.0     # 传感器感知范围 (用于衰减)
 
+        # ============================================================
+        # v13.1: 具身运动学参数 (Embodied Kinematics)
+        # ============================================================
+        self.use_embodied_kinematics = False  # 启用新物理模型
+        self.linear_damping = 0.1            # 线速度阻尼
+        self.angular_damping = 0.2           # 角速度阻尼
+        self.actuator_cost_rate = 0.01       # Actuator 做功耗能率
+        self.max_linear_speed = 10.0         # 最大线速度
+        self.max_angular_speed = 5.0         # 最大角速度
+
         # 代谢惩罚参数
         self.metabolic_alpha = metabolic_alpha  # 每个节点的能耗
         self.metabolic_beta = metabolic_beta    # 每条边的能耗
@@ -3070,18 +3080,114 @@ class Environment:
         actuator_outputs: np.ndarray
     ) -> None:
         """
-        根据执行器输出更新智能体物理状态 (v7.2 优化版)
+        根据执行器输出更新智能体物理状态 (v13.1 具身运动学版)
 
         差速驱动逻辑:
             - 左推进力 > 右推进力 → 右转
             - 右推进力 > 左推进力 → 左转
             - 相等 → 直线前进
+
+        v13.1 新增:
+            - 物理阻尼 (防止永动滑行)
+            - Actuator 做功耗能 (防止永动机)
         """
         left_force = actuator_outputs[0]
         right_force = actuator_outputs[1]
+        
+        # 提取额外通道 (如果有)
+        # actuator_outputs 格式: [left, right, impedance, stigmergy, stress, ...]
+        impedance = actuator_outputs[2] if len(actuator_outputs) > 2 else 0.0
+        stigmergy = actuator_outputs[3] if len(actuator_outputs) > 3 else 0.0
+        stress = actuator_outputs[4] if len(actuator_outputs) > 4 else 0.0
 
         # 记录旧位置 (用于压痕更新)
         old_x, old_y = agent.x, agent.y
+
+        # ============================================================
+        # v13.1: 具身运动学模型 (如果启用了新模型)
+        # ============================================================
+        if getattr(self, 'use_embodied_kinematics', False):
+            # 初始化速度状态 (如果不存在)
+            if not hasattr(agent, 'linear_velocity'):
+                agent.linear_velocity = 0.0
+            if not hasattr(agent, 'angular_velocity'):
+                agent.angular_velocity = 0.0
+            
+            # 物理参数
+            linear_damping = getattr(self, 'linear_damping', 0.1)
+            angular_damping = getattr(self, 'angular_damping', 0.2)
+            max_speed = self.max_speed
+            actuator_cost_rate = getattr(self, 'actuator_cost_rate', 0.01)
+            
+            # ==================== Channel 1: IMPEDANCE (阻尼调制) ====================
+            # 阻抗越大，阻尼越大
+            impedance_factor = 1.0 + max(0, impedance) * 2.0
+            linear_damping *= impedance_factor
+            angular_damping *= impedance_factor
+            
+            # 计算加速度 (差速驱动模型)
+            # 线加速度 = 左右推力之和
+            linear_accel = left_force + right_force
+            # 角加速度 = 左右推力差 (右侧强则左转, 左侧强则右转)
+            angular_accel = right_force - left_force
+            
+            # 应用阻尼
+            dt = 1.0  # 时间步长
+            agent.linear_velocity *= (1.0 - linear_damping * dt)
+            agent.angular_velocity *= (1.0 - angular_damping * dt)
+            
+            # 应用加速度
+            agent.linear_velocity += linear_accel * dt
+            agent.angular_velocity += angular_accel * dt
+            
+            # 速度限制
+            agent.linear_velocity = np.clip(agent.linear_velocity, -max_speed, max_speed)
+            agent.angular_velocity = np.clip(agent.angular_velocity, -self.turn_rate * 10, self.turn_rate * 10)
+            
+            # 位置更新 (非全向移动)
+            new_theta = (agent.theta + agent.angular_velocity * dt) % (2 * np.pi)
+            new_x = (agent.x + agent.linear_velocity * np.cos(new_theta) * dt) % self.width
+            new_y = (agent.y + agent.linear_velocity * np.sin(new_theta) * dt) % self.height
+            
+            # 计算速度大小
+            dx = new_x - agent.x
+            dy = new_y - agent.y
+            agent.speed = np.sqrt(dx**2 + dy**2)
+            
+            # ==================== 能量代谢 ====================
+            # Actuator 做功必须消耗能量 (所有通道)
+            work_done = np.abs(left_force) + np.abs(right_force)
+            work_done += np.abs(impedance) + np.abs(stigmergy) + np.abs(stress)
+            metabolic_cost = work_done * actuator_cost_rate * dt
+            agent.internal_energy -= metabolic_cost
+            
+            # ==================== Channel 2: STIGMERGY (信息素) ====================
+            if hasattr(self, 'stigmergy_field') and self.stigmergy_field is not None:
+                # 写入信息素
+                self.stigmergy_field.deposit(agent.x, agent.y, stigmergy * 0.1, agent.internal_energy)
+            
+            # ==================== Channel 3: STRESS (攻击/摄食) ====================
+            if stress > 0:
+                # 攻击模式: 尝试从附近 Agent 获取能量
+                self._attempt_energy_theft(agent, np.array([left_force, right_force]))
+            # stress < 0 时为防御模式 (在能量被盗时减少损失)
+            
+            # 更新状态
+            agent.x = new_x
+            agent.y = new_y
+            agent.theta = new_theta
+            
+            # 边界处理 (环绕)
+            agent.x = agent.x % self.width
+            agent.y = agent.y % self.height
+            
+            if self.stigmergic_friction_enabled:
+                self._update_friction_grid(agent, old_x, old_y)
+            return
+
+        # ============================================================
+        # v7.2: 旧版物理模型 (差速驱动)
+        # ============================================================
 
         
         max_speed = self.max_speed

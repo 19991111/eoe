@@ -213,6 +213,57 @@ class EnvironmentGPU:
             results.extend([torch.zeros(N, device=self.device)] * 3)
         
         return torch.stack(results, dim=1)
+    
+    def get_env_tensor(self, normalize: bool = True) -> torch.Tensor:
+        """
+        获取多通道环境张量 (Perception Field Mapping)
+        
+        Args:
+            normalize: 是否归一化到 [0, 1]
+            
+        Returns:
+            Tensor [1, C, H, W] - 通道: ENERGY, IMPEDANCE, STRESS, STIGMERGY
+        """
+        # 获取网格大小
+        if self.energy_field_enabled:
+            H, W = self.energy_field.field.shape
+        elif self.impedance_field_enabled:
+            H, W = self.impedance_field.field.shape
+        else:
+            H, W = int(self.height), int(self.width)
+        
+        channels = []
+        
+        # Channel 0: Energy Field (归一化 0~1)
+        if self.energy_field_enabled:
+            energy = self.energy_field.field  # [H, W]
+            if normalize:
+                energy = energy / 200.0
+            channels.append(energy)
+        else:
+            channels.append(torch.zeros(H, W, device=self.device))
+        
+        # Channel 1: Impedance Field (0~1)
+        if self.impedance_field_enabled:
+            channels.append(self.impedance_field.field)
+        else:
+            channels.append(torch.ones(H, W, device=self.device))
+        
+        # Channel 2: Stress Field (留空)
+        channels.append(torch.zeros(H, W, device=self.device))
+        
+        # Channel 3: Stigmergy Field (0~1)
+        if self.stigmergy_field_enabled:
+            channels.append(self.stigmergy_field.field)
+        else:
+            channels.append(torch.zeros(H, W, device=self.device))
+        
+        env_tensor = torch.stack(channels, dim=0).unsqueeze(0)
+        
+        if normalize:
+            env_tensor = torch.clamp(env_tensor, 0, 1)
+        
+        return env_tensor  # [1, C, H, W]
 
 
 class Simulation:

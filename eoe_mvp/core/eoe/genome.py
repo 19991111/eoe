@@ -216,12 +216,9 @@ class OperatorGenome:
             else:
                 node.activation = 0.0
         
-        # 收集传感器节点用于输入
+        # 🚀 v14.0: 统一传感器 - 所有旧类型归一化为 SENSOR
+        # 旧类型: LIGHT_SENSOR, AGENT_RADAR_SENSOR, GPS_SENSOR, COMPASS_SENSOR 等
         sensor_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.SENSOR]
-        light_sensor_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.LIGHT_SENSOR]
-        agent_radar_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.AGENT_RADAR_SENSOR]
-        gps_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.GPS_SENSOR]
-        compass_nodes = [n for n in self.nodes.values() if n.node_type == NodeType.COMPASS_SENSOR]
         
         # ============================================================
         # v13.0: 统一场物理传感器节点
@@ -242,25 +239,11 @@ class OperatorGenome:
             if nodes_of_type:
                 v13_sensor_nodes[nt] = nodes_of_type[0]
         
-        # v7.0: 设置传感器输入
-        # 传感器输入格式: [SENSOR_0, SENSOR_1, LIGHT_0, LIGHT_1, RADAR_0, RADAR_1, RADAR_2]
-        
-        # 基础食物传感器 (node_id 0, 1)
+        # 🚀 v14.0: 简化传感器输入设置 - 统一 SENSOR
+        # 所有传感器节点按顺序接收 sensor_inputs
         for i, sensor_node in enumerate(sensor_nodes):
             if i < len(sensor_inputs):
                 sensor_node.activation = sensor_inputs[i]
-        
-        # 光源传感器 (node_id 6, 7) - 对应 sensor_inputs[2], sensor_inputs[3]
-        for i, node in enumerate(light_sensor_nodes):
-            idx = 2 + i  # 偏移2位
-            if idx < len(sensor_inputs):
-                node.activation = sensor_inputs[idx]
-        
-        # 社会雷达传感器 (node_id 8, 9, 10) - 对应 sensor_inputs[4], [5], [6]
-        for i, node in enumerate(agent_radar_nodes):
-            idx = 4 + i  # 偏移4位
-            if idx < len(sensor_inputs):
-                node.activation = sensor_inputs[idx]
         
         # ============================================================
         # v13.0: 设置统一场物理传感器输入
@@ -283,11 +266,9 @@ class OperatorGenome:
         for node_id in topo_order:
             node = self.nodes[node_id]
             
-            # 跳过输入节点 (已设置)
-            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR, 
-                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR,
-                                  # v13.0: 统一场物理传感器
+            # 🚀 v14.0: 跳过输入节点 (已设置) - 精简版
+            if node.node_type in (NodeType.SENSOR,
+                                  # v13.0: 统一场物理传感器 (仍保留兼容)
                                   NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
                                   NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
                                   NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
@@ -348,70 +329,32 @@ class OperatorGenome:
                 total_input = sum(input_values)
                 node.activation = 1.0 if total_input > 0.5 else 0.0
             
-            elif node.node_type == NodeType.PREDICTOR:
-                # 预测节点: 简单地输出输入的加权和（可用于学习预测）
-                # 在训练阶段，这会尝试匹配下一时刻的传感器值
-                node.activation = sum(input_values) if input_values else 0.0
+            # 🚀 v14.0: PREDICTOR/ENTITY_RADAR 归一化为 SENSOR
+            # 预测能力应从 DELAY+ADD+THRESHOLD 演化涌现
             
-            elif node.node_type == NodeType.ENTITY_RADAR:
-                # 社会传感器: ENTITY_RADAR 在前向传播时需要环境信息
-                # 这里使用节点的 radar_data 属性（在Environment中设置）
-                # 默认输出 0（表示无检测）
-                node.activation = getattr(node, 'radar_data', 0.0)
+            # 🚀 v14.0: PORT_* 类型归一化为 ACTUATOR
+            # 所有物理输出通过 ACTUATOR 的 emitter_key 控制
             
             elif node.node_type == NodeType.MACRO:
                 # 宏算子: 执行预封装的子图
-                # 从 macro_subgraph 获取输出
                 node.activation = getattr(node, 'macro_output', 0.0)
             
             elif node.node_type == NodeType.ACTUATOR:
-                # 执行器：对所有输入求和 ( 添加ReLU确保非负)
+                # 执行器：对所有输入求和 (添加ReLU确保非负)
                 node.activation = max(0.0, sum(input_values))
-                                                                                                
-            # ============================================================
-            # v6.0 GAIA 物理输出端口 (纯基础算子驱动)
-            # 基础算子通过连接这些端口来控制物理行为
-            # ============================================================
-            elif node.node_type == NodeType.PORT_MOTION:
-                # 运动 [速度, 转向]: 激活值控制移动
-                node.activation = sum(input_values) if input_values else 0.0
-            
-            elif node.node_type == NodeType.PORT_OFFENSE:
-                # 攻击强度: 碰撞时对敌方的能量掠夺力
-                node.activation = sum(input_values) if input_values else 0.0
-            
-            elif node.node_type == NodeType.PORT_DEFENSE:
-                # 防御硬度: 被撞击时的能量损失降低
-                node.activation = sum(input_values) if input_values else 0.0
-            
-            elif node.node_type == NodeType.PORT_REPAIR:
-                # 修复: 能量→寿命转化
-                node.activation = sum(input_values) if input_values else 0.0
-            
-            elif node.node_type == NodeType.PORT_SIGNAL:
-                # 信号: 改变感知频率 (诱导/伪装)
-                node.activation = sum(input_values) if input_values else 0.0
         
-        # 收集执行器输出 + 预测器输出
+        # 🚀 v14.0: 简化执行器收集 - 统一 ACTUATOR
         actuator_nodes = [
             n for n in self.nodes.values() 
-            if n.node_type in (NodeType.ACTUATOR, 
-                               NodeType.PORT_MOTION, NodeType.PORT_OFFENSE,
-                               NodeType.PORT_DEFENSE, NodeType.PORT_REPAIR,
-                               NodeType.PORT_SIGNAL,
-                               # v13.0: 统一场物理执行器
+            if n.node_type in (NodeType.ACTUATOR,
+                               # v13.0: 统一场物理执行器 (仍保留兼容)
                                NodeType.ACTUATOR_PERMEABILITY, NodeType.ACTUATOR_THRUST_X,
                                NodeType.ACTUATOR_THRUST_Y, NodeType.ACTUATOR_SIGNAL,
                                NodeType.ACTUATOR_DEFENSE)
         ]
-        predictor_nodes = [
-            n for n in self.nodes.values()
-            if n.node_type == NodeType.PREDICTOR
-        ]
         
         # 按 node_id 排序确保一致性
         actuator_nodes.sort(key=lambda n: n.node_id)
-        predictor_nodes.sort(key=lambda n: n.node_id)
         
         # ============================================================
         # v13.0: 激活函数钳制
@@ -423,21 +366,20 @@ class OperatorGenome:
             return 1.0 / (1.0 + np.exp(-np.clip(x, -500, 500)))
         
         def apply_activation(node_type: str, value: float) -> float:
-            """应用物理致动器激活函数"""
-            if node_type in ('ACTUATOR_PERMEABILITY', 'ACTUATOR_DEFENSE', 'PORT_DEFENSE'):
+            """🚀 v14.0: 简化致动器激活函数"""
+            if node_type in ('ACTUATOR_PERMEABILITY', 'ACTUATOR_DEFENSE'):
                 return sigmoid(value)
-            elif node_type in ('ACTUATOR_THRUST_X', 'ACTUATOR_THRUST_Y', 'PORT_MOTION'):
+            elif node_type in ('ACTUATOR_THRUST_X', 'ACTUATOR_THRUST_Y'):
                 return np.tanh(value)
-            elif node_type in ('ACTUATOR_SIGNAL', 'PORT_SIGNAL'):
+            elif node_type in ('ACTUATOR_SIGNAL',):
                 return max(0.0, min(1.0, value))  # ReLU + clamp
             else:
                 return np.tanh(value)  # 默认Tanh
         
-        # 应用激活函数
+        # 🚀 v14.0: 简化输出 - 只保留执行器
         actuator_outputs = [apply_activation(n.node_type.name, n.activation) for n in actuator_nodes]
-        predictor_outputs = [n.activation for n in predictor_nodes]
         
-        outputs = np.array(actuator_outputs + predictor_outputs)
+        outputs = np.array(actuator_outputs)
         
         # ============================================================
         # v7.3: 熵增与腐蚀 - 更新节点稳定性
@@ -461,14 +403,10 @@ class OperatorGenome:
         for node_id in topo_order:
             node = self.nodes[node_id]
             
-            # 跳过传感器、常量、执行器端口 (不参与腐蚀)
-            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR, 
-                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
-                                  NodeType.ACTUATOR, NodeType.PORT_MOTION,
-                                  NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
-                                  # v13.0: 统一场物理传感器
+            # 🚀 v14.0: 跳过输入/输出节点 (不参与腐蚀)
+            if node.node_type in (NodeType.SENSOR, NodeType.CONSTANT,
+                                  NodeType.ACTUATOR,
+                                  # v13.0: 统一场物理传感器/执行器 (仍保留兼容)
                                   NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
                                   NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
                                   NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
@@ -502,14 +440,10 @@ class OperatorGenome:
         stats = {"noisy_nodes": 0, "mutated_nodes": 0}
         
         for node in self.nodes.values():
-            # 跳过传感器和端口
-            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR,
-                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
-                                  NodeType.ACTUATOR, NodeType.PORT_MOTION,
-                                  NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
-                                  # v13.0: 统一场物理
+            # 🚀 v14.0: 简化 - 跳过输入/输出节点
+            if node.node_type in (NodeType.SENSOR, NodeType.CONSTANT,
+                                  NodeType.ACTUATOR,
+                                  # v13.0: 统一场物理 (仍保留兼容)
                                   NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
                                   NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
                                   NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
@@ -593,23 +527,10 @@ class OperatorGenome:
         nodes_to_remove = []
         
         for node_id, node in self.nodes.items():
-            # 跳过传感器和端口
-            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR,
-                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
-                                  NodeType.ACTUATOR, NodeType.PORT_MOTION,
-                                  NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL):
-                continue
-            
-            # 跳过传感器和端口
-            if node.node_type in (NodeType.SENSOR, NodeType.LIGHT_SENSOR,
-                                  NodeType.AGENT_RADAR_SENSOR, NodeType.GPS_SENSOR,
-                                  NodeType.COMPASS_SENSOR, NodeType.CONSTANT,
-                                  NodeType.ACTUATOR, NodeType.PORT_MOTION,
-                                  NodeType.PORT_OFFENSE, NodeType.PORT_DEFENSE,
-                                  NodeType.PORT_REPAIR, NodeType.PORT_SIGNAL,
-                                  # v13.0: 统一场物理
+            # 🚀 v14.0: 简化 - 跳过输入/输出节点
+            if node.node_type in (NodeType.SENSOR, NodeType.CONSTANT,
+                                  NodeType.ACTUATOR,
+                                  # v13.0: 统一场物理 (仍保留兼容)
                                   NodeType.SENSE_EPF_CENTER, NodeType.SENSE_EPF_GRAD_X, NodeType.SENSE_EPF_GRAD_Y,
                                   NodeType.SENSE_KIF_CENTER, NodeType.SENSE_KIF_GRAD_X, NodeType.SENSE_KIF_GRAD_Y,
                                   NodeType.SENSE_ISF_CENTER, NodeType.SENSE_ISF_GRAD_X, NodeType.SENSE_ISF_GRAD_Y,
@@ -674,18 +595,17 @@ class OperatorGenome:
         # 获取新的节点 ID
         new_node_id = max(self.nodes.keys()) + 1 if self.nodes else 0
         
-        # 随机选择节点类型 (ADD, MULTIPLY, DELAY, THRESHOLD)
+        # 🚀 v14.0: 精简节点类型 - 只保留核心算子
+        # PREDICTOR 应该从 DELAY+ADD+THRESHOLD 演化涌现
         rand = np.random.random()
-        if rand < 0.3:
+        if rand < 0.35:
             node_type = NodeType.ADD
-        elif rand < 0.5:
+        elif rand < 0.6:
             node_type = NodeType.MULTIPLY
-        elif rand < 0.7:
+        elif rand < 0.8:
             node_type = NodeType.DELAY
-        elif rand < 0.85:
-            node_type = NodeType.THRESHOLD  # 阈值算子
         else:
-            node_type = NodeType.PREDICTOR  # 预测节点
+            node_type = NodeType.THRESHOLD  # 阈值算子
         
         # ============================================================
         
@@ -731,16 +651,17 @@ class OperatorGenome:
         返回:
             是否成功执行突变
         """
-        # 获取可作为源和目标的节点
+        # 🚀 v14.0: 精简源节点类型
         source_nodes = [
             n.node_id for n in self.nodes.values() 
             if n.node_type in (NodeType.SENSOR, NodeType.CONSTANT, NodeType.ADD, 
-                               NodeType.MULTIPLY, NodeType.DELAY, NodeType.PREDICTOR)
+                               NodeType.MULTIPLY, NodeType.DELAY)
         ]
+        # 🚀 v14.0: 精简目标节点类型
         target_nodes = [
             n.node_id for n in self.nodes.values() 
             if n.node_type in (NodeType.ADD, NodeType.MULTIPLY, NodeType.ACTUATOR, 
-                               NodeType.DELAY, NodeType.THRESHOLD, NodeType.PREDICTOR)
+                               NodeType.DELAY, NodeType.THRESHOLD)
         ]
         
         for _ in range(max_attempts):
@@ -1113,4 +1034,44 @@ class OperatorGenome:
         with open(path, 'r') as f:
             data = json.load(f)
         return cls.from_dict(data)
+    
+    def mutate(self, rate: float = 0.1) -> 'OperatorGenome':
+        """
+        统一变异接口 - 用于分裂时的基因突变
+        
+        对父代基因进行随机变异:
+        - 权重扰动 (60% 概率)
+        - 添加节点 (10% 概率)
+        - 添加边 (20% 概率)
+        - 结构微调 (10% 概率)
+        
+        Args:
+            rate: 变异概率
+            
+        Returns:
+            新的 OperatorGenome 实例 (突变后的副本)
+        """
+        import copy
+        import random
+        
+        # 深拷贝父代基因
+        child = copy.deepcopy(self)
+        
+        # 重新分配新ID (避免冲突)
+        child._innovation_mgr = InnovationManager()
+        
+        # 变异操作
+        if random.random() < rate:
+            # 权重扰动
+            child.mutate_weight(sigma=0.2, probability=0.8)
+        
+        if random.random() < rate * 0.3:
+            # 添加节点
+            child.mutate_add_node()
+        
+        if random.random() < rate * 0.5:
+            # 添加边
+            child.mutate_add_edge()
+        
+        return child
 

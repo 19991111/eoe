@@ -48,8 +48,10 @@ Thumbs.db
 *.tmp
 temp/
 
-# 本地实验文档 (不推送到 GitHub)
+# 本地文档 (不推送到 GitHub)
 docs/EXPERIMENTS_LOCAL.md
+docs/PERCEPTION_FIELD_MAPPING_PROPOSAL.md
+docs/OPERATOR_PRUNING_PROPOSAL.md
 
 # 日志和数据文件
 *.log
