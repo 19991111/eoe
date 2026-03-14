@@ -1,0 +1,1942 @@
+{
+  "step": 1500,
+  "total_snapshots": 1729,
+  "unique_structures": 39,
+  "structures": {
+    "struct_82371": {
+      "structure_id": "struct_82371",
+      "nodes": [
+        1,
+        4,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          4,
+          0.001
+        ],
+        [
+          0,
+          5,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    "struct_07678": {
+      "structure_id": "struct_07678",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 55,
+      "avg_fitness": 30.357149830665602
+    },
+    "struct_42986": {
+      "structure_id": "struct_42986",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 78,
+      "avg_fitness": 30.360780465282428
+    },
+    "struct_37984": {
+      "structure_id": "struct_37984",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 76,
+      "avg_fitness": 30.36001783988609
+    },
+    "struct_53735": {
+      "structure_id": "struct_53735",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 39,
+      "avg_fitness": 30.361375828963414
+    },
+    "struct_42718": {
+      "structure_id": "struct_42718",
+      "nodes": [
+        1,
+        4,
+        7,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52827148884535
+    },
+    "struct_54952": {
+      "structure_id": "struct_54952",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 68,
+      "avg_fitness": 30.360890159450282
+    },
+    "struct_91748": {
+      "structure_id": "struct_91748",
+      "nodes": [
+        1,
+        6,
+        4,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          3,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    "struct_33830": {
+      "structure_id": "struct_33830",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 50,
+      "avg_fitness": 30.36103088737292
+    },
+    "struct_36615": {
+      "structure_id": "struct_36615",
+      "nodes": [
+        1,
+        4,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 4,
+      "avg_fitness": 37.13069248199463
+    },
+    "struct_63947": {
+      "structure_id": "struct_63947",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 42,
+      "avg_fitness": 30.361378112500248
+    },
+    "struct_91516": {
+      "structure_id": "struct_91516",
+      "nodes": [
+        1,
+        7,
+        4,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          3,
+          4,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    "struct_97117": {
+      "structure_id": "struct_97117",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 81,
+      "avg_fitness": 30.35994042852705
+    },
+    "struct_92260": {
+      "structure_id": "struct_92260",
+      "nodes": [
+        1,
+        4,
+        7,
+        6,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 11.697224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.9841537475586
+    },
+    "struct_22249": {
+      "structure_id": "struct_22249",
+      "nodes": [
+        1,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_51398": {
+      "structure_id": "struct_51398",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.76851074397564
+    },
+    "struct_02257": {
+      "structure_id": "struct_02257",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          3,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.697224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    "struct_30538": {
+      "structure_id": "struct_30538",
+      "nodes": [
+        1,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_74697": {
+      "structure_id": "struct_74697",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_65160": {
+      "structure_id": "struct_65160",
+      "nodes": [
+        1,
+        6,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52860683016479
+    },
+    "struct_27702": {
+      "structure_id": "struct_27702",
+      "nodes": [
+        1,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          3,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528339898213744
+    },
+    "struct_82000": {
+      "structure_id": "struct_82000",
+      "nodes": [
+        1,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 21,
+      "avg_fitness": 30.397894663823536
+    },
+    "struct_86004": {
+      "structure_id": "struct_86004",
+      "nodes": [
+        1,
+        7,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    "struct_59567": {
+      "structure_id": "struct_59567",
+      "nodes": [
+        1,
+        4,
+        4,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          4,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_54845": {
+      "structure_id": "struct_54845",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 21,
+      "avg_fitness": 30.398804851662135
+    },
+    "struct_18428": {
+      "structure_id": "struct_18428",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52688259445131
+    },
+    "struct_45360": {
+      "structure_id": "struct_45360",
+      "nodes": [
+        1,
+        4,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          4,
+          0.001
+        ],
+        [
+          1,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_80381": {
+      "structure_id": "struct_80381",
+      "nodes": [
+        1,
+        7,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          4,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    "struct_65264": {
+      "structure_id": "struct_65264",
+      "nodes": [
+        1,
+        4,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.527226818725467
+    },
+    "struct_78145": {
+      "structure_id": "struct_78145",
+      "nodes": [
+        1,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528501061722636
+    },
+    "struct_40614": {
+      "structure_id": "struct_40614",
+      "nodes": [
+        1,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.386294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528660222887993
+    },
+    "struct_08699": {
+      "structure_id": "struct_08699",
+      "nodes": [
+        1,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    "struct_89503": {
+      "structure_id": "struct_89503",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          5,
+          0.001
+        ],
+        [
+          2,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    "struct_52740": {
+      "structure_id": "struct_52740",
+      "nodes": [
+        1,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    "struct_46533": {
+      "structure_id": "struct_46533",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.36328380521178827
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 4,
+      "avg_fitness": 37.13069248199463
+    },
+    "struct_83530": {
+      "structure_id": "struct_83530",
+      "nodes": [
+        1,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          2,
+          1,
+          0.4358421063564888
+        ]
+      ],
+      "complexity_score": 11.718875824868201,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    "struct_02802": {
+      "structure_id": "struct_02802",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.28510991613642733
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    "struct_88598": {
+      "structure_id": "struct_88598",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          0,
+          2,
+          -0.25754428780499505
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    "struct_38007": {
+      "structure_id": "struct_38007",
+      "nodes": [
+        1,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          0,
+          4,
+          -0.5520698854217644
+        ]
+      ],
+      "complexity_score": 8.697224577336218,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    }
+  },
+  "complexity_rank": [
+    "struct_83530",
+    "struct_92260",
+    "struct_02257",
+    "struct_82371",
+    "struct_89503",
+    "struct_42718",
+    "struct_91748",
+    "struct_36615",
+    "struct_91516",
+    "struct_51398",
+    "struct_86004",
+    "struct_59567",
+    "struct_45360",
+    "struct_80381",
+    "struct_38007",
+    "struct_30538",
+    "struct_65160",
+    "struct_82000",
+    "struct_78145",
+    "struct_08699",
+    "struct_52740",
+    "struct_22249",
+    "struct_27702",
+    "struct_40614",
+    "struct_65264",
+    "struct_07678",
+    "struct_37984",
+    "struct_54952",
+    "struct_63947",
+    "struct_97117",
+    "struct_46533",
+    "struct_02802",
+    "struct_88598",
+    "struct_42986",
+    "struct_53735",
+    "struct_33830",
+    "struct_74697",
+    "struct_54845",
+    "struct_18428"
+  ],
+  "top_k": [
+    {
+      "structure_id": "struct_83530",
+      "nodes": [
+        1,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          2,
+          1,
+          0.4358421063564888
+        ]
+      ],
+      "complexity_score": 11.718875824868201,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    {
+      "structure_id": "struct_92260",
+      "nodes": [
+        1,
+        4,
+        7,
+        6,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 11.697224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.9841537475586
+    },
+    {
+      "structure_id": "struct_02257",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          3,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.697224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    {
+      "structure_id": "struct_82371",
+      "nodes": [
+        1,
+        4,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          4,
+          0.001
+        ],
+        [
+          0,
+          5,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    {
+      "structure_id": "struct_89503",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          5,
+          0.001
+        ],
+        [
+          2,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 10.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 2,
+      "avg_fitness": 74.98999786376953
+    },
+    {
+      "structure_id": "struct_42718",
+      "nodes": [
+        1,
+        4,
+        7,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52827148884535
+    },
+    {
+      "structure_id": "struct_91748",
+      "nodes": [
+        1,
+        6,
+        4,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          3,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    {
+      "structure_id": "struct_36615",
+      "nodes": [
+        1,
+        4,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 4,
+      "avg_fitness": 37.13069248199463
+    },
+    {
+      "structure_id": "struct_91516",
+      "nodes": [
+        1,
+        7,
+        4,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          3,
+          4,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    {
+      "structure_id": "struct_51398",
+      "nodes": [
+        1,
+        6,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.76851074397564
+    },
+    {
+      "structure_id": "struct_86004",
+      "nodes": [
+        1,
+        7,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    {
+      "structure_id": "struct_59567",
+      "nodes": [
+        1,
+        4,
+        4,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          4,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_45360",
+      "nodes": [
+        1,
+        4,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          4,
+          0.001
+        ],
+        [
+          1,
+          4,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_80381",
+      "nodes": [
+        1,
+        7,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          4,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 9.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_38007",
+      "nodes": [
+        1,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          0,
+          4,
+          -0.5520698854217644
+        ]
+      ],
+      "complexity_score": 8.697224577336218,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    {
+      "structure_id": "struct_30538",
+      "nodes": [
+        1,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_65160",
+      "nodes": [
+        1,
+        6,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52860683016479
+    },
+    {
+      "structure_id": "struct_82000",
+      "nodes": [
+        1,
+        4,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 21,
+      "avg_fitness": 30.397894663823536
+    },
+    {
+      "structure_id": "struct_78145",
+      "nodes": [
+        1,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528501061722636
+    },
+    {
+      "structure_id": "struct_08699",
+      "nodes": [
+        1,
+        6,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          2,
+          3,
+          0.001
+        ],
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 8.197224577336218,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    {
+      "structure_id": "struct_52740",
+      "nodes": [
+        1,
+        7,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 11,
+      "avg_fitness": 30.773445889353752
+    },
+    {
+      "structure_id": "struct_22249",
+      "nodes": [
+        1,
+        7,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          2,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_27702",
+      "nodes": [
+        1,
+        6,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          3,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528339898213744
+    },
+    {
+      "structure_id": "struct_40614",
+      "nodes": [
+        1,
+        7,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          3,
+          0.001
+        ]
+      ],
+      "complexity_score": 7.386294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.528660222887993
+    },
+    {
+      "structure_id": "struct_65264",
+      "nodes": [
+        1,
+        4,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.527226818725467
+    },
+    {
+      "structure_id": "struct_07678",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 55,
+      "avg_fitness": 30.357149830665602
+    },
+    {
+      "structure_id": "struct_37984",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 76,
+      "avg_fitness": 30.36001783988609
+    },
+    {
+      "structure_id": "struct_54952",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 68,
+      "avg_fitness": 30.360890159450282
+    },
+    {
+      "structure_id": "struct_63947",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          1,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 42,
+      "avg_fitness": 30.361378112500248
+    },
+    {
+      "structure_id": "struct_97117",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          1,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 81,
+      "avg_fitness": 30.35994042852705
+    },
+    {
+      "structure_id": "struct_46533",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.36328380521178827
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 0,
+      "population_count": 4,
+      "avg_fitness": 37.13069248199463
+    },
+    {
+      "structure_id": "struct_02802",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ],
+        [
+          0,
+          1,
+          0.28510991613642733
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    {
+      "structure_id": "struct_88598",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ],
+        [
+          0,
+          2,
+          -0.25754428780499505
+        ]
+      ],
+      "complexity_score": 6.697224577336219,
+      "first_seen_step": 500,
+      "population_count": 3,
+      "avg_fitness": 32.145742416381836
+    },
+    {
+      "structure_id": "struct_42986",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 78,
+      "avg_fitness": 30.360780465282428
+    },
+    {
+      "structure_id": "struct_53735",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 39,
+      "avg_fitness": 30.361375828963414
+    },
+    {
+      "structure_id": "struct_33830",
+      "nodes": [
+        1,
+        7,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 50,
+      "avg_fitness": 30.36103088737292
+    },
+    {
+      "structure_id": "struct_74697",
+      "nodes": [
+        1,
+        6,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52866174839437
+    },
+    {
+      "structure_id": "struct_54845",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          2,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 21,
+      "avg_fitness": 30.398804851662135
+    },
+    {
+      "structure_id": "struct_18428",
+      "nodes": [
+        1,
+        4,
+        2
+      ],
+      "edges": [
+        [
+          0,
+          1,
+          0.001
+        ]
+      ],
+      "complexity_score": 5.886294361119891,
+      "first_seen_step": 0,
+      "population_count": 14,
+      "avg_fitness": 30.52688259445131
+    }
+  ]
+}

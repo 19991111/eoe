@@ -1,0 +1,71 @@
+# v15 认知溢价实验 - 机制配置
+# ================================
+
+# 代谢模型 (核心改动)
+metabolism:
+  # v15 非线性代谢 (Economies of Scale)
+  nonlinear: true
+  log_base: 2.0           # 对数底
+  free_nodes: 5           # 免费脑容量
+  sparse_activation: true  # 稀疏激活 (待实现)
+  sparse_threshold: 0.01  # 发放率阈值
+
+  # v14 继承设置
+  base_metabolism: 0.05
+  activation_cost: 0.001
+  metabolic_grace: true
+  grace_steps: 100
+  grace_discount: 0.5
+
+# 演化棘轮
+supernode:
+  enabled: true
+  # v15: SuperNode成本 = 1节点 (之前是0.5)
+  metabolic_bonus: 1.0  
+  detection_frequency: 500
+  min_occurrence: 5
+
+# 鲍德温效应
+hebbian:
+  enabled: true
+  eligibility_trace: 5
+  base_lr: 0.01
+  reward_modulation: true
+  deadzone: 1.0
+  max_weight_delta: 0.1
+  trace_decay: 0.9
+
+# 寒武纪初始化
+cambrian:
+  enabled: true
+  min_nodes: 3
+  max_nodes: 7
+  delay_prob: 0.3
+  multiply_prob: 0.3
+
+# T型迷宫 (POMDP - 强制记忆测试)
+t_maze:
+  enabled: false              # 默认关闭，需要在实验中启用
+  signal_duration: 5          # 信号持续步数
+  blind_zone: 20              # 盲区步数
+  decision_delay: 25          # 信号结束到决策点的延迟
+  correct_reward: 100.0       # 正确奖励
+  wrong_reward: 0.0           # 错误惩罚
+  step_penalty: 0.1           # 每步惩罚
+
+# 资源周期性消失
+resource_cycle:
+  enabled: false              # 默认关闭
+  cycle_length: 500           # 周期长度
+  fade_steps: 50              # 消失过渡步数
+
+# Red Queen Dynamics (智能猎物)
+red_queen:
+  enabled: false              # 默认关闭
+  detection_range: 25.0       # 感知范围
+  escape_trigger: 15.0        # 触发逃跑距离
+  escape_speed: 2.0           # 逃跑速度
+  zigzag_period: 8            # Z字形周期
+  zigzag_amplitude: 0.5       # Z字形幅度
+  fatigue_duration: 30        # 逃跑后疲劳步数
+  energy_cost: 0.5            # 每步能量消耗

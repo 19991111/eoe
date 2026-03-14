@@ -18,6 +18,10 @@ GPU 加速的 Agent 批处理系统 - 100% VRAM 常驻 + 异步连续生死
 import torch
 import torch.nn.functional as F
 import numpy as np
+from typing import Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.eoe.genome import OperatorGenome
 from typing import Optional, Tuple, List, Dict, Callable
 from dataclasses import dataclass
 
@@ -110,6 +114,15 @@ class PoolConfig:
     METABOLIC_GRACE_DISCOUNT = 0.5   # 折扣: 前100步只付50%代谢
     
     # ================================================================
+    # v15 认知溢价: 非线性代谢 (Economies of Scale)
+    # ================================================================
+    NONLINEAR_METABOLISM = True      # 启用非线性代谢 (log(N+1))
+    LOG_BASE = 2.0                   # 对数底 (2.0 = log2)
+    FREE_NODES = 5                   # 免费基础脑容量 (前5节点免代谢)
+    SPARSE_ACTIVATION = True         # 稀疏激活 (休眠节点不耗能)
+    SPARSE_THRESHOLD = 0.01          # 发放率低于此值视为休眠
+    
+    # ================================================================
     # v14.2 动态环境难度 (季节/干旱)
     # ================================================================
     SEASONS_ENABLED = True           # 启用季节变化
@@ -120,9 +133,50 @@ class PoolConfig:
     DROUGHT_INTENSITY = 0.05         # 干旱期能量倍率 (5%)
     
     # ================================================================
+    # v15 T型迷宫 (POMDP - 强制记忆测试)
+    # ================================================================
+    T_MAZE_ENABLED = False           # 启用T型迷宫任务
+    T_MAZE_SIGNAL_DURATION = 5       # 信号持续步数
+    T_MAZE_BLIND_ZONE = 20           # 盲区步数
+    T_MAZE_DECISION_DELAY = 25       # 信号到决策的延迟
+    T_MAZE_CORRECT_REWARD = 100.0    # 正确奖励
+    T_MAZE_WRONG_REWARD = 0.0        # 错误惩罚
+    T_MAZE_STEP_PENALTY = 0.1        # 每步惩罚
+    
+    # 资源周期性消失
+    RESOURCE_CYCLE_ENABLED = False   # 启用资源周期
+    RESOURCE_CYCLE_LENGTH = 500      # 周期长度
+    RESOURCE_FADE_STEPS = 50         # 消失过渡步数
+    
+    # ================================================================
+    # v15 Red Queen Dynamics (智能猎物)
+    # ================================================================
+    RED_QUEEN_ENABLED = False        # 启用智能猎物
+    
+    # ================================================================
+    # v15 能量循环 (代谢能量回归环境)
+    # ================================================================
+    ENERGY_RECIRCULATION_ENABLED = True   # 启用能量循环
+    ENERGY_RECIRCULATION_RATIO = 0.6      # 60%代谢能量回归环境
+    PREY_DETECTION_RANGE = 25.0      # 猎物感知范围
+    PREY_ESCAPE_TRIGGER = 15.0       # 触发逃跑距离
+    PREY_ESCAPE_SPEED = 2.0          # 逃跑速度
+    PREY_ZIGZAG_PERIOD = 8           # Z字形周期
+    PREY_ZIGZAG_AMPLITUDE = 0.5      # Z字形幅度
+    PREY_FATIGUE_DURATION = 30       # 逃跑后疲劳步数
+    
+    # ================================================================
     # v14.1 诊断系统
     # ================================================================
     DIAGNOSTICS_ENABLED = True       # 启用诊断监控
+    
+    # ================================================================
+    # v15 预加载脑结构机制 (Brain Bootstrap)
+    # ================================================================
+    PRETRAINED_INIT = False          # 启用预加载脑结构
+    PRETRAINED_STRUCTURES_FILE = ""  # 结构文件路径
+    PRETRAINED_TOP_N = 20            # 使用Top N个最复杂结构
+    PRETRAINED_DUPLICATE_FACTOR = 1  # 每种结构复制次数
 
 
 # ============================================================================
@@ -164,6 +218,20 @@ class AgentState:
     # v14.1 代谢宽限期 (Metabolic Grace Period)
     # ================================================================
     mutation_timestamp: torch.Tensor  # [MAX_AGENTS] 上次拓扑突变的时间步
+    
+    # ================================================================
+    # v15 T型迷宫 (POMDP - 强制记忆测试)
+    # ================================================================
+    t_maze_signal: torch.Tensor       # [MAX_AGENTS] 当前信号 (0=无, 1=左, 2=右)
+    t_maze_signal_timer: torch.Tensor # [MAX_AGENTS] 信号剩余步数
+    t_maze_episode_step: torch.Tensor # [MAX_AGENTS] 当前回合步数
+    t_maze_correct_dir: torch.Tensor  # [MAX_AGENTS] 当前回合正确方向 (0=左, 1=右)
+    t_maze_decision_made: torch.Tensor # [MAX_AGENTS] 是否已决策
+    t_maze_episodes: torch.Tensor     # [MAX_AGENTS] 完成的回合数
+    t_maze_correct: torch.Tensor      # [MAX_AGENTS] 正确决策次数
+    
+    # 资源周期状态
+    resource_visible: torch.Tensor    # [MAX_AGENTS] 资源是否可见
 
 
 class ActiveBatch:
@@ -227,7 +295,7 @@ class BatchedAgents:
         print(f"  池大小: {max_agents}, 初始人口: {initial_population}")
         
         # 预分配状态张量
-        self._init_state_tensor(init_energy)
+        self._init_state_tensor(init_energy, initial_population)
         
         # 生命掩码 (核心！)
         self.alive_mask = torch.zeros(max_agents, dtype=torch.bool, device=device)
@@ -331,7 +399,7 @@ class BatchedAgents:
         
         print(f"  ✅ 掩码池初始化完成")
     
-    def _init_state_tensor(self, init_energy: float):
+    def _init_state_tensor(self, init_energy: float, init_population: int):
         """预分配所有状态张量 (MAX_AGENTS 大小)"""
         max_agents = self.max_agents
         
@@ -364,13 +432,36 @@ class BatchedAgents:
             
             # v14.1 代谢宽限期
             mutation_timestamp = torch.full((max_agents,), -1000, device=self.device, dtype=torch.long),  # -1000表示无突变
+            
+            # v15 T型迷宫 (POMDP)
+            t_maze_signal = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            t_maze_signal_timer = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            t_maze_episode_step = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            t_maze_correct_dir = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            t_maze_decision_made = torch.zeros(max_agents, device=self.device, dtype=torch.bool),
+            t_maze_episodes = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            t_maze_correct = torch.zeros(max_agents, device=self.device, dtype=torch.long),
+            
+            # 资源周期状态
+            resource_visible = torch.ones(max_agents, device=self.device, dtype=torch.bool),
         )
         
-        # 初始人口能量
-        init_n = self.config.MAX_AGENTS  # 这里用配置值，实际只有前 initial_population 是活的
+        # 初始人口能量 - 使用initial_population而非MAX_AGENTS
+        init_n = init_population
         self.state.energies[:init_n] = init_energy
         self.state.prev_energies[:init_n] = init_energy  # 初始化prev_energy
         self.state.structural_energy[:init_n] = init_energy * 0.5
+        
+        # ============================================================
+        # v15 T型迷宫初始化 (初始人口也需要)
+        # ============================================================
+        if self.config.T_MAZE_ENABLED and init_n > 0:
+            correct_dirs = torch.randint(0, 2, (init_n,), device=self.device)
+            self.state.t_maze_correct_dir[:init_n] = correct_dirs
+            self.state.t_maze_signal[:init_n] = correct_dirs + 1
+            self.state.t_maze_signal_timer[:init_n] = self.config.T_MAZE_SIGNAL_DURATION
+            self.state.t_maze_episode_step[:init_n] = 0
+            self.state.t_maze_decision_made[:init_n] = False
         
         print(f"  ✅ 预分配张量: {self.state.positions.shape}")
     
@@ -423,6 +514,10 @@ class BatchedAgents:
         
         # 3. 代谢扣除
         self._apply_metabolism(batch, dt)
+        
+        # 3.3 T型迷宫状态更新 (POMDP)
+        if self.config.T_MAZE_ENABLED:
+            self._update_t_maze(batch)
         
         # 3.5 鲍德温效应: 能量调制赫布学习
         if self.config.HEBBIAN_ENABLED:
@@ -593,28 +688,125 @@ class BatchedAgents:
         total_multiplier = impedance_multiplier * age_multiplier
         
         # ============================================================
-        # 超级节点代谢折扣 (演化棘轮)
-        # 每个超级节点减少基础代谢
+        # v15 认知溢价: 非线性代谢
+        # 核心公式: Cost = log(N + 1) × BaseCost (超出FREE_NODES部分)
+        # 特点: 规模经济 - 节点越多，每个节点平均成本越低
         # ============================================================
-        if self.config.SUPERNODE_ENABLED:
-            n_supernodes = self.state.supernodes[idx].float()
-            # 超级节点代谢折扣: 每个super算0.5节点而不是1节点
-            # effective_nodes = node_counts - supernodes * 0.5
-            node_counts = self.state.node_counts[idx].float()
-            effective_nodes = node_counts - n_supernodes * self.config.SUPERNODE_METABOLIC_BONUS
-            # 基础代谢按有效节点数计算
-            node_metabolism = effective_nodes.clamp(min=1.0) * base_cost
+        node_counts = self.state.node_counts[idx].float()
+        
+        if self.config.NONLINEAR_METABOLISM:
+            # 对数代谢: Cost = log_base(N + 1) × BaseCost
+            # 核心思想: 规模经济 - 节点越多，每个节点的边际成本越低
+            log_base = self.config.LOG_BASE
+            free_nodes = self.config.FREE_NODES
+            
+            # 方案A: 免费基础脑容量
+            # 前free_nodes个节点完全免费
+            taxable_nodes = (node_counts - free_nodes).clamp(min=0)
+            
+            # 方案B: 对数增长 (不是线性的 N*base)
+            # log_base(N+1) vs N: 当N=100时, log2(101)=6.7 vs 100
+            log_cost = torch.log(taxable_nodes + 1) / torch.log(torch.tensor(log_base))
+            
+            # 最终成本 = 对数值 × 基础成本
+            node_metabolism = log_cost * base_cost
+            
+            # 确保至少有基础代谢 (避免0成本)
+            node_metabolism = node_metabolism.clamp(min=0.0)
+            
+            # v15 SuperNode成本 = 1节点 (形态学锁定激励)
+            if self.config.SUPERNODE_ENABLED:
+                n_supernodes = self.state.supernodes[idx].float()
+                # SuperNode成本 = 1节点 (不是0.5!)
+                # 这会刺激复杂结构的层级嵌套
+                supernode_cost = n_supernodes * 1.0 * base_cost
+                node_metabolism = node_metabolism + supernode_cost
         else:
-            node_metabolism = self.state.node_counts[idx].float() * base_cost
+            # v14 线性代谢 (向后兼容)
+            if self.config.SUPERNODE_ENABLED:
+                n_supernodes = self.state.supernodes[idx].float()
+                effective_nodes = node_counts - n_supernodes * self.config.SUPERNODE_METABOLIC_BONUS
+                node_metabolism = effective_nodes.clamp(min=1.0) * base_cost
+            else:
+                node_metabolism = node_counts * base_cost
         
         total_cost = (node_metabolism + kinetic_cost) * total_multiplier
         
         # 扣除活动能量
         self.state.energies[idx] -= total_cost
         
+        # ============================================================
+        # v15 能量循环: 代谢能量部分回归环境
+        # 模拟"排泄物被分解者回收"或"热辐射再利用"
+        # ============================================================
+        if self.config.ENERGY_RECIRCULATION_ENABLED and hasattr(self, 'env') and self.env is not None:
+            try:
+                # 30%代谢能量回归环境
+                recirculated = total_cost * self.config.ENERGY_RECIRCULATION_RATIO
+                
+                # 随机注入到能量场 (简化: 注入到agent当前位置)
+                if hasattr(self.env, 'energy_field') and self.env.energy_field is not None:
+                    positions = batch.positions
+                    gx = (positions[:, 0] / self.env.energy_field.resolution).long() % self.env.energy_field.grid_width
+                    gy = (positions[:, 1] / self.env.energy_field.resolution).long() % self.env.energy_field.grid_height
+                    
+                    # 每人平均分摊回归能量
+                    per_agent = recirculated / batch.n if batch.n > 0 else 0
+                    for i in range(batch.n):
+                        self.env.energy_field.field[0, 0, gy[i], gx[i]] += per_agent
+            except Exception:
+                pass
+        
         # 更新年龄
         if self.config.AGE_ENABLED:
             self.state.ages[idx] += dt
+    
+    # ============================================================================
+    # v15 T型迷宫更新 (POMDP)
+    # ============================================================================
+    def _update_t_maze(self, batch: ActiveBatch):
+        """更新T型迷宫状态"""
+        if not self.config.T_MAZE_ENABLED:
+            return
+        
+        idx = batch.indices
+        
+        # 更新回合步数
+        self.state.t_maze_episode_step[idx] += 1
+        
+        # 更新信号计时器
+        signal_active = self.state.t_maze_signal_timer[idx] > 0
+        self.state.t_maze_signal_timer[idx] = (self.state.t_maze_signal_timer[idx] - 1).clamp(min=0)
+        
+        # 信号结束时清除信号
+        signal_just_ended = signal_active & (self.state.t_maze_signal_timer[idx] == 0)
+        if signal_just_ended.any():
+            self.state.t_maze_signal[idx[signal_just_ended]] = 0
+        
+        # 决策点检测: 信号结束后BLIND_ZONE步到达决策点
+        decision_step = self.config.T_MAZE_SIGNAL_DURATION + self.config.T_MAZE_DECISION_DELAY
+        at_decision = (self.state.t_maze_episode_step[idx] == decision_step) & ~self.state.t_maze_decision_made[idx]
+        
+        # 回合结束检测: 超过决策点后重置
+        reset_step = decision_step + 10  # 决策后10步结束回合
+        reset_mask = (self.state.t_maze_episode_step[idx] > reset_step) & ~self.state.t_maze_decision_made[idx]
+        
+        if reset_mask.any():
+            # 重置回合 (开始新回合)
+            new_dirs = torch.randint(0, 2, (reset_mask.sum(),), device=self.device)
+            self.state.t_maze_correct_dir[idx[reset_mask]] = new_dirs
+            self.state.t_maze_signal[idx[reset_mask]] = new_dirs + 1
+            self.state.t_maze_signal_timer[idx[reset_mask]] = self.config.T_MAZE_SIGNAL_DURATION
+            self.state.t_maze_episode_step[idx[reset_mask]] = 0
+            self.state.t_maze_decision_made[idx[reset_mask]] = False
+            # 更新回合计数
+            self.state.t_maze_episodes[idx[reset_mask]] += 1
+        
+        # 资源周期性可见性
+        if self.config.RESOURCE_CYCLE_ENABLED:
+            cycle_pos = self.total_steps % self.config.RESOURCE_CYCLE_LENGTH
+            visible = cycle_pos < (self.config.RESOURCE_CYCLE_LENGTH - self.config.RESOURCE_FADE_STEPS)
+            self.state.resource_visible[idx] = visible
     
     def _apply_environment_interaction(self, batch: ActiveBatch, env: 'EnvironmentGPU'):
         """环境交互 - 摄食"""
@@ -1045,6 +1237,24 @@ class BatchedAgents:
         self.state.ages[child_indices] = 0.0
         
         # ============================================================
+        # v15 T型迷宫初始化: 新agent开始新回合
+        # ============================================================
+        if self.config.T_MAZE_ENABLED:
+            # 随机选择正确方向 (0=左, 1=右)
+            correct_dirs = torch.randint(0, 2, (n_spawn,), device=self.device)
+            self.state.t_maze_correct_dir[child_indices] = correct_dirs
+            
+            # 设置信号 (信号持续T_MAZE_SIGNAL_DURATION步)
+            self.state.t_maze_signal[child_indices] = correct_dirs + 1  # 1=左, 2=右
+            self.state.t_maze_signal_timer[child_indices] = self.config.T_MAZE_SIGNAL_DURATION
+            
+            # 重置回合状态
+            self.state.t_maze_episode_step[child_indices] = 0
+            self.state.t_maze_decision_made[child_indices] = False
+            
+            # 注意: episodes和correct在agent死亡时重置，这里继承父代
+        
+        # ============================================================
         # 超级节点继承 (演化棘轮)
         # 子代继承父代的超级节点数量
         # 有一定概率增加新的超级节点 (进化!)
@@ -1135,8 +1345,146 @@ class BatchedAgents:
     # 大脑管理 (保留兼容)
     # ============================================================================
     
-    def set_brains(self, genomes: List['OperatorGenome']):
-        """设置大脑矩阵 (异构大脑掩码对齐)"""
+    def _load_pretrained_genomes(self, n_agents: int) -> List['OperatorGenome']:
+        """从预训练文件加载脑结构"""
+        import json
+        from copy import deepcopy
+        
+        filepath = self.config.PRETRAINED_STRUCTURES_FILE
+        top_n = self.config.PRETRAINED_TOP_N
+        dup_factor = self.config.PRETRAINED_DUPLICATE_FACTOR
+        
+        print(f"[预加载] 从 {filepath} 加载Top {top_n} 结构...")
+        
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+        
+        structures = data.get('structures', {})
+        if isinstance(structures, dict):
+            structures = list(structures.values())
+        
+        # 按复杂度排序
+        structures = sorted(structures, key=lambda s: s.get('complexity_score', 0), reverse=True)
+        structures = structures[:top_n]
+        
+        if not structures:
+            print("[预加载] ⚠️ 未找到有效结构，回退到寒武纪初始化")
+            return None
+        
+        # 转换为OperatorGenome
+        genomes = []
+        for s in structures:
+            try:
+                genome = self._genome_from_structure(s)
+                genomes.append(genome)
+                print(f"  ✅ {s.get('structure_id', '?')}: {s.get('complexity_score', 0):.2f}分")
+            except Exception as e:
+                print(f"  ❌ 结构转换失败: {e}")
+        
+        if not genomes:
+            return None
+        
+        # 复制填充到n_agents
+        result = []
+        agent_id = 0
+        while agent_id < n_agents:
+            for g in genomes:
+                if agent_id >= n_agents:
+                    break
+                result.append(deepcopy(g))
+                agent_id += 1
+        
+        print(f"[预加载] ✅ 创建 {len(result)} 个Agent，使用 {len(genomes)} 种结构")
+        return result
+    
+    def _genome_from_structure(self, struct: Dict) -> 'OperatorGenome':
+        """从结构字典创建基因组"""
+        from core.eoe.node import Node, NodeType
+        from core.eoe.genome import OperatorGenome
+        
+        genome = OperatorGenome()
+        
+        # 添加节点
+        node_map = {}
+        next_node_id = 0
+        
+        for i, node_type in enumerate(struct['nodes']):
+            node = Node(node_id=next_node_id, node_type=NodeType(node_type))
+            genome.add_node(node)
+            node_map[i] = next_node_id
+            next_node_id += 1
+        
+        # 添加边
+        for edge in struct.get('edges', []):
+            if isinstance(edge, (list, tuple)) and len(edge) >= 3:
+                src, tgt, w = edge[0], edge[1], edge[2]
+            elif isinstance(edge, dict):
+                src = edge.get('source_id', edge.get('source', 0))
+                tgt = edge.get('target_id', edge.get('target', 0))
+                w = edge.get('weight', 0.5)
+            else:
+                continue
+            
+            if src in node_map and tgt in node_map:
+                genome.add_edge(node_map[src], node_map[tgt], w)
+        
+        return genome
+    
+    def _create_cambrian_genomes(self, n_agents: int) -> List['OperatorGenome']:
+        """寒武纪初始化: 随机生成初始基因组"""
+        import numpy as np
+        from core.eoe.node import Node, NodeType
+        from core.eoe.genome import OperatorGenome
+        
+        print(f"[寒武纪] 随机初始化 {n_agents} 个Agent...")
+        
+        genomes = []
+        for i in range(n_agents):
+            genome = OperatorGenome()
+            
+            n_nodes = np.random.randint(
+                self.config.CAMBRIAN_MIN_NODES,
+                self.config.CAMBRIAN_MAX_NODES + 1
+            )
+            
+            # 构建节点类型链
+            node_types = [NodeType.SENSOR]
+            for _ in range(n_nodes - 2):
+                rt = np.random.random()
+                if rt < self.config.CAMBRIAN_DELAY_PROB:
+                    node_types.append(NodeType.DELAY)
+                elif rt < self.config.CAMBRIAN_DELAY_PROB + self.config.CAMBRIAN_MULTIPLY_PROB:
+                    node_types.append(NodeType.MULTIPLY)
+                else:
+                    node_types.append(NodeType.THRESHOLD)
+            node_types.append(NodeType.ACTUATOR)
+            
+            # 添加节点
+            for j, nt in enumerate(node_types):
+                genome.add_node(Node(node_id=j, node_type=nt))
+            
+            # 添加边 (前馈为主)
+            for src in range(len(node_types) - 1):
+                if np.random.random() < 0.7:
+                    tgt = np.random.randint(src + 1, len(node_types))
+                    weight = self.config.SILENT_WEIGHT if self.config.SILENT_MUTATION else np.random.uniform(-0.5, 0.5)
+                    genome.add_edge(src, tgt, weight=weight)
+            
+            # 确保SENSOR有输出
+            if not any(e['source_id'] == 0 for e in genome.edges):
+                tgt = np.random.randint(1, len(node_types))
+                genome.add_edge(0, tgt, weight=self.config.SILENT_WEIGHT)
+            
+            genomes.append(genome)
+        
+        return genomes
+    
+    def set_brains(self, genomes: List['OperatorGenome'] = None):
+        """设置大脑矩阵 (异构大脑掩码对齐)
+        
+        Args:
+            genomes: 可选的基因组列表。如果PRETRAINED_INIT启用且genomes为空，则自动从文件加载
+        """
         # 只为活着的 Agent 构建
         batch = self.get_active_batch()
         n_alive = batch.n
@@ -1144,8 +1492,24 @@ class BatchedAgents:
         if n_alive == 0:
             return
         
+        # ================================================================
+        # 预加载脑结构机制: 如果启用且未提供genomes，则从文件加载
+        # ================================================================
+        if genomes is None and self.config.PRETRAINED_INIT and self.config.PRETRAINED_STRUCTURES_FILE:
+            genomes = self._load_pretrained_genomes(n_alive)
+        
+        # 如果仍然没有genomes且启用了寒武纪初始化，则随机生成
+        if not genomes and self.config.CAMBRIAN_INIT:
+            genomes = self._create_cambrian_genomes(n_alive)
+        
+        if not genomes:
+            raise ValueError("No genomes provided and neither pretrained nor cambrian init enabled")
+        
         max_nodes = max(len(g.nodes) for g in genomes[:n_alive]) if genomes else 4
         max_edges = max(len(g.edges) for g in genomes[:n_alive]) if genomes else 4
+        
+        # 确保max_nodes至少为10 (传感器维度)
+        max_nodes = max(max_nodes, 10)
         
         # 预分配大脑矩阵
         self.brain_matrix = torch.zeros(
@@ -1164,17 +1528,30 @@ class BatchedAgents:
         
         # 填充活着的 Agent
         for i, (idx, genome) in enumerate(zip(batch.indices.tolist(), genomes[:n_alive])):
+            # 同时填充genomes字典（供复杂度追踪器使用）
+            self.genomes[idx] = genome
+            
             nodes = list(genome.nodes.values())
             node_ids = {n.node_id: idx for idx, n in enumerate(nodes)}
             
             self.node_counts_tensor[idx] = len(nodes)
             self.state.node_counts[idx] = len(nodes)
             
-            for edge in genome.edges.values():
-                if edge.source in node_ids and edge.target in node_ids:
-                    src_idx = node_ids[edge.source]
-                    tgt_idx = node_ids[edge.target]
-                    self.brain_matrix[idx, src_idx, tgt_idx] = edge.weight
+            # 处理edges (可能是dict或对象)
+            for edge in genome.edges:
+                if isinstance(edge, dict):
+                    src = edge.get('source_id', edge.get('source'))
+                    tgt = edge.get('target_id', edge.get('target'))
+                    w = edge.get('weight', 0.5)
+                else:
+                    src = edge.source if hasattr(edge, 'source') else edge.source_id
+                    tgt = edge.target if hasattr(edge, 'target') else edge.target_id
+                    w = edge.weight if hasattr(edge, 'weight') else 0.5
+                
+                if src in node_ids and tgt in node_ids:
+                    src_idx = node_ids[src]
+                    tgt_idx = node_ids[tgt]
+                    self.brain_matrix[idx, src_idx, tgt_idx] = w
                     self.brain_masks[idx, src_idx, tgt_idx] = True
         
         # BMR 预编译
@@ -1188,8 +1565,11 @@ class BatchedAgents:
         
         bmr_values = []
         for genome in genomes:
-            node_cost = sum(node_costs[min(n.node_type.value, 6)].item() for n in genome.nodes.values())
-            edge_cost = len([e for e in genome.edges.values() if e['weight'] != 0]) * 0.0005
+            nodes = list(genome.nodes.values()) if hasattr(genome.nodes, 'values') else genome.nodes
+            node_cost = sum(node_costs[min(n.node_type.value, 6)].item() for n in nodes)
+            # 处理edges (可能是list)
+            edges = genome.edges if isinstance(genome.edges, list) else list(genome.edges.values())
+            edge_cost = len([e for e in edges if (e.get('weight') if isinstance(e, dict) else e.get('weight', 0)) != 0]) * 0.0005
             bmr_values.append(node_cost + edge_cost)
         
         batch = self.get_active_batch()
@@ -1203,14 +1583,21 @@ class BatchedAgents:
         batch = self.get_active_batch()
         idx = batch.indices
         n = batch.n
-        input_dim = sensors.shape[1]
         
         if n == 0:
             return torch.zeros(0, 5, device=self.device)
         
+        sensor_dim = sensors.shape[1]
+        max_nodes = self.brain_matrix.shape[1]
+        
+        # 填充传感器到max_nodes维度
+        if sensor_dim < max_nodes:
+            padding = torch.zeros(n, max_nodes - sensor_dim, device=self.device)
+            sensors = torch.cat([sensors, padding], dim=1)
+        
         # 获取当前 Agent 的脑矩阵
-        W = self.brain_matrix[idx, :input_dim, :32]
-        M = self.brain_masks[idx, :input_dim, :32]
+        W = self.brain_matrix[idx, :max_nodes, :32]
+        M = self.brain_masks[idx, :max_nodes, :32]
         
         W_masked = W * M
         hidden = torch.bmm(sensors.unsqueeze(1), W_masked).squeeze(1)
@@ -1231,12 +1618,12 @@ class BatchedAgents:
         """批量获取传感器 (兼容旧版)"""
         batch = self.get_active_batch()
         if batch.n == 0:
-            return torch.zeros(0, 7, device=self.device)
+            return torch.zeros(0, 10, device=self.device)  # 9 field + 1 energy
         
         try:
             field_values = env.get_field_values(batch.positions)
         except Exception:
-            field_values = torch.zeros(batch.n, 6, device=self.device)
+            field_values = torch.zeros(batch.n, 9, device=self.device)  # 实际是9维
         
         energy_norm = torch.clamp(batch.energies / 200.0, 0, 1)
         
