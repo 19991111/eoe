@@ -79,49 +79,76 @@ class StigmergyField:
             [0, 1, 0]
         ], dtype=np.float64)
         
-    def step(self):
-        """单步更新: 扩散 -> 衰减"""
-        self._diffuse()
+    def step(self, matter_grid: Optional[np.ndarray] = None):
+        """
+        单步更新: 扩散 -> 衰减
+        
+        Args:
+            matter_grid: 可选的物质网格，用于遮挡扩散
+        """
+        self._diffuse(matter_grid)
         self._decay()
         
         # 标记梯度需要重新计算
         self.gradient_valid = False
         
-    def _diffuse(self):
-        """空间扩散 - 使用卷积实现拉普拉斯算子"""
+    def _diffuse(self, matter_grid: Optional[np.ndarray] = None):
+        """
+        空间扩散 - 使用卷积实现拉普拉斯算子
+        
+        v16.0 增强: MatterGrid 遮挡 (防止量子隧穿)
+        - 必须在卷积前和后都应用掩码
+        - 否则3x3卷积核会透过1像素的墙
+        """
+        # v16.0: 应用前置掩码 (防止墙后接收墙前扩散)
+        if matter_grid is not None:
+            # 1 = 可通行, 0 = 墙壁
+            mask = (matter_grid == 0).astype(np.float64)
+            masked_field = self.field * mask
+        else:
+            masked_field = self.field
+        
+        # 扩散计算
         try:
             from scipy.ndimage import convolve
-            laplacian = convolve(self.field, self._laplacian_kernel, mode='constant', cval=0.0)
+            laplacian = convolve(masked_field, self._laplacian_kernel, mode='constant', cval=0.0)
         except ImportError:
             # 回退: 手动向量化
             laplacian = np.zeros_like(self.field)
             laplacian[1:-1, 1:-1] = (
-                self.field[0:-2, 1:-1] +
-                self.field[2:, 1:-1] +
-                self.field[1:-1, 0:-2] +
-                self.field[1:-1, 2:] -
-                4 * self.field[1:-1, 1:-1]
+                masked_field[0:-2, 1:-1] +
+                masked_field[2:, 1:-1] +
+                masked_field[1:-1, 0:-2] +
+                masked_field[1:-1, 2:] -
+                4 * masked_field[1:-1, 1:-1]
             )
             # 边界 (环形世界)
             laplacian[0, :] = (
-                self.field[-1, :] + self.field[1, :] +
-                self.field[0, :-1] + self.field[0, 1:] - 4 * self.field[0, :]
+                masked_field[-1, :] + masked_field[1, :] +
+                masked_field[0, :-1] + masked_field[0, 1:] - 4 * masked_field[0, :]
             )
             laplacian[-1, :] = (
-                self.field[-2, :] + self.field[0, :] +
-                self.field[-1, :-1] + self.field[-1, 1:] - 4 * self.field[-1, :]
+                masked_field[-2, :] + masked_field[0, :] +
+                masked_field[-1, :-1] + masked_field[-1, 1:] - 4 * masked_field[-1, :]
             )
             laplacian[:, 0] = (
-                self.field[:, -1] + self.field[:, 1] +
-                self.field[:-1, 0] + self.field[1:, 0] - 4 * self.field[:, 0]
+                masked_field[:, -1] + masked_field[:, 1] +
+                masked_field[:-1, 0] + masked_field[1:, 0] - 4 * masked_field[:, 0]
             )
             laplacian[:, -1] = (
-                self.field[:, -2] + self.field[:, 0] +
-                self.field[:-1, -1] + self.field[1:, -1] - 4 * self.field[:, -1]
+                masked_field[:, -2] + masked_field[:, 0] +
+                masked_field[:-1, -1] + masked_field[1:, -1] - 4 * masked_field[:, -1]
             )
         
         # 扩散更新
-        self.field += self.diffusion_rate * laplacian
+        new_field = self.field + self.diffusion_rate * laplacian
+        
+        # v16.0: 应用后置掩码 (防止墙前受墙后回流)
+        if matter_grid is not None:
+            mask = (matter_grid == 0).astype(np.float64)
+            new_field = new_field * mask
+        
+        self.field = new_field
         
         # 裁剪负值
         np.maximum(0, self.field, out=self.field)

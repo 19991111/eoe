@@ -84,6 +84,10 @@ class NodeType(Enum):
     ACTUATOR_SIGNAL = auto()        # λ 信号强度 [0,1] - ReLU/Sigmoid
     ACTUATOR_DEFENSE = auto()       # S 防御刚性 [0,1] - Sigmoid
 
+    # v16.0: 构成性执行器
+    ACTUATOR_CONSTRUCT = auto()     # 建造: 消耗能量生成物质块
+    ACTUATOR_DECONSTRUCT = auto()   # 分解: 破坏物质块回收能量
+
 
 class Node:
     """

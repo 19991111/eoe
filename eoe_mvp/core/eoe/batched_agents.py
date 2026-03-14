@@ -158,6 +158,23 @@ class PoolConfig:
     # ================================================================
     ENERGY_RECIRCULATION_ENABLED = True   # 启用能量循环
     ENERGY_RECIRCULATION_RATIO = 0.6      # 60%代谢能量回归环境
+    
+    # ================================================================
+    # v16.0 构成性环境 (Matter Grid)
+    # ================================================================
+    MATTER_GRID_ENABLED = False        # 启用物质场
+    MATTER_RESOLUTION = 1.0            # 物质场分辨率
+    
+    # 建造/分解参数
+    CONSTRUCT_ENERGY_COST = 15.0       # 建造消耗能量
+    CONSTRUCT_MIN_ENERGY = 25.0        # 建造所需最小能量
+    DECONSTRUCT_ENERGY_GAIN = 15.0     # 分解回收能量 (全额返还)
+    CONSTRUCT_COOLDOWN = 5             # 建造/分解冷却步数
+    CONSTRUCT_DISTANCE_FACTOR = 1.0    # 建造距离 = radius * factor
+    
+    # 脑输出通道配置
+    N_BRAIN_OUTPUTS = 5                # 默认5通道 (兼容旧版)
+    N_BRAIN_OUTPUTS_V16 = 7            # v16.0 7通道 (含建造/分解)
     PREY_DETECTION_RANGE = 25.0      # 猎物感知范围
     PREY_ESCAPE_TRIGGER = 15.0       # 触发逃跑距离
     PREY_ESCAPE_SPEED = 2.0          # 逃跑速度
@@ -520,13 +537,20 @@ class BatchedAgents:
             return {'n_alive': 0, 'births': 0, 'deaths': 0}
         
         # 1. 大脑推理
+        # v16.0: 根据配置确定输出通道数
+        n_outputs = self.config.N_BRAIN_OUTPUTS if not self.config.MATTER_GRID_ENABLED else self.config.N_BRAIN_OUTPUTS_V16
+        
         if brain_fn is not None:
             brain_outputs = brain_fn(batch)
         else:
-            brain_outputs = torch.zeros(batch.n, 5, device=self.device)
+            brain_outputs = torch.zeros(batch.n, n_outputs, device=self.device)
         
         # 2. 物理更新
         self._apply_physics(batch, brain_outputs, dt)
+        
+        # 2.5 v16.0: 建造/分解动作
+        if self.config.MATTER_GRID_ENABLED and env is not None:
+            self._apply_construction(batch, brain_outputs, env)
         
         # 3. 代谢扣除
         self._apply_metabolism(batch, dt)
@@ -627,6 +651,9 @@ class BatchedAgents:
         self.state.angular_velocity[idx] *= friction
         self.state.angular_velocity[idx] += (thrust_x * 0.1) * dt
         
+        # 记录旧位置（用于碰撞恢复）
+        old_positions = self.state.positions[idx].clone()
+        
         # 位置更新 (非全向)
         self.state.positions[idx, 0] += self.state.linear_velocity[idx] * \
             torch.cos(self.state.thetas[idx]) * dt
@@ -636,10 +663,185 @@ class BatchedAgents:
         # 朝向更新
         self.state.thetas[idx] += self.state.angular_velocity[idx] * dt
         
+        # ============================================================
+        # v16.0: MatterGrid 碰撞检测
+        # 如果新位置是固体，恢复到旧位置
+        # ============================================================
+        if hasattr(self, 'env') and self.env is not None:
+            if hasattr(self.env, 'matter_grid') and self.env.matter_grid is not None:
+                self._apply_matter_collision(batch, old_positions)
+        
         # 写回其他状态
         self.state.permeabilities[idx] = permeabilities
         self.state.defenses[idx] = defenses
         self.state.signals[idx] = signals
+    
+    def _apply_matter_collision(self, batch: ActiveBatch, old_positions: torch.Tensor):
+        """应用 MatterGrid 碰撞检测"""
+        idx = batch.indices
+        device = self.state.positions.device
+        
+        # 获取新位置
+        new_pos = self.state.positions[idx]
+        
+        # 转换为网格坐标
+        if not hasattr(self.env, 'matter_grid') or self.env.matter_grid is None:
+            return
+            
+        # 使用环境分辨率
+        resolution = getattr(self.env, 'matter_resolution', 1.0)
+        grid_w = self.env.matter_grid.shape[3]  # [1, 1, H, W]
+        grid_h = self.env.matter_grid.shape[2]
+        
+        # 计算新位置的网格坐标
+        new_gx = (new_pos[:, 0] / resolution).long() % grid_w
+        new_gy = (new_pos[:, 1] / resolution).long() % grid_h
+        
+        # 采样 matter_grid
+        # matter_grid shape: [1, 1, H, W]
+        try:
+            collision = self.env.matter_grid[0, 0, new_gy, new_gx].bool()
+            
+            # 如果发生碰撞，恢复到旧位置
+            if collision.any():
+                self.state.positions[idx][collision] = old_positions[collision]
+                # 碰撞时速度清零
+                self.state.linear_velocity[idx][collision] = 0.0
+        except Exception:
+            pass  # 静默失败
+    
+    def _apply_construction(self, batch: ActiveBatch, brain_outputs: torch.Tensor, env: 'EnvironmentGPU'):
+        """
+        v16.0: 应用建造/分解动作
+        
+        脑输出通道:
+        - 5: CONSTRUCT (建造) - 激活则建造
+        - 6: DECONSTRUCT (分解) - 激活则分解
+        
+        Review #2: 建造距离 = agent.radius + resolution (防止自我活埋)
+        Review #3: 能量守恒 - 墙壁存储能量，分解全额返还
+        Review #4: GPU并发竞争处理 - 使用去重逻辑
+        """
+        if not self.config.MATTER_GRID_ENABLED:
+            return
+        
+        idx = batch.indices
+        n = batch.n
+        
+        # 检查输出维度是否足够
+        if brain_outputs.shape[1] < 7:
+            return
+        
+        # 解码建造/分解输出
+        construct_activation = torch.sigmoid(brain_outputs[:, 5])  # [N]
+        deconstruct_activation = torch.sigmoid(brain_outputs[:, 6])  # [N]
+        
+        # 建造阈值
+        CONSTRUCT_THRESHOLD = 0.5
+        DECONSTRUCT_THRESHOLD = 0.5
+        
+        # 获取当前能量
+        energies = self.state.energies[idx]
+        
+        # ========== 建造动作 ==========
+        can_construct = (
+            (construct_activation > CONSTRUCT_THRESHOLD) &
+            (energies >= self.config.CONSTRUCT_MIN_ENERGY)
+        )
+        
+        if can_construct.any():
+            # 计算目标位置 (前方)
+            # Review #2: 距离必须大于 agent.radius
+            positions = self.state.positions[idx]
+            thetas = self.state.thetas[idx]
+            
+            # 假设 agent.radius = 1.0 (或从配置获取)
+            agent_radius = 1.0
+            forward_dist = agent_radius + self.config.CONSTRUCT_DISTANCE_FACTOR
+            
+            target_x = positions[can_construct, 0] + torch.cos(thetas[can_construct]) * forward_dist
+            target_y = positions[can_construct, 1] + torch.sin(thetas[can_construct]) * forward_dist
+            
+            # 执行建造 (CPU 环境)
+            if hasattr(env, 'matter_grid') and env.matter_grid is not None:
+                # Review #4: GPU并发竞争处理 - 去重逻辑
+                # 将目标坐标转换为网格索引，进行去重
+                resolution = getattr(env, 'matter_resolution', 1.0)
+                grid_w = env.matter_grid.shape[3]
+                
+                target_gx = (target_x.cpu().numpy() / resolution).astype(np.int32) % grid_w
+                target_gy = (target_y.cpu().numpy() / resolution).astype(np.int32) % env.matter_grid.shape[2]
+                
+                # 创建唯一索引
+                grid_indices = target_gy * grid_w + target_gx
+                unique_indices, inverse_idx = np.unique(grid_indices, return_inverse=True)
+                
+                # 每个唯一格子只执行一次建造
+                construct_indices = torch.where(can_construct)[0]
+                
+                for uidx in unique_indices:
+                    # 找到所有想建造在这个格子的 agent
+                    mask = (inverse_idx == np.where(unique_indices == uidx)[0][0])
+                    
+                    # 只处理第一个（按能量排序可选）
+                    agent_idx = construct_indices[np.where(mask)[0][0]]
+                    
+                    tx = target_x[mask][0].item()
+                    ty = target_y[mask][0].item()
+                    
+                    if env.is_solid(tx, ty):
+                        continue  # 已有物质，跳过
+                    
+                    # 建造并存储能量
+                    if env.add_matter(tx, ty, stored_energy=self.config.CONSTRUCT_ENERGY_COST):
+                        # 扣除能量 (只扣一次)
+                        self.state.energies[idx[agent_idx]] -= self.config.CONSTRUCT_ENERGY_COST
+        
+        # ========== 分解动作 ==========
+        can_deconstruct = deconstruct_activation > DECONSTRUCT_THRESHOLD
+        
+        if can_deconstruct.any():
+            positions = self.state.positions[idx]
+            thetas = self.state.thetas[idx]
+            
+            forward_dist = agent_radius + self.config.CONSTRUCT_DISTANCE_FACTOR
+            
+            target_x = positions[can_deconstruct, 0] + torch.cos(thetas[can_deconstruct]) * forward_dist
+            target_y = positions[can_deconstruct, 1] + torch.sin(thetas[can_deconstruct]) * forward_dist
+            
+            # 执行分解 (带去重)
+            if hasattr(env, 'matter_grid') and env.matter_grid is not None:
+                # Review #4: 去重逻辑
+                resolution = getattr(env, 'matter_resolution', 1.0)
+                grid_w = env.matter_grid.shape[3]
+                
+                target_gx = (target_x.cpu().numpy() / resolution).astype(np.int32) % grid_w
+                target_gy = (target_y.cpu().numpy() / resolution).astype(np.int32) % env.matter_grid.shape[2]
+                
+                grid_indices = target_gy * grid_w + target_gx
+                unique_indices, inverse_idx = np.unique(grid_indices, return_inverse=True)
+                
+                deconstruct_indices = torch.where(can_deconstruct)[0]
+                
+                for uidx in unique_indices:
+                    mask = (inverse_idx == np.where(unique_indices == uidx)[0][0])
+                    
+                    agent_idx = deconstruct_indices[np.where(mask)[0][0]]
+                    
+                    tx = target_x[mask][0].item()
+                    ty = target_y[mask][0].item()
+                    
+                    if not env.is_solid(tx, ty):
+                        continue  # 无物质可分解
+                    
+                    # 获取存储的能量并回收
+                    stored_energy = env.get_matter_energy(tx, ty)
+                    if stored_energy is None:
+                        stored_energy = self.config.DECONSTRUCT_ENERGY_GAIN
+                    
+                    if env.remove_matter(tx, ty):
+                        # Review #3: 全额返还能量 (只返一次)
+                        self.state.energies[idx[agent_idx]] += stored_energy
     
     def _apply_metabolism(self, batch: ActiveBatch, dt: float):
         """代谢能耗 (含年龄惩罚 + 迷宫阻抗)"""
@@ -772,6 +974,36 @@ class BatchedAgents:
                         self.env.energy_field.field[0, 0, gy[i], gx[i]] += per_agent
             except Exception:
                 pass
+        
+        # ============================================================
+        # v16.0: 风场伤害 (Wind Field)
+        # 暴露在风中会受到持续伤害
+        # ============================================================
+        if self.config.MATTER_GRID_ENABLED and hasattr(self, 'env') and self.env is not None:
+            if hasattr(self.env, 'wind_field') and self.env.wind_field is not None:
+                if self.env.wind_field.enabled:
+                    # 使用射线投射检测是否有遮挡
+                    positions = batch.positions
+                    
+                    # 简化实现: 检查智能体位置是否在墙后
+                    # (完整实现需要 ray_cast_batch)
+                    if hasattr(self.env, 'matter_grid') and self.env.matter_grid is not None:
+                        resolution = getattr(self.env, 'matter_resolution', 1.0)
+                        grid_w = self.env.matter_grid.shape[3]
+                        grid_h = self.env.matter_grid.shape[2]
+                        
+                        gx = (positions[:, 0] / resolution).long() % grid_w
+                        gy = (positions[:, 1] / resolution).long() % grid_h
+                        
+                        # 采样 matter_grid
+                        in_shelter = self.env.matter_grid[0, 0, gy, gx].bool()
+                        
+                        # 暴露在风中的受伤
+                        wind_damage = self.env.wind_field.damage_rate
+                        damage_mask = ~in_shelter
+                        
+                        if damage_mask.any():
+                            self.state.energies[idx[damage_mask]] -= wind_damage
         
         # 更新年龄
         if self.config.AGE_ENABLED:
@@ -1593,15 +1825,18 @@ class BatchedAgents:
     
     def forward_brains(self, sensors: torch.Tensor) -> torch.Tensor:
         """批量前向传播"""
+        # v16.0: 根据配置确定输出通道数
+        n_outputs = self.config.N_BRAIN_OUTPUTS if not self.config.MATTER_GRID_ENABLED else self.config.N_BRAIN_OUTPUTS_V16
+        
         if self.brain_matrix is None:
-            return torch.zeros(sensors.shape[0], 5, device=self.device)
+            return torch.zeros(sensors.shape[0], n_outputs, device=self.device)
         
         batch = self.get_active_batch()
         idx = batch.indices
         n = batch.n
         
         if n == 0:
-            return torch.zeros(0, 5, device=self.device)
+            return torch.zeros(0, n_outputs, device=self.device)
         
         sensor_dim = sensors.shape[1]
         max_nodes = self.brain_matrix.shape[1]
@@ -1619,8 +1854,9 @@ class BatchedAgents:
         hidden = torch.bmm(sensors.unsqueeze(1), W_masked).squeeze(1)
         hidden = torch.relu(hidden)
         
-        W2 = self.brain_matrix[idx, :32, :5]
-        M2 = self.brain_masks[idx, :32, :5]
+        # v16.0: 根据配置使用不同的输出维度
+        W2 = self.brain_matrix[idx, :32, :n_outputs]
+        M2 = self.brain_masks[idx, :32, :n_outputs]
         W2_masked = W2 * M2
         output = torch.bmm(hidden.unsqueeze(1), W2_masked).squeeze(1)
         

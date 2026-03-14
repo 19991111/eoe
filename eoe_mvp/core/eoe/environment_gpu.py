@@ -413,17 +413,36 @@ class StigmergyFieldGPU:
         ], device=device, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         return kernel * self.diffusion_rate
     
-    def step(self):
-        """单步扩散"""
+    def step(self, matter_grid: Optional[torch.Tensor] = None):
+        """
+        单步扩散
+        
+        v16.0 增强: MatterGrid 遮挡 (防止量子隧穿)
+        - 必须在卷积前和后都应用掩码
+        """
+        # v16.0: 应用前置掩码
+        if matter_grid is not None:
+            # matter_grid: [1, 1, H, W], 0=墙, 1=空
+            mask = (matter_grid == 0).float()
+            masked_field = self.field * mask
+        else:
+            masked_field = self.field
+        
         # 卷积扩散 (GPU 加速)
         diffused = F.conv2d(
-            self.field, 
+            masked_field, 
             self._diffusion_kernel, 
             padding=1
         )
         
         # 更新场
-        self.field = self.field + diffused
+        new_field = self.field + diffused
+        
+        # v16.0: 应用后置掩码
+        if matter_grid is not None:
+            new_field = new_field * mask
+        
+        self.field = new_field
         
         # 衰减
         self.field *= self.decay_rate
@@ -556,7 +575,10 @@ class EnvironmentGPU:
         season_length: int = 3000,
         winter_multiplier: float = 0.15,
         summer_multiplier: float = 1.8,
-        drought_intensity: float = 0.08
+        drought_intensity: float = 0.08,
+        # v16.0: 构成性物质场
+        matter_grid_enabled: bool = False,
+        matter_resolution: float = 1.0
     ):
         self.width = width
         self.height = height
@@ -614,6 +636,31 @@ class EnvironmentGPU:
         self.kif_grad_y = None
         self.isf_grad_x = None
         self.isf_grad_y = None
+
+        # ============================================================
+        # v16.0: 构成性物质场 (Matter Grid)
+        # ============================================================
+        self.matter_grid_enabled = matter_grid_enabled
+        self.matter_resolution = matter_resolution
+
+        if matter_grid_enabled:
+            self.matter_grid_width = int(width / matter_resolution)
+            self.matter_grid_height = int(height / matter_resolution)
+            # Boolean grid: 0 = empty, 1 = solid matter
+            self.matter_grid = torch.zeros(
+                1, 1, self.matter_grid_height, self.matter_grid_width,
+                device=device, dtype=torch.int8
+            )
+            # 能量存储网格 (用于全局能量守恒)
+            self.matter_energy = torch.zeros(
+                1, 1, self.matter_grid_height, self.matter_grid_width,
+                device=device, dtype=torch.float32
+            )
+            print(f"  ✅ MatterGrid: {self.matter_grid_width}x{self.matter_grid_height}")
+            print(f"    Energy storage enabled for conservation")
+        else:
+            self.matter_grid = None
+            self.matter_energy = None
         
         # 性能统计
         self.step_count = 0
@@ -687,7 +734,8 @@ class EnvironmentGPU:
             self.impedance_field.step()
         
         if self.stigmergy_field_enabled:
-            self.stigmergy_field.step()
+            # v16.0: 传入 matter_grid 实现遮挡
+            self.stigmergy_field.step(matter_grid=self.matter_grid)
         
         # 2. 预计算梯度 (每个场每步计算一次)
         self._compute_gradients()
@@ -852,6 +900,58 @@ class EnvironmentGPU:
             'min_step_time_ms': np.min(self.step_times),
             'max_step_time_ms': np.max(self.step_times),
         }
+
+    # ============================================================
+    # v16.0: 构成性物质场辅助方法 (Matter Grid)
+    # ============================================================
+
+    def is_solid(self, x: float, y: float) -> bool:
+        """检查坐标是否为固体物质 (GPU tensor version)"""
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        return self.matter_grid[0, 0, gy, gx].item() == 1
+
+    def add_matter(self, x: float, y: float, stored_energy: float = 0.0) -> bool:
+        """
+        在指定坐标添加物质，返回是否成功
+
+        Args:
+            x, y: 目标坐标
+            stored_energy: 物质中存储的能量（用于守恒）
+        """
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[0, 0, gy, gx].item() == 0:
+            self.matter_grid[0, 0, gy, gx] = 1
+            self.matter_energy[0, 0, gy, gx] = stored_energy
+            return True
+        return False
+
+    def remove_matter(self, x: float, y: float) -> bool:
+        """移除指定坐标的物质"""
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[0, 0, gy, gx].item() == 1:
+            self.matter_grid[0, 0, gy, gx] = 0
+            self.matter_energy[0, 0, gy, gx] = 0.0
+            return True
+        return False
+
+    def get_matter_energy(self, x: float, y: float) -> Optional[float]:
+        """获取指定坐标物质存储的能量"""
+        if self.matter_grid is None or self.matter_energy is None:
+            return None
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[0, 0, gy, gx].item() == 1:
+            return self.matter_energy[0, 0, gy, gx].item()
+        return None
 
 
 def benchmark_environment_gpu(n_steps: int = 100):

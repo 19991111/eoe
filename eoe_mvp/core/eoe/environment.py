@@ -743,7 +743,16 @@ class Environment:
         stress_field_enabled: bool = False,       # 是否启用应力场
         stress_resolution: float = 2.0,           # 应力场分辨率
         stress_temp_period: int = 200,            # 温度周期
-        stress_season_length: int = 200           # 应力周期
+        stress_season_length: int = 200,          # 应力周期
+        # ============================================================
+        # v16.0: 构成性物质场 (Matter Grid)
+        # ============================================================
+        matter_grid_enabled: bool = False,        # 是否启用物质场
+        matter_resolution: float = 1.0,           # 物质场分辨率
+        # v16.0: 风场 (Wind Field) - Phase 3 挡风墙测试
+        wind_field_enabled: bool = False,         # 是否启用风场
+        wind_direction: float = 0.0,              # 风向 (弧度)
+        wind_damage_rate: float = 0.1             # 风伤害率
     ):
         self.width = width
         self.height = height
@@ -869,6 +878,55 @@ class Environment:
         else:
             self.stress_field = None
             self.stress_law = None
+
+        # ============================================================
+        # v16.0: 构成性物质场 (Matter Grid)
+        # 智能体可以建造/破坏的永久物理实体
+        # ============================================================
+        self.matter_grid_enabled = matter_grid_enabled
+        self.matter_resolution = matter_resolution
+
+        if matter_grid_enabled:
+            self.matter_grid_width = int(width / matter_resolution)
+            self.matter_grid_height = int(height / matter_resolution)
+            # Boolean grid: 0 = empty, 1 = solid matter
+            self.matter_grid = np.zeros(
+                (self.matter_grid_width, self.matter_grid_height),
+                dtype=np.int8
+            )
+            # 能量存储网格 (用于全局能量守恒)
+            self.matter_energy = np.zeros(
+                (self.matter_grid_width, self.matter_grid_height),
+                dtype=np.float32
+            )
+            print(f"  [MatterGrid] Enabled: {self.matter_grid_width}x{self.matter_grid_height}")
+            print(f"    Energy storage enabled for conservation")
+        else:
+            self.matter_grid = None
+            self.matter_energy = None
+
+        # ============================================================
+        # v16.0: 风场 (Wind Field) - Phase 3 挡风墙测试
+        # ============================================================
+        self.wind_field_enabled = wind_field_enabled
+        
+        if wind_field_enabled:
+            try:
+                from core.eoe.fields.wind import WindField
+                self.wind_field = WindField(
+                    width=width,
+                    height=height,
+                    direction=wind_direction,
+                    damage_rate=wind_damage_rate,
+                    enabled=True,
+                    resolution=matter_resolution
+                )
+                print(f"  [WindField] Enabled: direction={wind_direction} rad, damage={wind_damage_rate}")
+            except ImportError:
+                print(f"  [WindField] Failed to import, skipping")
+                self.wind_field = None
+        else:
+            self.wind_field = None
 
         # ============================================================
         # v13.0: 预计算梯度矩阵 (性能优化)
@@ -1253,6 +1311,94 @@ class Environment:
                fx*fy*self._temp_grid[ix+1, iy+1]
 
         return temp
+
+    # ============================================================
+    # v16.0: 构成性物质场辅助方法 (Matter Grid)
+    # ============================================================
+
+    def is_solid(self, x: float, y: float) -> bool:
+        """检查坐标是否为固体物质"""
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        return self.matter_grid[gx, gy] == 1
+
+    def add_matter(self, x: float, y: float, stored_energy: float = 0.0) -> bool:
+        """
+        在指定坐标添加物质，返回是否成功
+
+        Args:
+            x, y: 目标坐标
+            stored_energy: 物质中存储的能量（用于守恒）
+        """
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[gx, gy] == 0:
+            self.matter_grid[gx, gy] = 1
+            self.matter_energy[gx, gy] = stored_energy
+            return True
+        return False
+
+    def remove_matter(self, x: float, y: float) -> bool:
+        """移除指定坐标的物质"""
+        if self.matter_grid is None:
+            return False
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[gx, gy] == 1:
+            self.matter_grid[gx, gy] = 0
+            self.matter_energy[gx, gy] = 0.0
+            return True
+        return False
+
+    def get_matter_energy(self, x: float, y: float) -> Optional[float]:
+        """获取指定坐标物质存储的能量"""
+        if self.matter_grid is None or self.matter_energy is None:
+            return None
+        gx = int(x / self.matter_resolution) % self.matter_grid_width
+        gy = int(y / self.matter_resolution) % self.matter_grid_height
+        if self.matter_grid[gx, gy] == 1:
+            return self.matter_energy[gx, gy]
+        return None
+
+    def ray_cast(
+        self,
+        start: Tuple[float, float],
+        direction: float,
+        max_distance: float = 50.0
+    ) -> Tuple[bool, float]:
+        """
+        射线投射 - 检测沿某方向是否有物质遮挡
+        
+        Args:
+            start: 起始位置 (x, y)
+            direction: 方向 (弧度)
+            max_distance: 最大投射距离
+            
+        Returns:
+            (hit_solid, distance) - 是否击中固体及距离
+        """
+        if self.matter_grid is None:
+            return False, max_distance
+        
+        cos_d = np.cos(direction)
+        sin_d = np.sin(direction)
+        
+        # 步进采样
+        step_size = self.matter_resolution
+        steps = int(max_distance / step_size)
+        
+        for i in range(steps):
+            x = start[0] + cos_d * (i * step_size)
+            y = start[1] + sin_d * (i * step_size)
+            
+            if self.is_solid(x, y):
+                return True, i * step_size
+        
+        return False, max_distance
 
     def enable_morphological_computation(self, enabled: bool = True,
                                           adhesion_range: float = 2.5,
@@ -3485,9 +3631,10 @@ class Environment:
 
         # ============================================================
         # v13.0: 压痕场更新 (扩散 + 衰减)
+        # v16.0: 传入 matter_grid 实现遮挡 (防止量子隧穿)
         # ============================================================
         if self.stigmergy_field_enabled and self.stigmergy_field:
-            self.stigmergy_field.step()
+            self.stigmergy_field.step(matter_grid=self.matter_grid)
 
         # ============================================================
         # v13.0: 应力场 - 场间耦合 (调制物理常数)
