@@ -128,11 +128,16 @@ class SubgraphMiner:
         # 转换为Python列表 (解决tensor key问题)
         alive_list = alive_indices.cpu().tolist()
 
-        # 按能量排序，取Top K
+        # 按能量排序，取Top K (如果没有energy属性，用节点数代替)
         energy_list = []
         for idx in alive_list:
             g = genomes[idx]
-            e = g.total_energy if hasattr(g, 'total_energy') else g.energy
+            if hasattr(g, 'total_energy'):
+                e = g.total_energy
+            elif hasattr(g, 'energy'):
+                e = g.energy
+            else:
+                e = len(g.nodes)  # 用节点数作为后备
             energy_list.append(float(e))
         energies = torch.tensor(energy_list, device=self.device)
 

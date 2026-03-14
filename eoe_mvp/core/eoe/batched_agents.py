@@ -21,6 +21,13 @@ import numpy as np
 from typing import Optional, Tuple, List, Dict, Callable
 from dataclasses import dataclass
 
+# 诊断模块
+try:
+    from core.eoe.diagnostics import EvolutionDiagnostics
+    DIAGNOSTICS_AVAILABLE = True
+except ImportError:
+    DIAGNOSTICS_AVAILABLE = False
+
 
 # ============================================================================
 # 配置
@@ -111,6 +118,11 @@ class PoolConfig:
     SUMMER_MULTIPLIER = 1.5          # 夏季能量倍率 (150%)
     DROUGHT_ENABLED = True           # 启用干旱期
     DROUGHT_INTENSITY = 0.05         # 干旱期能量倍率 (5%)
+    
+    # ================================================================
+    # v14.1 诊断系统
+    # ================================================================
+    DIAGNOSTICS_ENABLED = True       # 启用诊断监控
 
 
 # ============================================================================
@@ -302,6 +314,20 @@ class BatchedAgents:
             self.manifest = None
             self.evo_mechanisms = []
             self.event_mechanisms = []
+        
+        # ================================================================
+        # v14.1 诊断系统
+        # ================================================================
+        if DIAGNOSTICS_AVAILABLE and getattr(self.config, 'DIAGNOSTICS_ENABLED', True):
+            self.diagnostics = EvolutionDiagnostics(
+                max_agents=max_agents,
+                device=device,
+                log_interval=500,
+                history_size=2000
+            )
+            print(f"  ✅ 诊断系统已启用")
+        else:
+            self.diagnostics = None
         
         print(f"  ✅ 掩码池初始化完成")
     
