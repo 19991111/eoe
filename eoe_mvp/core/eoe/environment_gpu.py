@@ -578,7 +578,11 @@ class EnvironmentGPU:
         drought_intensity: float = 0.08,
         # v16.0: 构成性物质场
         matter_grid_enabled: bool = False,
-        matter_resolution: float = 1.0
+        matter_resolution: float = 1.0,
+        # v16.0: 风场
+        wind_field_enabled: bool = False,
+        wind_direction: float = 0.0,
+        wind_damage_rate: float = 0.1
     ):
         self.width = width
         self.height = height
@@ -661,6 +665,30 @@ class EnvironmentGPU:
         else:
             self.matter_grid = None
             self.matter_energy = None
+        
+        # ============================================================
+        # v16.0: 风场 (Wind Field) - Phase 3 挡风墙测试
+        # ============================================================
+        self.wind_field_enabled = wind_field_enabled
+        
+        if wind_field_enabled:
+            try:
+                from core.eoe.fields.wind import WindFieldGPU
+                self.wind_field = WindFieldGPU(
+                    width=width,
+                    height=height,
+                    direction=wind_direction,
+                    damage_rate=wind_damage_rate,
+                    device=device,
+                    enabled=True,
+                    resolution=matter_resolution
+                )
+                print(f"  ✅ WindField: direction={wind_direction} rad, damage={wind_damage_rate}")
+            except ImportError as e:
+                print(f"  ⚠️  WindField import failed: {e}")
+                self.wind_field = None
+        else:
+            self.wind_field = None
         
         # 性能统计
         self.step_count = 0
@@ -928,6 +956,8 @@ class EnvironmentGPU:
         if self.matter_grid[0, 0, gy, gx].item() == 0:
             self.matter_grid[0, 0, gy, gx] = 1
             self.matter_energy[0, 0, gy, gx] = stored_energy
+            # 调试: 跟踪建造
+            # print(f"    [墙壁] 建造于 ({gx}, {gy}), 共 {self.matter_grid.sum().item()} 个")
             return True
         return False
 
