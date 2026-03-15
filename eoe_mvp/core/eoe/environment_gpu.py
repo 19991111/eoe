@@ -582,7 +582,12 @@ class EnvironmentGPU:
         # v16.0: 风场
         wind_field_enabled: bool = False,
         wind_direction: float = 0.0,
-        wind_damage_rate: float = 0.1
+        wind_damage_rate: float = 0.1,
+        # v16.1: Flickering Energy Field
+        flickering_energy_enabled: bool = False,
+        flickering_period: int = 25,
+        flickering_invisible_moves: int = 75,
+        flickering_speed: float = 0.5
     ):
         self.width = width
         self.height = height
@@ -632,6 +637,19 @@ class EnvironmentGPU:
                 width, height, resolution, device
             )
             print(f"  ✅ DANGER: {self.danger_field.field.shape}")
+        
+        # v16.1: Flickering Energy Field
+        self.flickering_energy_enabled = flickering_energy_enabled
+        if flickering_energy_enabled:
+            self.flickering_energy_field = FlickeringEnergyFieldGPU(
+                width, height, resolution, device,
+                n_sources=30,
+                source_strength=50.0,
+                flicker_period=flickering_period,
+                invisible_moves=flickering_invisible_moves,
+                source_speed=flickering_speed
+            )
+            print(f"  ✅ FPEF: {self.flickering_energy_field.field.shape}")
         
         # 预计算梯度矩阵 (GPU)
         self.epf_grad_x = None
@@ -764,6 +782,10 @@ class EnvironmentGPU:
         if self.stigmergy_field_enabled:
             # v16.0: 传入 matter_grid 实现遮挡
             self.stigmergy_field.step(matter_grid=self.matter_grid)
+        
+        # v16.1: Flickering Energy Field
+        if self.flickering_energy_enabled:
+            self.flickering_energy_field.step()
         
         # 2. 预计算梯度 (每个场每步计算一次)
         self._compute_gradients()
@@ -1064,6 +1086,166 @@ def benchmark_environment_gpu(n_steps: int = 100):
     print(f"  🚀 加速比: {cpu_elapsed/elapsed:.1f}x")
     
     return env, env_cpu
+
+
+# ============================================================
+# v16.1 Flickering Energy Field (Deceptive Landscape)
+# ============================================================
+class FlickeringEnergyFieldGPU:
+    """GPU Flickering Energy Field - periodic invisibility + inertia motion"""
+    
+    def __init__(
+        self,
+        width: float = 100.0,
+        height: float = 100.0,
+        resolution: float = 1.0,
+        device: str = 'cuda:0',
+        n_sources: int = 30,
+        source_strength: float = 50.0,
+        flicker_period: int = 25,
+        invisible_moves: int = 75,
+        source_speed: float = 0.5,
+    ):
+        import numpy as np
+        self.np = np
+        self.width = width
+        self.height = height
+        self.resolution = resolution
+        self.device = device
+        
+        self.flicker_period = flicker_period
+        self.invisible_moves = invisible_moves
+        self.source_speed = source_speed
+        self.step_count = 0
+        
+        self.grid_width = int(width / resolution)
+        self.grid_height = int(height / resolution)
+        
+        self.field = torch.zeros(
+            1, 1, self.grid_height, self.grid_width,
+            device=device, dtype=torch.float32
+        )
+        
+        # [x, y, vx, vy, energy, visible]
+        self.sources = torch.zeros(n_sources, 6, device=device)
+        self.n_sources = n_sources
+        self.source_strength = source_strength
+        
+        self._init_sources()
+    
+    def _init_sources(self):
+        import numpy as np
+        for i in range(self.n_sources):
+            x = torch.rand(1, device=self.device) * (self.width - 10) + 5
+            y = torch.rand(1, device=self.device) * (self.height - 10) + 5
+            
+            angle = torch.rand(1, device=self.device) * 2 * np.pi
+            vx = torch.cos(angle) * self.source_speed
+            vy = torch.sin(angle) * self.source_speed
+            
+            energy = torch.full((1,), self.source_strength, device=self.device)
+            visible = torch.ones(1, device=self.device)
+            
+            self.sources[i] = torch.cat([x, y, vx, vy, energy, visible])
+    
+    def step(self):
+        import numpy as np
+        self.step_count += 1
+        
+        cycle_length = self.flicker_period + self.invisible_moves
+        cycle_pos = self.step_count % cycle_length
+        is_visible = cycle_pos < self.flicker_period
+        
+        for i in range(self.n_sources):
+            src = self.sources[i]
+            
+            self.sources[i, 5] = 1.0 if is_visible else 0.0
+            
+            new_x = src[0] + src[2]
+            new_y = src[1] + src[3]
+            
+            if new_x < 0 or new_x > self.width:
+                self.sources[i, 2] *= -1
+                new_x = torch.clip(new_x, 0, self.width)
+            if new_y < 0 or new_y > self.height:
+                self.sources[i, 3] *= -1
+                new_y = torch.clip(new_y, 0, self.height)
+            
+            self.sources[i, 0] = new_x
+            self.sources[i, 1] = new_y
+        
+        self._render_field()
+    
+    def _render_field(self):
+        import numpy as np
+        self.field.zero_()
+        
+        for i in range(self.n_sources):
+            src = self.sources[i]
+            
+            if src[5] < 0.5:
+                continue
+            
+            gx = int(src[0].item() / self.resolution)
+            gy = int(src[1].item() / self.resolution)
+            
+            if 0 <= gx < self.grid_width and 0 <= gy < self.grid_height:
+                for dy in range(-5, 6):
+                    for dx in range(-5, 6):
+                        nx, ny = gx + dx, gy + dy
+                        if 0 <= nx < self.grid_width and 0 <= ny < self.grid_height:
+                            dist = np.sqrt(dx*dx + dy*dy)
+                            intensity = np.exp(-dist**2 / 8)
+                            self.field[0, 0, ny, nx] += src[4].item() * intensity
+    
+    def consume_at(self, x: float, y: float, radius: float = 2.0) -> float:
+        gained = 0.0
+        
+        for i in range(self.n_sources):
+            src = self.sources[i]
+            
+            dx = src[0].item() - x
+            dy = src[1].item() - y
+            dist = np.sqrt(dx*dx + dy*dy)
+            
+            if dist < radius and src[4].item() > 0:
+                gained += src[4].item()
+                self.sources[i, 4] = 0.0
+                
+                self.sources[i, 0] = torch.rand(1, device=self.device) * (self.width - 20) + 10
+                self.sources[i, 1] = torch.rand(1, device=self.device) * (self.height - 20) + 10
+                self.sources[i, 4] = self.source_strength
+        
+        return gained
+    
+    def get_energy_at(self, x: float, y: float, sensor_range: float) -> float:
+        import numpy as np
+        total = 0.0
+        
+        for i in range(self.n_sources):
+            src = self.sources[i]
+            
+            if src[5] < 0.5:
+                continue
+            
+            dx = src[0].item() - x
+            dy = src[1].item() - y
+            dist = np.sqrt(dx*dx + dy*dy)
+            
+            if dist < sensor_range:
+                intensity = np.exp(-dist**2 / (sensor_range**2 / 2))
+                total += src[4].item() * intensity
+        
+        return total
+    
+    def get_stats(self) -> dict:
+        visible_count = (self.sources[:, 5] > 0.5).sum().item()
+        return {
+            'visible_sources': visible_count,
+            'total_sources': self.n_sources,
+            'invisible_moves': self.invisible_moves,
+            'cycle_pos': self.step_count % (self.flicker_period + self.invisible_moves)
+        }
 
 
 if __name__ == "__main__":

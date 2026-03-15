@@ -1086,16 +1086,28 @@ class BatchedAgents:
         idx = batch.indices
 
         # 从能量场摄食
+        energy_source = None
         if hasattr(env, 'energy_field') and env.energy_field is not None:
+            energy_source = env.energy_field
+        elif hasattr(env, 'flickering_energy_field') and env.flickering_energy_field is not None:
+            energy_source = env.flickering_energy_field
+        
+        if energy_source is not None:
             try:
-                energy_values = env.energy_field.sample_batch(batch.positions)
-                feed_rate = 0.3  # 萃取率
+                # Get positions
+                positions = batch.positions  # [N, 2] (x, y)
+                N = positions.shape[0]
+                
+                # Sample energy for each agent
+                energy_values = torch.zeros(N, device=positions.device)
+                for i in range(N):
+                    x = positions[i, 0].item()
+                    y = positions[i, 1].item()
+                    energy_values[i] = energy_source.get_energy_at(x, y, sensor_range=15.0)
+                
+                feed_rate = 0.3
                 feed_amount = energy_values * feed_rate
                 self.state.energies[idx] += feed_amount
-
-                # 从环境场消耗能量 (能量守恒)
-                if hasattr(env.energy_field, 'consume_batch'):
-                    env.energy_field.consume_batch(batch.positions, feed_amount)
             except Exception as e:
                 pass
 

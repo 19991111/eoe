@@ -1,0 +1,19 @@
+{
+  "step": 500,
+  "total_snapshots": 100,
+  "unique_structures": 1,
+  "structures": {
+    "struct_28212": {
+      "structure_id": "struct_28212",
+      "nodes": [
+        1,
+        7,
+        4,
+        22,
+        23
+      ],
+      "edges": [],
+      "complexity_score": 7.5,
+      "first_seen_step": 500,
+      "population_count": 100,
+      "avg_fitness": 
