@@ -1172,8 +1172,19 @@ class FlickeringEnergyFieldGPU:
             
             self.sources[i, 5] = 1.0 if is_visible else 0.0
             
-            # 隐身期曲线运动: 添加微小的角度偏转
-            if is_invisible and curved_motion:
+            # 圆形运动模式 (新!)
+            if getattr(self, '_circular_motion', False):
+                # 更新相位
+                phase_speed = 0.05  # 旋转速度
+                self._circular_phase[i] += phase_speed
+                phase = self._circular_phase[i].item()
+                radius = self._circular_radius[i].item()
+                speed = self.source_speed * radius * 2
+                
+                self.sources[i, 2] = np.cos(phase) * speed
+                self.sources[i, 3] = np.sin(phase) * speed
+            elif is_invisible and curved_motion:
+                # 隐身期曲线运动: 添加微小的角度偏转
                 current_vx = src[2].item()
                 current_vy = src[3].item()
                 current_speed = np.sqrt(current_vx**2 + current_vy**2)
@@ -1201,6 +1212,31 @@ class FlickeringEnergyFieldGPU:
             self.sources[i, 1] = new_y
         
         self._render_field()
+    
+    def set_circular_motion(self, enabled: bool = True):
+        """启用圆形/8字轨迹运动模式"""
+        self._circular_motion = enabled
+        self._circular_phase = torch.zeros(self.n_sources, device=self.device)
+        self._circular_radius = torch.rand(self.n_sources, device=self.device) * 0.3 + 0.2  # 0.2-0.5 speed variation
+        if enabled:
+            print(f"  🔄 能量源圆形轨迹模式已启用")
+    
+    def _apply_circular_motion(self, idx: int, src):
+        """应用圆形运动"""
+        if not getattr(self, '_circular_motion', False):
+            return src[2].item(), src[3].item()
+        
+        # 每个能量源有自己的相位
+        phase = self._circular_phase[idx].item()
+        radius = self._circular_radius[idx].item()
+        speed = self.source_speed * radius * 2
+        
+        # 圆形运动: vx = cos(phase), vy = sin(phase)
+        # 相位随时间推进
+        new_vx = np.cos(phase) * speed
+        new_vy = np.sin(phase) * speed
+        
+        return new_vx, new_vy
     
     def _render_field(self):
         import numpy as np

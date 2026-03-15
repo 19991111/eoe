@@ -1091,11 +1091,12 @@ class RedQueenLaw(PhysicalLaw):
         refresh_interval = self.manifest.rival_refresh_interval
         n_rivals = self.manifest.n_rivals
         
+        # 提前获取batch数据（确保变量存在）
+        idx = batch.indices
+        energies = batch.energies
+        
         # 检查是否需要刷新敌对 (GPU模式: 简化处理)
         if generation > 0 and generation % refresh_interval == 0:
-            idx = batch.indices
-            energies = batch.energies
-            
             # 选择能量最高的个体作为"敌对" (模拟从精英克隆)
             top_k = min(n_rivals * 2, len(idx))
             if top_k > 0:
@@ -1103,18 +1104,24 @@ class RedQueenLaw(PhysicalLaw):
                 
                 # 增强这些"敌对"的能力 (增加攻击输出)
                 # 在GPU模式下，我们记录哪些是"敌对"供后续处理
-                if not hasattr(batch.state, 'is_rival'):
-                    batch.state.is_rival = torch.zeros_like(batch.energies, dtype=torch.bool)
+                if not hasattr(batch.state, 'is_rival') or batch.state.is_rival.shape[0] != batch.state.energies.shape[0]:
+                    # 使用完整的state.energies大小（max_agents）
+                    batch.state.is_rival = torch.zeros(batch.state.energies.shape[0], device=batch.state.energies.device, dtype=torch.bool)
                 
-                batch.state.is_rival[idx[top_indices[:n_rivals]]] = True
+                # 获取实际agent indices
+                rival_indices = idx[top_indices[:n_rivals]]
+                batch.state.is_rival[rival_indices] = True
                 
                 # 增加敌对能量 (1.5x)
-                batch.state.energies[idx[top_indices[:n_rivals]]] *= 1.5
+                batch.state.energies[rival_indices] *= 1.5
         
         # 在捕食发生时，应用额外压力
         # 检查是否有recent predation发生 (通过能量大幅下降检测)
-        if hasattr(batch.state, 'prev_energies'):
-            energy_drops = batch.state.prev_energies - batch.energies
+        # 注意: prev_energies是完整大小[MAX_AGENTS]，batch.energies是活跃大小
+        if hasattr(batch.state, 'prev_energies') and batch.n > 0:
+            # 只比较活跃Agent的能量变化
+            prev_energies_active = batch.state.prev_energies[idx]
+            energy_drops = prev_energies_active - energies
             significant_drops = energy_drops > 5.0  # 能量突然下降 > 5
             
             if significant_drops.any():
