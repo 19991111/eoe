@@ -154,7 +154,7 @@ class EnergyFieldGPU:
         self._check_and_respawn()
     
     def _inject_energy_pulse(self):
-        """脉冲式注入能量 (受季节倍率调节)"""
+        """脉冲式注入能量 (受季节倍率调节) - 高斯扩散版本"""
         # 季节调整后的注入量
         seasonal_strength = self.seasonal_multiplier
         
@@ -172,7 +172,14 @@ class EnergyFieldGPU:
                 remaining = self.sources[i, 4].item()
                 if remaining > 0:
                     actual_inject = min(inject_amount, remaining)
-                    self.field[0, 0, gy, gx] += actual_inject
+                    # 高斯扩散注入 (10x10 半径)
+                    for dy in range(-10, 11):
+                        for dx in range(-10, 11):
+                            ny, nx = gy + dy, gx + dx
+                            if 0 <= ny < self.grid_height and 0 <= nx < self.grid_width:
+                                dist = (dx * dx + dy * dy) ** 0.5
+                                intensity = 1.0 / (1.0 + dist * dist * 0.1)  # 简化的2D高斯
+                                self.field[0, 0, ny, nx] += actual_inject * intensity * 0.05
                     self.sources[i, 4] -= actual_inject
                 else:
                     # 容量已耗尽，不注入
@@ -1156,10 +1163,29 @@ class FlickeringEnergyFieldGPU:
         cycle_pos = self.step_count % cycle_length
         is_visible = cycle_pos < self.flicker_period
         
+        # 隐身期曲线运动标志
+        is_invisible = not is_visible
+        curved_motion = getattr(self, '_invisible_curved', True)
+        
         for i in range(self.n_sources):
             src = self.sources[i]
             
             self.sources[i, 5] = 1.0 if is_visible else 0.0
+            
+            # 隐身期曲线运动: 添加微小的角度偏转
+            if is_invisible and curved_motion:
+                current_vx = src[2].item()
+                current_vy = src[3].item()
+                current_speed = np.sqrt(current_vx**2 + current_vy**2)
+                
+                if current_speed > 0.01:
+                    current_angle = np.arctan2(current_vy, current_vx)
+                    # 随机偏转 ±15度
+                    angle_offset = (np.random.random() - 0.5) * 0.5  # ~±15 degrees
+                    new_angle = current_angle + angle_offset
+                    
+                    self.sources[i, 2] = np.cos(new_angle) * current_speed
+                    self.sources[i, 3] = np.sin(new_angle) * current_speed
             
             new_x = src[0] + src[2]
             new_y = src[1] + src[3]
@@ -1246,6 +1272,56 @@ class FlickeringEnergyFieldGPU:
             'invisible_moves': self.invisible_moves,
             'cycle_pos': self.step_count % (self.flicker_period + self.invisible_moves)
         }
+    
+    @property
+    def is_visible_cycle(self) -> bool:
+        """当前是否处于可见周期"""
+        cycle_length = self.flicker_period + self.invisible_moves
+        cycle_pos = self.step_count % cycle_length
+        return cycle_pos < self.flicker_period
+    
+    def sample_all_sources_batch(self, positions: torch.Tensor, sensor_range: float = 15.0) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        批量采样所有能量源(包括隐身源) - GPU加速版
+        返回: (total_energy, invisible_energy)
+        """
+        N = positions.shape[0]
+        n_src = self.n_sources
+        
+        # sources: [n_sources, 6] -> [n_sources, 1, 6]
+        # positions: [N, 2] -> [1, N, 2]
+        src = self.sources.unsqueeze(1)  # [n_sources, 1, 6]
+        pos = positions.unsqueeze(0)     # [1, N, 2]
+        
+        # 计算距离 (简化: 不考虑环形世界)
+        diff = src[..., :2] - pos        # [n_sources, N, 2]
+        dist_sq = (diff ** 2).sum(dim=2) # [n_sources, N]
+        
+        # 高斯衰减
+        variance = (sensor_range ** 2) / 2
+        intensity = torch.exp(-dist_sq / variance)  # [n_sources, N]
+        
+        # 能量 = 源能量 * 衰减强度
+        src_energy = src[..., 4]  # [n_sources, 1]
+        energy_at_pos = src_energy * intensity  # [n_sources, N]
+        
+        # 可见性
+        is_visible = src[..., 5] > 0.5  # [n_sources, 1]
+        
+        # 总能量 (所有源)
+        total_energy = energy_at_pos.sum(dim=0)  # [N]
+        
+        # 不可见能量 - 需要正确广播
+        invisible_energy = torch.zeros(N, device=self.device)
+        for i in range(n_src):
+            if not is_visible[i, 0].item():
+                invisible_energy += energy_at_pos[i]
+        
+        return total_energy, invisible_energy
+    
+    def set_invisible_motion_curved(self, curved: bool = True):
+        """设置隐身期运动模式: True=曲线运动, False=直线运动"""
+        self._invisible_curved = curved
 
 
 if __name__ == "__main__":

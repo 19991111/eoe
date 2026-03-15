@@ -56,6 +56,35 @@ class PoolConfig:
     # 代谢参数
     BASE_METABOLISM = 0.05  # 极低基础代谢
     ACTIVATION_COST = 0.001
+    
+    # v16.2 运动惩罚 (惩罚盲目移动，奖励精准伏击)
+    MOVEMENT_PENALTY = 0.05  # 50倍于原ACTIVATION_COST，迫使"看准再动"
+
+    # v16.3 认知溢价 (Cognitive Premium) - 隐身进食10倍奖励
+    COGNITIVE_PREMIUM_MULTIPLIER = 10.0  # 隐身状态进食获得10倍能量
+    ENABLE_INVISIBLE_SENSING = True      # 允许感知隐身能量(弱感知)
+    
+    # v16.4 基础代谢 (BMR) - 打破"伏地魔"策略
+    # 即使静止也有不可避免的代谢成本，且复杂大脑消耗更多
+    BASAL_COST = 0.10  # 静息基础代谢 (2倍于原BASE_METABOLISM)
+    NEURAL_COST = 0.02  # 每节点额外代谢成本 (复杂脑更贵!)
+    
+    # v16.5 主动感知 (Active Sensing) - 运动-感知耦合
+    # 不动就看不见！模拟生物界"主动感知"机制
+    ACTIVE_SENSING_ENABLED = True        # 启用主动感知
+    ACTIVE_SENSING_THRESHOLD = 0.3       # 达到此速度则100%感知
+    ACTIVE_SENSING_MIN_EFFICIENCY = 0.05 # 静止时最低感知效率 (5%)
+    INVISIBLE_SENSING_BOOST = 2.0        # 隐身能量需要更多运动来感知
+    
+    # v16.6 认知重构：只有隐身捕食才配获得10x奖励！
+    # 伏地魔策略的核心漏洞：可见能量也给10x
+    # 现在修复：可见=1x，隐身=10x (只有主动出击才能赢)
+    COGNITIVE_PREMIUM_ONLY_INVISIBLE = True  # 只有隐身阶段有10x奖励
+    
+    # v16.7 极端不对称策略（彻底饿死伏地魔）
+    VISIBLE_REWARD_MULTIPLIER = 0.1    # 可见能量只有0.1x (垃圾食品!)
+    INVISIBLE_REWARD_MULTIPLIER = 20.0 # 隐身能量20x (超级大补丸!)
+    VISIBLE_RATIO = 0.05               # 可见时间降至5%
 
     # 繁衍参数调整
     REPRODUCTION_THRESHOLD = 100.0  # 进一步降低
@@ -866,15 +895,25 @@ class BatchedAgents:
                         self.state.energies[idx[agent_idx]] += stored_energy
 
     def _apply_metabolism(self, batch: ActiveBatch, dt: float):
-        """代谢能耗 (含年龄惩罚 + 迷宫阻抗)"""
+        """代谢能耗 (v16.4 含BMR基础代谢 + 神经成本)"""
         idx = batch.indices
 
-        # 基础代谢
+        # 基础代谢 (最小能量消耗)
         base_cost = self.config.BASE_METABOLISM * dt
+        
+        # v16.4 基础代谢 (BMR) - 不可避免的静息成本
+        # 这打破了"伏地魔"策略: 即使不动也要消耗能量
+        basal_cost = self.config.BASAL_COST * dt
+        
+        # v16.4 神经成本 - 复杂大脑更"饿"
+        # 模拟: 高级神经网络需要更多能量维持
+        node_counts = self.state.node_counts[idx].float()
+        neural_cost = node_counts * self.config.NEURAL_COST * dt
 
-        # 运动代谢
-        kinetic_cost = (batch.linear_velocity.abs() + batch.angular_velocity.abs()) * \
-                       self.config.ACTIVATION_COST * dt
+        # 运动代谢 (v16.2: 使用MOVEMENT_PENALTY惩罚盲目移动)
+        linear_speed = batch.linear_velocity.norm(dim=-1)  # 线速度模长
+        kinetic_cost = (linear_speed + batch.angular_velocity.abs()) * \
+                       self.config.MOVEMENT_PENALTY * dt
 
         # ============================================================
         # 迷宫阻抗 (空间记忆压力)
@@ -972,7 +1011,9 @@ class BatchedAgents:
             else:
                 node_metabolism = node_counts * base_cost
 
-        total_cost = (node_metabolism + kinetic_cost) * total_multiplier
+        # v16.4 总代谢 = 基础代谢 + BMR静息成本 + 神经成本 + 运动成本
+        # 关键: basal_cost是不可避免的 (即使完全静止也要支付)
+        total_cost = (node_metabolism + kinetic_cost + basal_cost + neural_cost) * total_multiplier
 
         # 扣除活动能量
         self.state.energies[idx] -= total_cost
@@ -1082,7 +1123,7 @@ class BatchedAgents:
             self.state.resource_visible[idx] = visible
 
     def _apply_environment_interaction(self, batch: ActiveBatch, env: 'EnvironmentGPU'):
-        """环境交互 - 摄食"""
+        """环境交互 - 向量化摄食 v16.5 主动感知版"""
         idx = batch.indices
 
         # 从能量场摄食
@@ -1094,20 +1135,127 @@ class BatchedAgents:
         
         if energy_source is not None:
             try:
-                # Get positions
                 positions = batch.positions  # [N, 2] (x, y)
                 N = positions.shape[0]
                 
-                # Sample energy for each agent
-                energy_values = torch.zeros(N, device=positions.device)
-                for i in range(N):
-                    x = positions[i, 0].item()
-                    y = positions[i, 1].item()
-                    energy_values[i] = energy_source.get_energy_at(x, y, sensor_range=15.0)
+                # ===== v16.5 主动感知: 计算感知效率 =====
+                # 核心思想: 不动就看不见！模拟生物界"主动感知"机制
+                if self.config.ACTIVE_SENSING_ENABLED:
+                    # 计算速度幅度
+                    linear_speed = batch.linear_velocity.norm(dim=-1)  # [N]
+                    angular_speed = batch.angular_velocity.abs()       # [N]
+                    total_speed = linear_speed + angular_speed
+                    
+                    # 感知效率: 达到阈值速度则100%感知，否则按比例衰减
+                    threshold = self.config.ACTIVE_SENSING_THRESHOLD
+                    min_eff = self.config.ACTIVE_SENSING_MIN_EFFICIENCY
+                    
+                    # perception_efficiency = clamp(speed / threshold, min_eff, 1.0)
+                    perception_eff = (total_speed / threshold).clamp(min=min_eff, max=1.0)
+                    
+                    # 对可见能量: 轻度衰减 (保留基础感知)
+                    visible_perception = perception_eff * 0.8 + 0.2  # 最低20%感知
+                    
+                    # 对隐身能量: 严厉衰减 (需要主动感知才能捕获!)
+                    invisible_boost = self.config.INVISIBLE_SENSING_BOOST
+                    invisible_perception = perception_eff.clamp(min=min_eff) * invisible_boost
+                    invisible_perception = invisible_perception.clamp(max=1.0)
+                else:
+                    # 旧模式: 无主动感知
+                    visible_perception = torch.ones(N, device=self.device)
+                    invisible_perception = torch.ones(N, device=self.device)
                 
+                # ===== 能量感知 (v16.3 支持隐身感知) =====
+                sensor_range = 15.0
+                
+                # 检查是否支持全源采样(含隐身)
+                if hasattr(energy_source, 'sample_all_sources_batch') and self.config.ENABLE_INVISIBLE_SENSING:
+                    # 新方法: 同时获取可见和不可见能量
+                    total_energy, invisible_energy = energy_source.sample_all_sources_batch(positions, sensor_range)
+                    visible_energy = total_energy - invisible_energy
+                elif hasattr(energy_source, 'get_energy_at'):
+                    # 回退到旧方法
+                    energy_values = torch.zeros(N, device=self.device)
+                    for i in range(N):
+                        x = positions[i, 0].item()
+                        y = positions[i, 1].item()
+                        energy_values[i] = energy_source.get_energy_at(x, y, sensor_range)
+                    visible_energy = energy_values
+                    invisible_energy = torch.zeros(N, device=self.device)
+                else:
+                    energy_values = energy_source.sample_batch(positions)
+                    visible_energy = energy_values
+                    invisible_energy = torch.zeros(N, device=self.device)
+                
+                # ===== 应用主动感知效率 =====
+                # 可见能量: 轻度感知衰减
+                effective_visible = visible_energy * visible_perception
+                # 隐身能量: 严厉感知衰减 (需要"动起来"才能感知!)
+                effective_invisible = invisible_energy * invisible_perception
+                
+                # ===== 能量消耗 =====
                 feed_rate = 0.3
-                feed_amount = energy_values * feed_rate
-                self.state.energies[idx] += feed_amount
+                feed_amount_visible = effective_visible * feed_rate
+                feed_amount_invisible = effective_invisible * feed_rate
+                
+                # 处理可见能量消耗 (从field扣除)
+                if feed_amount_visible.sum() > 0:
+                    grid_w = energy_source.grid_width
+                    grid_h = energy_source.grid_height
+                    grid_x = (positions[:, 0] / energy_source.resolution).long().clamp(0, grid_w - 1)
+                    grid_y = (positions[:, 1] / energy_source.resolution).long().clamp(0, grid_h - 1)
+                    
+                    flat_field = energy_source.field.view(-1)
+                    flat_indices = grid_y * grid_w + grid_x
+                    
+                    total_requested = torch.zeros(grid_h * grid_w, device=self.device)
+                    total_requested.scatter_add_(0, flat_indices, feed_amount_visible)
+                    
+                    actual_consumed = torch.min(total_requested, flat_field)
+                    flat_field = flat_field - actual_consumed
+                    energy_source.field.view(-1)[:] = flat_field
+                    
+                    # 按比例分配
+                    safe_requested = total_requested.clone()
+                    safe_requested[safe_requested == 0] = 1.0
+                    supply_ratio = actual_consumed / safe_requested
+                    agent_supply_ratio = supply_ratio[flat_indices]
+                    actual_feed_visible = feed_amount_visible * agent_supply_ratio
+                else:
+                    actual_feed_visible = torch.zeros(N, device=self.device)
+                
+                # ===== v16.7 极端不对称：0.1x可见 vs 20x隐身！=====
+                # 核心修复：彻底饿死伏地魔
+                # 可见=0.1x (垃圾食品)，隐身=20x (超级大补丸)
+                
+                if hasattr(self.config, 'VISIBLE_REWARD_MULTIPLIER'):
+                    # v16.7新版: 极端不对称
+                    # 可见阶段：0.1x (垃圾食品，连代谢都抵消不了)
+                    # 隐身阶段：20x (只有主动出击才能赢)
+                    premium_visible = self.config.VISIBLE_REWARD_MULTIPLIER
+                    premium_invisible = self.config.INVISIBLE_REWARD_MULTIPLIER
+                elif self.config.COGNITIVE_PREMIUM_ONLY_INVISIBLE:
+                    # v16.6: 1x vs 10x
+                    premium_visible = 1.0
+                    premium_invisible = self.config.COGNITIVE_PREMIUM_MULTIPLIER
+                else:
+                    # 旧版: 全部10x (导致伏地魔)
+                    premium_visible = self.config.COGNITIVE_PREMIUM_MULTIPLIER
+                    premium_invisible = self.config.COGNITIVE_PREMIUM_MULTIPLIER
+                
+                # 修复: premium应该应用于实际获取的能量，而不是原始请求量!
+                actual_feed_visible = actual_feed_visible * premium_visible
+                actual_feed_invisible = feed_amount_invisible * premium_invisible
+                
+                # 总能量获取 = 可见部分(1x) + 隐身暴击部分(10x)
+                actual_feed = actual_feed_visible + actual_feed_invisible
+                
+                self.state.energies[idx] += actual_feed
+                
+                # 记录统计 (如果有统计追踪器)
+                if hasattr(self, 'stats') and self.stats is not None:
+                    pass  # 可扩展统计
+                
             except Exception as e:
                 pass
 
