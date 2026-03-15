@@ -574,6 +574,10 @@ class BatchedAgents:
 
         if brain_fn is not None:
             brain_outputs = brain_fn(batch)
+        elif self.brain_matrix is not None and env is not None:
+            # 默认使用内置大脑前向传播
+            sensors = self.get_sensors(env)
+            brain_outputs = self.forward_brains(sensors)
         else:
             brain_outputs = torch.zeros(batch.n, n_outputs, device=self.device)
 
