@@ -258,13 +258,41 @@ T-Maze需要"记住目标位置并导航" - 不同技能
 
 ---
 
-## 📊 当前状态 (2026-03-21 12:11)
+## 2026-03-23: PREDICTOR前馈断层修复 ✅
+
+### 问题诊断
+Benchmark测试全面失败(0/3)，轨迹显示Agent几乎不动。
+
+**根因**: `core/eoe/genome.py` 中 PREDICTOR 节点类型没有实现处理逻辑，导致节点激活值永远为0，形成前馈断层：
+```
+SENSOR → PREDICTOR(死节点) → ACTUATOR(无信号)
+```
+
+### 修复
+在 `genome.py` 的 forward() 中添加 PREDICTOR 处理：
+```python
+elif node.node_type == NodeType.PREDICTOR:
+    input_sum = sum(input_values) if input_values else 0.0
+    node.activation = np.tanh(input_sum)
+```
+
+验证：信号成功通过 PREDICTOR 节点 (0.664 → 0.332)
+
+---
+
+## 📊 当前状态 (2026-03-23 08:20)
 
 ### 已完成
-- ✅ 场域T-Maze基础设施 (KIF墙+EPF目标+ISF)
-- ✅ Benchmark框架 + Warmup
-- ✅ CONSTANT偏置修复
+- ✅ PREDICTOR前馈断层修复
+- ✅ 大脑保存/加载流程
+- ✅ Benchmark测试框架
+- ❌ Benchmark仍然失败 (0/3)
 
 ### 待解决
-- ❌ Brain不追逐EPF (0/3成功)
-- 需要目标导向的brain重新测试
+- **演化大脑结构太简单**: 只有3-4节点，没有SENSOR→ACTUATOR直接通路
+- **演化环境与T-Maze不匹配**: 演化时没用EPF场，Agent不会追逐能量梯度
+
+### 待办事项
+1. [ ] 修改演化环境，加入EPF能量场目标，强制演化EPF感知→执行能力
+2. [ ] 或在Benchmark测试时使用warmup阶段让brain学习EPF→执行
+3. [ ] 增加演化代数/压力，演化更复杂的大脑结构

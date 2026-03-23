@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 import time
 import json
+import pickle
 from copy import deepcopy
 import warnings
 warnings.filterwarnings('ignore')
@@ -93,16 +94,17 @@ class EnvironmentGenome:
         genome = EnvironmentGenome()
         
         if high_pressure:
-            # 回退到验证成功的参数 (350步版本)
-            genome.base_metabolism = np.random.uniform(0.006, 0.025)  
-            genome.neural_cost = np.random.uniform(0.0003, 0.0025)  
-            genome.food_energy = np.random.uniform(35, 80)  
-            genome.food_count = np.random.randint(12, 35)  
-            genome.global_energy_budget = np.random.uniform(1200, 3500)  
-            genome.predation_rate = np.random.uniform(0.4, 1.3)  
+            # 修复：极低代谢 + 高初始能量，适应20000步长演化
+            # 初始能量800，metab=0.002意味着20000步消耗40%，留有余地
+            genome.base_metabolism = np.random.uniform(0.0005, 0.002)  
+            genome.neural_cost = np.random.uniform(0.00005, 0.0002)  
+            genome.food_energy = np.random.uniform(100, 180)  
+            genome.food_count = np.random.randint(40, 70)  
+            genome.global_energy_budget = np.random.uniform(4000, 8000)  
+            genome.predation_rate = np.random.uniform(0.02, 0.15)  
             genome.predation_range = np.random.uniform(2, 7)  
-            genome.winter_multiplier = np.random.uniform(0.08, 0.25)  
-            genome.season_length = np.random.randint(600, 2500)  
+            genome.winter_multiplier = np.random.uniform(0.02, 0.08)  
+            genome.season_length = np.random.randint(4000, 8000)  
         else:
             # 标准参数范围
             genome.base_metabolism = np.random.uniform(0.005, 0.04)
@@ -150,9 +152,9 @@ class EnvironmentGenome:
                 return new_val
             return param
         
-        new_genome.base_metabolism = mutate_param(self.base_metabolism, 0.0005, 0.05)
-        new_genome.neural_cost = mutate_param(self.neural_cost, 0.00005, 0.005)
-        new_genome.food_energy = mutate_param(self.food_energy, 20, 200)
+        new_genome.base_metabolism = mutate_param(self.base_metabolism, 0.0005, 0.008)
+        new_genome.neural_cost = mutate_param(self.neural_cost, 0.00005, 0.0005)
+        new_genome.food_energy = mutate_param(self.food_energy, 80, 200)
         new_genome.food_count = max(5, int(mutate_param(self.food_count, 3, 150)))
         new_genome.energy_recirculation_ratio = mutate_param(
             self.energy_recirculation_ratio, 0.1, 0.95
@@ -361,7 +363,7 @@ def create_simulation(genome: EnvironmentGenome, n_agents: int, device: str, wid
         env_width=width,
         env_height=height,
         device=device,
-        init_energy=config.INITIAL_ENERGY if hasattr(config, 'INITIAL_ENERGY') else 80.0,
+        init_energy=config.INITIAL_ENERGY if hasattr(config, 'INITIAL_ENERGY') else 800.0,
         config=config,
         env=env
     )
@@ -700,6 +702,30 @@ def run_coevolution(
     }
     with open(f"{save_dir}/final_result.json", 'w') as f:
         json.dump(final_result, f, indent=2, default=str)
+    
+    # 保存最佳大脑模板（仅保存可序列化的genome，避免config）
+    if best_genome_template is not None:
+        brain_path = f"{save_dir}/best_brain.pkl"
+        # 创建一个干净的genome副本，移除不可序列化的config引用
+        if isinstance(best_genome_template, list):
+            clean_templates = []
+            for tmpl in best_genome_template:
+                # 创建无config的新genome
+                from core.eoe.genome import OperatorGenome
+                clean = OperatorGenome()
+                clean.nodes = tmpl.nodes.copy()
+                clean.edges = tmpl.edges.copy()
+                clean_templates.append(clean)
+            with open(brain_path, 'wb') as f:
+                pickle.dump(clean_templates, f)
+        else:
+            from core.eoe.genome import OperatorGenome
+            clean = OperatorGenome()
+            clean.nodes = best_genome_template.nodes.copy()
+            clean.edges = best_genome_template.edges.copy()
+            with open(brain_path, 'wb') as f:
+                pickle.dump(clean, f)
+        print(f"   🧠 已保存最佳大脑到: {brain_path}")
     
     return best_genome_overall, history
 

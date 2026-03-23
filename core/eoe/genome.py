@@ -394,8 +394,14 @@ class OperatorGenome:
                 total_input = sum(input_values)
                 node.activation = 1.0 if total_input > 0.5 else 0.0
 
-            # 🚀 v14.0: PREDICTOR/ENTITY_RADAR 归一化为 SENSOR
-            # 预测能力应从 DELAY+ADD+THRESHOLD 演化涌现
+            # 🟢 v18.0: PREDICTOR 节点 - 修复前馈断层
+            # 基础实现：标准前馈隐藏节点，聚合输入信号并通过tanh激活
+            elif node.node_type == NodeType.PREDICTOR:
+                # 1. 聚合前驱节点的输入信号（加权和）
+                input_sum = sum(input_values) if input_values else 0.0
+                # 2. 应用tanh激活函数，映射到[-1, 1]区间
+                node.activation = np.tanh(input_sum)
+                # 💡 扩展预留：未来可在此实现预测编码、状态缓存等高级机制
 
             # 🚀 v14.0: PORT_* 类型归一化为 ACTUATOR
             # 所有物理输出通过 ACTUATOR 的 emitter_key 控制

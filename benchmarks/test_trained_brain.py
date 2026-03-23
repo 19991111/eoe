@@ -7,6 +7,7 @@ sys.path.insert(0, '/home/node/.openclaw/workspace/eoe_mvp')
 
 import json
 import random
+import pickle
 from pathlib import Path
 
 from core.eoe.batched_agents import PoolConfig
@@ -15,7 +16,43 @@ from benchmarks.benchmark_runner import BenchmarkRunner, TaskFactory
 from benchmarks.visualization import BenchmarkReportGenerator
 
 
-def load_trained_genome(structure_file: str = None, top_n: int = 1):
+def load_trained_genome(brain_file: str = None, top_n: int = 1):
+    """
+    从保存的大脑pkl文件中加载训练好的大脑
+    
+    Args:
+        brain_file: 大脑pkl文件路径
+        top_n: 使用第N个大脑 (1=最复杂)
+    
+    Returns:
+        OperatorGenome: 训练好的大脑
+    """
+    if brain_file is None:
+        # 尝试从v18共演化结果加载
+        exp_dir = Path("/home/node/.openclaw/workspace/eoe_mvp/outputs/v18_coevolution")
+        brain_file = exp_dir / "best_brain.pkl"
+        
+        if not brain_file.exists():
+            raise FileNotFoundError(f"No brain file found at {brain_file}")
+    
+    print(f"Loading brain from: {brain_file}")
+    
+    with open(brain_file, 'rb') as f:
+        brain_template = pickle.load(f)
+    
+    # brain_template可能是一个genome或genome列表
+    if isinstance(brain_template, list):
+        if top_n > len(brain_template):
+            top_n = len(brain_template)
+        brain = brain_template[top_n - 1]
+    else:
+        brain = brain_template
+    
+    print(f"Loaded brain:")
+    print(f"  Nodes: {len(brain.nodes)}")
+    print(f"  Edges: {len(brain.edges)}")
+    
+    return brain
     """
     从保存的结构文件中加载训练好的大脑
     
