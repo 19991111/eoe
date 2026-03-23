@@ -1,0 +1,222 @@
+[
+  {
+    "step": 0,
+    "pop": 100,
+    "visibility": 0.8,
+    "avg_complexity": 0.5,
+    "max_complexity": 1.0,
+    "avg_energy": 54.53632354736328,
+    "low": 100,
+    "mid": 0,
+    "high": 0
+  },
+  {
+    "step": 500,
+    "pop": 2000,
+    "visibility": 0.74,
+    "avg_complexity": 1.096500039100647,
+    "max_complexity": 5.0,
+    "avg_energy": 103.4317855834961,
+    "low": 1975,
+    "mid": 25,
+    "high": 0
+  },
+  {
+    "step": 1000,
+    "pop": 2000,
+    "visibility": 0.68,
+    "avg_complexity": 1.0780000686645508,
+    "max_complexity": 5.0,
+    "avg_energy": 192.6413116455078,
+    "low": 1987,
+    "mid": 13,
+    "high": 0
+  },
+  {
+    "step": 1500,
+    "pop": 2000,
+    "visibility": 0.62,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 282.8157043457031,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 2000,
+    "pop": 2000,
+    "visibility": 0.56,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 373.2973327636719,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 2500,
+    "pop": 2000,
+    "visibility": 0.5,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 464.0965576171875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 3000,
+    "pop": 2000,
+    "visibility": 0.44,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 554.9169311523438,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 3500,
+    "pop": 2000,
+    "visibility": 0.38,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 645.6530151367188,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 4000,
+    "pop": 2000,
+    "visibility": 0.31999999999999995,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 736.9653930664062,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 4500,
+    "pop": 2000,
+    "visibility": 0.2599999999999999,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 828.5138549804688,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 5000,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 919.919921875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 5500,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1011.1692504882812,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 6000,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1102.5643310546875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 6500,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1193.8470458984375,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 7000,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1285.513671875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 7500,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1376.8729248046875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 8000,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1468.301025390625,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 8500,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1559.77685546875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 9000,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1650.930908203125,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  },
+  {
+    "step": 9500,
+    "pop": 2000,
+    "visibility": 0.2,
+    "avg_complexity": 1.0725001096725464,
+    "max_complexity": 3.0,
+    "avg_energy": 1742.2625732421875,
+    "low": 1990,
+    "mid": 10,
+    "high": 0
+  }
+]

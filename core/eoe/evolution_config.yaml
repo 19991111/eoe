@@ -1,0 +1,43 @@
+# EOE 演化配置
+# 可通过 IntegratedSimulation 或手动加载
+
+# 红皇后假说 (The Red Queen Hypothesis)
+red_queen:
+  enabled: true
+  predation_range: 4.0
+  predation_rate: 0.8
+  predation_cost: 0.05
+  mutation_rate: 0.15
+
+# 代谢衰老 (熵增定律)
+metabolic_senescence:
+  enabled: true
+  age_alpha: 0.00001
+  max_multiplier: 10.0
+
+# 空间阻抗 (迷宫墙壁)
+spatial_impedance:
+  enabled: true
+  wall_density: 0.15      # 15% 墙壁覆盖率
+  wall_strength: 10.0     # 墙壁阻抗强度
+  food_behind_walls: true # 食物刷新在墙壁后
+
+# 鲸落机制
+whale_fall:
+  enabled: true
+  biomass_factor: 10.0
+
+# 基因变异
+mutation:
+  velocity_rate: 0.10
+  node_add_prob: 0.05
+  node_remove_prob: 0.02
+  weight_shift: 0.10
+  edge_break: 0.02
+  edge_genesis: 0.03
+
+# 物理
+physics:
+  friction: 0.95
+  angular_damping: 0.90
+  spawn_radius: 2.0

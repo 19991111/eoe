@@ -1,0 +1,6 @@
+{
+  "_deprecated": true,
+  "_note": "请使用 core/eoe/manifest.py 作为唯一配置源 (SSOT)",
+  "_migration_date": "2026-03-12",
+  "see_also": "VERSION_MANAGEMENT.md"
+}
